@@ -1,6 +1,4 @@
-Narito ang isang **draft README.md** na pwede mong gamitin bilang base para sa project mo. Ginawa ko itong malinaw, structured, at developer-friendly:  
 
-```markdown
 # Kabisilya Management System
 
 A desktop application built with **Electron** and **Vite React/TypeScript** to streamline labor and financial management in rice farming. The system focuses on organizing workers per pitak, tracking debts, calculating payments based on luwang planted, and supporting manual deductions for fairness and transparency.
@@ -103,7 +101,3 @@ A desktop application built with **Electron** and **Vite React/TypeScript** to s
 
 MIT License – free to use and modify for your farming or labor management projects.
 ```
-
----
-
-👉 Gusto mo bang i-customize ko pa ang README para maging **mas pang-client pitch** (mas business-oriented ang tono), o mas **pang-developer** (mas technical at detailed)?
