@@ -1,0 +1,1 @@
+// workerService.ts placeholder

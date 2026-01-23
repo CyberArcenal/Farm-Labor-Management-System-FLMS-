@@ -1,0 +1,1116 @@
+// assignmentAPI.ts - API for Assignment Management
+export interface Assignment {
+  id: number;
+  luwangCount: number;
+  assignmentDate: string;
+  status: 'active' | 'completed' | 'cancelled';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  worker?: {
+    id: number;
+    name: string;
+    code: string;
+    contactNumber?: string;
+  };
+  pitak?: {
+    id: number;
+    name: string;
+    code: string;
+    location?: string;
+  };
+}
+
+export interface Worker {
+  id: number;
+  name: string;
+  code: string;
+  contactNumber?: string;
+}
+
+export interface Pitak {
+  id: number;
+  name: string;
+  code: string;
+  location?: string;
+}
+
+export interface AssignmentFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  status?: 'active' | 'completed' | 'cancelled';
+  workerId?: number;
+  pitakId?: number;
+}
+
+export interface AssignmentStats {
+  totalAssignments: number;
+  totalLuWang: string;
+  byStatus: {
+    active: { count: number; totalLuWang: number };
+    completed: { count: number; totalLuWang: number };
+    cancelled: { count: number; totalLuWang: number };
+  };
+  byDate: Array<{
+    date: string;
+    count: number;
+    totalLuWang: number;
+  }>;
+  averages: {
+    luwangPerAssignment: string;
+    assignmentsPerDay: string;
+  };
+}
+
+export interface AssignmentReport {
+  report: Array<{
+    id: number;
+    date: string;
+    luwangCount: string;
+    status: string;
+    worker?: {
+      id: number;
+      name: string;
+      code: string;
+    };
+    pitak?: {
+      id: number;
+      name: string;
+      code: string;
+    };
+    notes?: string;
+  }>;
+  summary: {
+    totalAssignments: number;
+    totalLuWang: string;
+    byStatus: {
+      active: number;
+      completed: number;
+      cancelled: number;
+    };
+    byWorker: Array<{
+      name: string;
+      totalAssignments: number;
+      totalLuWang: number;
+    }>;
+    byPitak: Array<{
+      name: string;
+      totalAssignments: number;
+      totalLuWang: number;
+    }>;
+  };
+}
+
+export interface WorkerPerformanceReport {
+  worker: {
+    id: number;
+    name: string;
+    code: string;
+    contactNumber?: string;
+  };
+  totalAssignments: number;
+  totalLuWang: string;
+  averageLuWang: string;
+  assignmentsByDate: Array<{
+    date: string;
+    assignments: number;
+    totalLuWang: number;
+  }>;
+  performanceMetrics: {
+    completionRate: string;
+    averageLuWangPerDay: string;
+    consistencyScore: string;
+  };
+}
+
+export interface PitakSummaryReport {
+  pitak: {
+    id: number;
+    name: string;
+    code: string;
+    location?: string;
+  };
+  totalAssignments: number;
+  totalLuWang: string;
+  averageLuWang: string;
+  uniqueWorkers: number;
+  utilizationMetrics: {
+    assignmentDays: number;
+    workerDays: number;
+    utilizationRate: string;
+  };
+}
+
+export interface AssignmentHistory {
+  type: 'CREATED' | 'STATUS_CHANGE' | 'LUWANG_UPDATE' | 'REASSIGNMENT' | 'NOTE';
+  timestamp: string;
+  details?: string;
+  from?: any;
+  to?: any;
+  reason?: string;
+  content?: string;
+}
+
+export interface AssignmentResponse<T = any> {
+  status: boolean;
+  message: string;
+  data: T;
+  meta?: any;
+}
+
+export interface BulkCreateAssignment {
+  workerId: number;
+  pitakId: number;
+  luwangCount?: number;
+  assignmentDate: string;
+  status?: 'active' | 'completed' | 'cancelled';
+  notes?: string;
+}
+
+export interface AssignmentPayload {
+  method: string;
+  params?: Record<string, any>;
+}
+
+class AssignmentAPI {
+  // 🔎 Read-only methods
+
+  /**
+   * Get all assignments with optional filters
+   */
+  async getAllAssignments(filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAllAssignments",
+        params: { filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignments");
+    }
+  }
+
+  /**
+   * Get assignment by ID
+   */
+  async getAssignmentById(id: number): Promise<AssignmentResponse<Assignment>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentById",
+        params: { id },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignment");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignment");
+    }
+  }
+
+  /**
+   * Get assignments by date
+   */
+  async getAssignmentsByDate(date: string, filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentsByDate",
+        params: { date, filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignments by date");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignments by date");
+    }
+  }
+
+  /**
+   * Get assignments by status
+   */
+  async getAssignmentsByStatus(status: 'active' | 'completed' | 'cancelled', filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentsByStatus",
+        params: { status, filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignments by status");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignments by status");
+    }
+  }
+
+  /**
+   * Get assignments by worker
+   */
+  async getAssignmentsByWorker(workerId: number, filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentsByWorker",
+        params: { workerId, filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignments by worker");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignments by worker");
+    }
+  }
+
+  /**
+   * Get assignments by pitak
+   */
+  async getAssignmentsByPitak(pitakId: number, filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentsByPitak",
+        params: { pitakId, filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignments by pitak");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignments by pitak");
+    }
+  }
+
+  /**
+   * Get active assignments
+   */
+  async getActiveAssignments(filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getActiveAssignments",
+        params: { filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get active assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get active assignments");
+    }
+  }
+
+  /**
+   * Get completed assignments
+   */
+  async getCompletedAssignments(filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getCompletedAssignments",
+        params: { filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get completed assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get completed assignments");
+    }
+  }
+
+  /**
+   * Get cancelled assignments
+   */
+  async getCancelledAssignments(filters?: AssignmentFilters): Promise<AssignmentResponse<Assignment[]>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getCancelledAssignments",
+        params: { filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get cancelled assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get cancelled assignments");
+    }
+  }
+
+  /**
+   * Get assignment statistics
+   */
+  async getAssignmentStats(dateRange?: { startDate: string; endDate: string }): Promise<AssignmentResponse<AssignmentStats>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentStats",
+        params: { date_range: dateRange },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignment stats");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignment stats");
+    }
+  }
+
+  /**
+   * Get assignment history
+   */
+  async getAssignmentHistory(assignmentId: number): Promise<AssignmentResponse<{ assignment: Assignment; history: AssignmentHistory[] }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentHistory",
+        params: { assignmentId },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignment history");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignment history");
+    }
+  }
+
+  /**
+   * Search assignments
+   */
+  async searchAssignments(query: string): Promise<AssignmentResponse<{ results: any; suggestions: any }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "searchAssignments",
+        params: { query },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to search assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to search assignments");
+    }
+  }
+
+  // 📊 Report methods
+
+  /**
+   * Get assignment report
+   */
+  async getAssignmentReport(dateRange: { startDate: string; endDate: string }, filters?: AssignmentFilters): Promise<AssignmentResponse<AssignmentReport>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getAssignmentReport",
+        params: { date_range: dateRange, filters },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get assignment report");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get assignment report");
+    }
+  }
+
+  /**
+   * Get worker performance report
+   */
+  async getWorkerPerformanceReport(workerId: number, dateRange?: { startDate: string; endDate: string }): Promise<AssignmentResponse<WorkerPerformanceReport>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getWorkerPerformanceReport",
+        params: { workerId, date_range: dateRange },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get worker performance report");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get worker performance report");
+    }
+  }
+
+  /**
+   * Get pitak summary report
+   */
+  async getPitakSummaryReport(pitakId: number, dateRange?: { startDate: string; endDate: string }): Promise<AssignmentResponse<PitakSummaryReport>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "getPitakSummaryReport",
+        params: { pitakId, date_range: dateRange },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to get pitak summary report");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get pitak summary report");
+    }
+  }
+
+  // ✏️ Write operation methods
+
+  /**
+   * Create a new assignment
+   */
+  async createAssignment(data: {
+    workerId: number;
+    pitakId: number;
+    luwangCount?: number;
+    assignmentDate: string;
+    notes?: string;
+  }): Promise<AssignmentResponse<Assignment>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "createAssignment",
+        params: data,
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to create assignment");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to create assignment");
+    }
+  }
+
+  /**
+   * Update assignment
+   */
+  async updateAssignment(data: {
+    assignmentId: number;
+    workerId?: number;
+    pitakId?: number;
+    luwangCount?: number;
+    assignmentDate?: string;
+    notes?: string;
+  }): Promise<AssignmentResponse<Assignment>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "updateAssignment",
+        params: data,
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to update assignment");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update assignment");
+    }
+  }
+
+  /**
+   * Delete assignment
+   */
+  async deleteAssignment(assignmentId: number, reason?: string): Promise<AssignmentResponse<{ deletedAssignment: Assignment }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "deleteAssignment",
+        params: { assignmentId, reason },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to delete assignment");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to delete assignment");
+    }
+  }
+
+  /**
+   * Update assignment status
+   */
+  async updateAssignmentStatus(assignmentId: number, status: 'active' | 'completed' | 'cancelled', notes?: string): Promise<AssignmentResponse<Assignment>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "updateAssignmentStatus",
+        params: { assignmentId, status, notes },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to update assignment status");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update assignment status");
+    }
+  }
+
+  /**
+   * Bulk update assignments
+   */
+  async bulkUpdateAssignments(data: {
+    assignments?: number[];
+    filters?: AssignmentFilters;
+    updateData: {
+      status?: 'active' | 'completed' | 'cancelled';
+      luwangCount?: number;
+      notes?: string;
+    };
+  }): Promise<AssignmentResponse<{ updatedAssignments: any[]; skippedAssignments: any[] }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "bulkUpdateAssignments",
+        params: data,
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to bulk update assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to bulk update assignments");
+    }
+  }
+
+  /**
+   * Reassign worker
+   */
+  async reassignWorker(assignmentId: number, newWorkerId: number, reason?: string): Promise<AssignmentResponse<Assignment>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "reassignWorker",
+        params: { assignmentId, newWorkerId, reason },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to reassign worker");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to reassign worker");
+    }
+  }
+
+  /**
+   * Update luwang count
+   */
+  async updateLuWangCount(assignmentId: number, luwangCount: number, notes?: string): Promise<AssignmentResponse<Assignment>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "updateLuWangCount",
+        params: { assignmentId, luwangCount, notes },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to update luwang count");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update luwang count");
+    }
+  }
+
+  /**
+   * Add note to assignment
+   */
+  async addAssignmentNote(assignmentId: number, note: string, noteType?: string): Promise<AssignmentResponse<Assignment>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "addAssignmentNote",
+        params: { assignmentId, note, noteType },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to add note to assignment");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to add note to assignment");
+    }
+  }
+
+  // 🔄 Batch operation methods
+
+  /**
+   * Bulk create assignments
+   */
+  async bulkCreateAssignments(assignments: BulkCreateAssignment[]): Promise<AssignmentResponse<{ created: any[]; skipped: any[] }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "bulkCreateAssignments",
+        params: { assignments },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to bulk create assignments");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to bulk create assignments");
+    }
+  }
+
+  /**
+   * Import assignments from CSV
+   */
+  async importAssignmentsFromCSV(filePath: string, options?: any): Promise<AssignmentResponse<{ results: any; summary: any }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "importAssignmentsFromCSV",
+        params: { filePath, options },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to import assignments from CSV");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to import assignments from CSV");
+    }
+  }
+
+  /**
+   * Export assignments to CSV
+   */
+  async exportAssignmentsToCSV(filters?: AssignmentFilters, outputPath?: string): Promise<AssignmentResponse<{ fileInfo: any; summary: any }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "exportAssignmentsToCSV",
+        params: { filters, outputPath },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to export assignments to CSV");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to export assignments to CSV");
+    }
+  }
+
+  /**
+   * Sync assignments from external source
+   */
+  async syncAssignmentsFromExternal(source: string, sourceData: any[], options?: any): Promise<AssignmentResponse<{ results: any; summary: any }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "syncAssignmentsFromExternal",
+        params: { source, sourceData, options },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to sync assignments from external source");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to sync assignments from external source");
+    }
+  }
+
+  // ⚙️ Validation methods
+
+  /**
+   * Validate assignment data
+   */
+  async validateAssignmentData(assignmentData: any, checkExisting: boolean = true): Promise<AssignmentResponse<{ isValid: boolean; errors: string[]; warnings: string[] }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "validateAssignmentData",
+        params: { assignmentData, checkExisting },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to validate assignment data");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to validate assignment data");
+    }
+  }
+
+  /**
+   * Check worker availability
+   */
+  async checkWorkerAvailability(workerId: number, date: string, excludeAssignmentId?: number): Promise<AssignmentResponse<{ isAvailable: boolean; existingAssignment?: Assignment }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "checkWorkerAvailability",
+        params: { workerId, date, excludeAssignmentId },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to check worker availability");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to check worker availability");
+    }
+  }
+
+  /**
+   * Validate luwang count
+   */
+  async validateLuWangCount(luwangCount: number, assignmentId?: number, dateRange?: { startDate: string; endDate: string }): Promise<AssignmentResponse<{ isValid: boolean; errors: string[]; statistics: any }>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.assignment) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.assignment({
+        method: "validateLuWangCount",
+        params: { luwangCount, assignmentId, dateRange },
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to validate luwang count");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to validate luwang count");
+    }
+  }
+
+  // 🔧 Utility methods (similar to activationAPI)
+
+  /**
+   * Check if worker is available for assignment
+   */
+  async isWorkerAvailable(workerId: number, date: string, excludeAssignmentId?: number): Promise<boolean> {
+    try {
+      const response = await this.checkWorkerAvailability(workerId, date, excludeAssignmentId);
+      return response.data.isAvailable;
+    } catch (error) {
+      console.error("Error checking worker availability:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Get today's assignments
+   */
+  async getTodayAssignments(filters?: AssignmentFilters): Promise<Assignment[]> {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await this.getAssignmentsByDate(today, filters);
+      return response.data || [];
+    } catch (error) {
+      console.error("Error getting today's assignments:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get assignments for date range
+   */
+  async getAssignmentsForDateRange(startDate: string, endDate: string, filters?: AssignmentFilters): Promise<Assignment[]> {
+    try {
+      const response = await this.getAllAssignments({
+        ...filters,
+        dateFrom: startDate,
+        dateTo: endDate,
+      });
+      return response.data || [];
+    } catch (error) {
+      console.error("Error getting assignments for date range:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Create assignment with validation
+   */
+  async createAssignmentWithValidation(data: {
+    workerId: number;
+    pitakId: number;
+    luwangCount?: number;
+    assignmentDate: string;
+    notes?: string;
+  }): Promise<AssignmentResponse<Assignment>> {
+    try {
+      // First validate
+      const validation = await this.validateAssignmentData(data);
+      
+      if (!validation.data.isValid) {
+        return {
+          status: false,
+          message: "Assignment data validation failed",
+          data: {} as Assignment,
+        };
+      }
+
+      // Then create
+      return await this.createAssignment(data);
+    } catch (error: any) {
+      return {
+        status: false,
+        message: error.message || "Failed to create assignment",
+        data: {} as Assignment,
+      };
+    }
+  }
+
+  /**
+   * Update assignment with validation
+   */
+  async updateAssignmentWithValidation(data: {
+    assignmentId: number;
+    workerId?: number;
+    pitakId?: number;
+    luwangCount?: number;
+    assignmentDate?: string;
+    notes?: string;
+  }): Promise<AssignmentResponse<Assignment>> {
+    try {
+      // First get current assignment
+      const current = await this.getAssignmentById(data.assignmentId);
+      
+      if (!current.status) {
+        return current;
+      }
+
+      // Merge data for validation
+      const assignmentData = {
+        ...current.data,
+        ...data,
+      };
+
+      // Validate (skip existing check since we're updating)
+      const validation = await this.validateAssignmentData(assignmentData, false);
+      
+      if (!validation.data.isValid) {
+        return {
+          status: false,
+          message: "Assignment data validation failed",
+          data: {} as Assignment,
+        };
+      }
+
+      // Then update
+      return await this.updateAssignment(data);
+    } catch (error: any) {
+      return {
+        status: false,
+        message: error.message || "Failed to update assignment",
+        data: {} as Assignment,
+      };
+    }
+  }
+
+  /**
+   * Complete assignment (convenience method)
+   */
+  async completeAssignment(assignmentId: number, notes?: string): Promise<AssignmentResponse<Assignment>> {
+    return await this.updateAssignmentStatus(assignmentId, 'completed', notes);
+  }
+
+  /**
+   * Cancel assignment (convenience method)
+   */
+  async cancelAssignment(assignmentId: number, reason: string): Promise<AssignmentResponse<Assignment>> {
+    return await this.updateAssignmentStatus(assignmentId, 'cancelled', reason);
+  }
+
+  /**
+   * Get assignment summary for dashboard
+   */
+  async getDashboardSummary(): Promise<{
+    totalAssignments: number;
+    activeAssignments: number;
+    completedToday: number;
+    totalLuWang: string;
+  }> {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Get all assignments for today
+      const todayAssignments = await this.getTodayAssignments();
+      const completedToday = todayAssignments.filter(a => a.status === 'completed').length;
+      
+      // Get active assignments
+      const activeAssignments = await this.getActiveAssignments();
+      
+      // Get stats
+      const stats = await this.getAssignmentStats();
+      
+      return {
+        totalAssignments: stats.data?.totalAssignments || 0,
+        activeAssignments: activeAssignments.data?.length || 0,
+        completedToday,
+        totalLuWang: stats.data?.totalLuWang || '0.00',
+      };
+    } catch (error) {
+      console.error("Error getting dashboard summary:", error);
+      return {
+        totalAssignments: 0,
+        activeAssignments: 0,
+        completedToday: 0,
+        totalLuWang: '0.00',
+      };
+    }
+  }
+
+  /**
+   * Generate report for current month
+   */
+  async getCurrentMonthReport(): Promise<AssignmentResponse<AssignmentReport>> {
+    try {
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      
+      return await this.getAssignmentReport(
+        { startDate: firstDay, endDate: lastDay },
+        { status: 'completed' }
+      );
+    } catch (error) {
+      throw new Error(`Failed to generate current month report: ${error.message}`);
+    }
+  }
+
+  // Event listeners (if supported by backend)
+  onAssignmentCreated(callback: (assignment: Assignment) => void) {
+    if (window.backendAPI && window.backendAPI.onAssignmentCreated) {
+      window.backendAPI.onAssignmentCreated(callback);
+    }
+  }
+
+  onAssignmentUpdated(callback: (assignment: Assignment) => void) {
+    if (window.backendAPI && window.backendAPI.onAssignmentUpdated) {
+      window.backendAPI.onAssignmentUpdated(callback);
+    }
+  }
+
+  onAssignmentDeleted(callback: (assignmentId: number) => void) {
+    if (window.backendAPI && window.backendAPI.onAssignmentDeleted) {
+      window.backendAPI.onAssignmentDeleted(callback);
+    }
+  }
+}
+
+const assignmentAPI = new AssignmentAPI();
+
+export default assignmentAPI;

@@ -1,0 +1,1 @@
+// PitakTable.tsx placeholder

@@ -1,0 +1,88 @@
+// src/entities/Debt.js
+const { EntitySchema } = require("typeorm");
+
+const Debt = new EntitySchema({
+  name: "Debt",
+  tableName: "debts",
+  columns: {
+    id: { type: Number, primary: true, generated: true },
+    originalAmount: { 
+      type: "decimal", 
+      precision: 10, 
+      scale: 2,
+      default: 0.00
+    },
+    amount: { 
+      type: "decimal", 
+      precision: 10, 
+      scale: 2,
+      default: 0.00
+    },
+    reason: { type: String, nullable: true },
+    balance: { 
+      type: "decimal", 
+      precision: 10, 
+      scale: 2,
+      default: 0.00
+    },
+    // status: "pending", "partially_paid", "paid", "cancelled", "overdue"
+    status: { 
+      type: String, 
+      default: "pending" 
+    },
+    dateIncurred: { type: Date, createDate: true },
+    dueDate: { type: Date, nullable: true },
+    paymentTerm: { type: String, nullable: true },
+    interestRate: { 
+      type: "decimal", 
+      precision: 5, 
+      scale: 2,
+      default: 0.00
+    },
+    totalInterest: { 
+      type: "decimal", 
+      precision: 10, 
+      scale: 2,
+      default: 0.00
+    },
+    totalPaid: { 
+      type: "decimal", 
+      precision: 10, 
+      scale: 2,
+      default: 0.00
+    },
+    lastPaymentDate: { type: Date, nullable: true },
+    createdAt: { type: Date, createDate: true },
+    updatedAt: { type: Date, updateDate: true }
+  },
+  relations: {
+    worker: { 
+      target: "Worker", 
+      type: "many-to-one", 
+      joinColumn: true, 
+      inverseSide: "debts",
+      onDelete: "CASCADE" 
+    },
+    history: { 
+      target: "DebtHistory", 
+      type: "one-to-many", 
+      inverseSide: "debt" 
+    }
+  },
+  indices: [
+    {
+      name: "IDX_DEBT_STATUS",
+      columns: ["status"]
+    },
+    {
+      name: "IDX_DEBT_DUE_DATE",
+      columns: ["dueDate"]
+    },
+    {
+      name: "IDX_DEBT_WORKER",
+      columns: ["workerId"]
+    }
+  ]
+});
+
+module.exports = Debt;

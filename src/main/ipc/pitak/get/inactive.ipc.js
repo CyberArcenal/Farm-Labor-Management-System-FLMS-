@@ -1,0 +1,206 @@
+// src/ipc/pitak/get/inactive.ipc
+//@ts-check
+
+const Pitak = require("../../../../entities/Pitak");
+const Assignment = require("../../../../entities/Assignment");
+const { AppDataSource } = require("../../../db/dataSource");
+
+// @ts-ignore
+module.exports = async (filters = {}, /** @type {any} */ userId) => {
+  try {
+    const pitakRepo = AppDataSource.getRepository(Pitak);
+    
+    const query = pitakRepo.createQueryBuilder('pitak')
+      .leftJoinAndSelect('pitak.bukid', 'bukid')
+      .leftJoin('bukid.kabisilya', 'kabisilya')
+      .addSelect(['kabisilya.id', 'kabisilya.name'])
+      .where('pitak.status = :status', { status: 'inactive' });
+
+    // Apply additional filters
+    // @ts-ignore
+    if (filters.bukidId) {
+      // @ts-ignore
+      query.andWhere('pitak.bukidId = :bukidId', { bukidId: filters.bukidId });
+    }
+    
+    // @ts-ignore
+    if (filters.location) {
+      // @ts-ignore
+      query.andWhere('pitak.location LIKE :location', { location: `%${filters.location}%` });
+    }
+    
+    // @ts-ignore
+    if (filters.minLuWang) {
+      // @ts-ignore
+      query.andWhere('pitak.totalLuwang >= :minLuWang', { minLuWang: filters.minLuWang });
+    }
+    
+    // @ts-ignore
+    if (filters.maxLuWang) {
+      // @ts-ignore
+      query.andWhere('pitak.totalLuwang <= :maxLuWang', { maxLuWang: filters.maxLuWang });
+    }
+
+    // Date filters for inactivity
+    // @ts-ignore
+    if (filters.inactiveSince) {
+      query.andWhere('pitak.updatedAt >= :inactiveSince', { 
+        // @ts-ignore
+        inactiveSince: new Date(filters.inactiveSince) 
+      });
+    }
+
+    // Sorting
+    // @ts-ignore
+    const sortField = filters.sortBy || 'updatedAt';
+    // @ts-ignore
+    const sortOrder = filters.sortOrder === 'asc' ? 'ASC' : 'DESC';
+    query.orderBy(`pitak.${sortField}`, sortOrder);
+
+    // Pagination
+    // @ts-ignore
+    const page = parseInt(filters.page) || 1;
+    // @ts-ignore
+    const limit = parseInt(filters.limit) || 50;
+    const skip = (page - 1) * limit;
+    
+    query.skip(skip).take(limit);
+
+    const [pitaks, total] = await query.getManyAndCount();
+
+    // Get historical data for each pitak
+    const pitaksWithHistory = await Promise.all(pitaks.map(async (/** @type {{ id: any; updatedAt: any; location: any; totalLuwang: string; bukid: { id: any; name: any; location: any; kabisilya: any; }; createdAt: any; }} */ pitak) => {
+      const assignmentRepo = AppDataSource.getRepository(Assignment);
+      
+      // Get last assignment
+      const lastAssignment = await assignmentRepo.findOne({
+        where: { pitakId: pitak.id },
+        order: { assignmentDate: 'DESC' }
+      });
+
+      // Get assignment statistics
+      const assignmentStats = await assignmentRepo
+        .createQueryBuilder('assignment')
+        .select([
+          'COUNT(*) as totalAssignments',
+          'SUM(assignment.luwangCount) as totalLuWangAssigned',
+          'MAX(assignment.assignmentDate) as lastAssignmentDate'
+        ])
+        .where('assignment.pitakId = :pitakId', { pitakId: pitak.id })
+        .getRawOne();
+
+      // Calculate inactivity duration
+      const lastActivityDate = lastAssignment ? lastAssignment.assignmentDate : pitak.updatedAt;
+      const inactivityDuration = calculateDuration(lastActivityDate, new Date());
+
+      return {
+        id: pitak.id,
+        location: pitak.location,
+        totalLuwang: parseFloat(pitak.totalLuwang),
+        bukid: pitak.bukid ? {
+          id: pitak.bukid.id,
+          name: pitak.bukid.name,
+          location: pitak.bukid.location,
+          kabisilya: pitak.bukid.kabisilya
+        } : null,
+        history: {
+          totalAssignments: parseInt(assignmentStats.totalAssignments) || 0,
+          totalLuWangAssigned: parseFloat(assignmentStats.totalLuWangAssigned) || 0,
+          lastAssignmentDate: assignmentStats.lastAssignmentDate,
+          lastActivityDate,
+          inactivityDuration
+        },
+        createdAt: pitak.createdAt,
+        updatedAt: pitak.updatedAt,
+        inactiveSince: lastActivityDate
+      };
+    }));
+
+    // Sort by inactivity duration if requested
+    // @ts-ignore
+    if (filters.sortBy === 'inactivityDuration') {
+      pitaksWithHistory.sort((/** @type {{ history: { inactivityDuration: { days: any; }; }; }} */ a, /** @type {{ history: { inactivityDuration: { days: any; }; }; }} */ b) => {
+        const durationA = a.history.inactivityDuration.days;
+        const durationB = b.history.inactivityDuration.days;
+        // @ts-ignore
+        return filters.sortOrder === 'asc' ? durationA - durationB : durationB - durationA;
+      });
+    }
+
+    // Calculate statistics
+    const stats = pitaksWithHistory.reduce((/** @type {{ totalPitaks: number; totalLuWangCapacity: any; totalHistoricalLuWang: any; totalAssignments: any; recentlyInactive: number; moderatelyInactive: number; longTermInactive: number; }} */ sum, /** @type {{ totalLuwang: any; history: { totalLuWangAssigned: any; totalAssignments: any; inactivityDuration: { days: any; }; }; }} */ pitak) => {
+      sum.totalPitaks++;
+      sum.totalLuWangCapacity += pitak.totalLuwang;
+      sum.totalHistoricalLuWang += pitak.history.totalLuWangAssigned;
+      sum.totalAssignments += pitak.history.totalAssignments;
+      
+      // Categorize by inactivity duration
+      const daysInactive = pitak.history.inactivityDuration.days;
+      if (daysInactive < 30) sum.recentlyInactive++;
+      else if (daysInactive < 90) sum.moderatelyInactive++;
+      else sum.longTermInactive++;
+      
+      return sum;
+    }, {
+      totalPitaks: 0,
+      totalLuWangCapacity: 0,
+      totalHistoricalLuWang: 0,
+      totalAssignments: 0,
+      recentlyInactive: 0, // < 30 days
+      moderatelyInactive: 0, // 30-90 days
+      longTermInactive: 0 // > 90 days
+    });
+
+    return {
+      status: true,
+      message: "Inactive pitaks retrieved successfully",
+      data: pitaksWithHistory,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        statistics: stats,
+        filters
+      }
+    };
+
+  } catch (error) {
+    console.error("Error retrieving inactive pitaks:", error);
+    return {
+      status: false,
+      // @ts-ignore
+      message: `Failed to retrieve inactive pitaks: ${error.message}`,
+      data: null
+    };
+  }
+};
+
+// Helper function to calculate duration
+/**
+ * @param {number} fromDate
+ * @param {number | Date} toDate
+ */
+function calculateDuration(fromDate, toDate) {
+  // @ts-ignore
+  const diffMs = toDate - fromDate;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  let description = '';
+  if (diffYears > 0) {
+    description = `${diffYears} year${diffYears > 1 ? 's' : ''}`;
+  } else if (diffMonths > 0) {
+    description = `${diffMonths} month${diffMonths > 1 ? 's' : ''}`;
+  } else {
+    description = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+  }
+
+  return {
+    days: diffDays,
+    months: diffMonths,
+    years: diffYears,
+    description
+  };
+}

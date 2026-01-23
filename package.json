@@ -1,0 +1,81 @@
+{
+  "name": "kabisilya-management",
+  "private": true,
+  "version": "1.0.0",
+  "main": "src/main/index.js",
+  "build": {
+    "appId": "com.CyberArcenal.kabisilya.app",
+    "productName": "Kabisilya Management",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": "nsis"
+    },
+    "mac": {
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "icon": "build/icon.png"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "CyberArcenal",
+        "repo": "Kabisilya-Management"
+      }
+    ]
+  },
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development concurrently \"vite\" \"electron ./src/main/index.js\"",
+    "build": "vite build && electron-builder",
+    "electron:dev": "electron ./src/main/index.js",
+    "electron:build": "electron-builder",
+    "migration:generate": "npx typeorm migration:generate src/migrations/InitSchema -d src/config/dataSource.js --outputJs",
+    "migration:run": "typeorm migration:run -d ./src/db/dataSource.js",
+    "migration:revert": "typeorm migration:revert -d ./src/db/dataSource.js",
+    "seed": "node src/seeders/seedData.js",
+    "seed:reset": "node src/seeders/seedData.js --reset",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "postinstall": "electron-rebuild"
+  },
+  "dependencies": {
+    "csv-parser": "^3.2.0",
+    "csv-stringify": "^6.6.0",
+    "decimal.js": "^10.6.0",
+    "electron": "^39.2.7",
+    "json2csv": "^6.0.0-alpha.2",
+    "jspdf": "^4.0.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.30.1",
+    "nodemailer": "^7.0.12",
+    "pdfkit": "^0.17.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.11.0",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7",
+    "twilio": "^5.11.1",
+    "typeorm": "^0.3.28",
+    "vite": "^7.2.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron-builder": "^26.4.0",
+    "electron-rebuild": "^3.2.9",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.14",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4"
+  }
+}

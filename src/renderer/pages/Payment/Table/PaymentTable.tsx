@@ -1,0 +1,1 @@
+// PaymentTable.tsx placeholder

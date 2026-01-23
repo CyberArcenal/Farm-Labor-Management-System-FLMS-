@@ -1,0 +1,1 @@
+// WorkerView.tsx placeholder

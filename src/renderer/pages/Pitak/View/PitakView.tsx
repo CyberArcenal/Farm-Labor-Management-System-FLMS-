@@ -1,0 +1,1 @@
+// PitakView.tsx placeholder

@@ -1,0 +1,1 @@
+// WorkerTable.tsx placeholder
