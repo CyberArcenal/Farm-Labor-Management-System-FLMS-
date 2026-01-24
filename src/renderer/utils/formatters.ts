@@ -280,3 +280,11 @@ export function getCurrentCurrencySymbol(): string {
   const currency = systemCache.getCurrency();
   return getCurrencySymbol(currency);
 }
+
+
+export function formatPercentage(rate:number): string {
+  if (typeof rate !== "number" || isNaN(rate)) {
+    return "0%";
+  }
+  return `${(rate * 100).toFixed(2)}%`;
+}

@@ -4,6 +4,7 @@ import userAPI from '../apis/user';
 import ProtectedRoute from '../app/ProtectedRoute';
 import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
+import KabisilyaDashboardPage from '../pages/dashboard';
 
 function App() {
   const [setupRequired, setSetupRequired] = useState<boolean | null>(false);
@@ -72,7 +73,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
 
             {/* Core POS */}
-            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="dashboard" element={<KabisilyaDashboardPage />} />
 
             {/* Define protected routes here */}
 

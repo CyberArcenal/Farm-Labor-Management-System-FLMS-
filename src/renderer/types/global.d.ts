@@ -4,15 +4,19 @@ export {};
 declare global {
   interface Window {
     backendAPI: {
+      kabisilyaDashboard: (payload: {
+        method: string;
+        params?: Record<string, any>;
+      }) => Promise<any>;
       kabisilya?: (payload: {
         method: string;
         params?: Record<string, any>;
       }) => Promise<any>;
 
-
-
-
-      worker?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
+      worker?: (payload: {
+        method: string;
+        params?: Record<string, any>;
+      }) => Promise<any>;
       onWorkerCreated?: (callback: (data: any) => void) => void;
       onWorkerUpdated?: (callback: (data: any) => void) => void;
       onWorkerDeleted?: (callback: (id: number) => void) => void;
@@ -39,24 +43,40 @@ declare global {
         method: string;
         params?: Record<string, any>;
       }) => Promise<any>;
-      
+
       // Event listeners (optional)
       onAuditTrailCreated?: (callback: (data: any) => void) => void;
       onAuditTrailUpdated?: (callback: (data: any) => void) => void;
       onAuditTrailDeleted?: (callback: (data: any) => void) => void;
 
-      notification?: (payload: NotificationPayload) => Promise<NotificationResponse>;
+      notification?: (
+        payload: NotificationPayload,
+      ) => Promise<NotificationResponse>;
       onNotificationCreated?: (callback: (data: any) => void) => void;
       onNotificationDeleted?: (callback: (id: number) => void) => void;
       onNotificationUpdated?: (callback: (data: any) => void) => void;
       onBulkNotificationsDeleted?: (callback: (count: number) => void) => void;
 
-        // ⚙️ SYSTEM CONFIG API
+      // ⚙️ SYSTEM CONFIG API
       systemConfig: (payload: { method: string; params?: any }) => Promise<{
         status: boolean;
         message: string;
         data: any;
       }>;
+      windowControl?: (payload: {
+        method: string;
+        params?: Record<string, any>;
+      }) => Promise<{
+        status: boolean;
+        message: string;
+        data?: any;
+      }>;
+      onWindowMaximized?: (callback: () => void) => void;
+      onWindowRestored?: (callback: () => void) => void;
+      onWindowMinimized?: (callback: () => void) => void;
+      onWindowClosed?: (callback: () => void) => void;
+      onWindowResized?: (callback: (bounds: any) => void) => void;
+      onWindowMoved?: (callback: (position: any) => void) => void;
     };
   }
 }
