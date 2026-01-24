@@ -92,7 +92,7 @@ const Payment = new EntitySchema({
     },
     {
       name: "IDX_PAYMENT_WORKER",
-      columns: ["workerId"]
+      columns: ["worker"]
     }
   ]
 });

@@ -1,2 +1,6 @@
 node_modules
 setup-structure.ps1
+kabisilyaManagement.db-shm
+kabisilyaManagement.db-wal
+kabisilyaManagement.db
+/.vs

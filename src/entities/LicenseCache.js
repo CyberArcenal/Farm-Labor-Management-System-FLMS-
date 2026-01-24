@@ -80,4 +80,4 @@ const LicenseCache = new EntitySchema({
 
 
 module.exports = 
-  LicenseCache
+  LicenseCache;

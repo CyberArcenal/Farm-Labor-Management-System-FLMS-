@@ -1,1 +1,646 @@
-// index.css placeholder
+/* KABISILYA MANAGEMENT THEME - AGRICULTURAL & NATURE INSPIRED */
+@import "tailwindcss";
+
+:root {
+  /* Primary Color Palette - Agricultural & Earthy */
+  --primary-color: #2a623d; /* Dark Green - Main brand color */
+  --primary-hover: #1a472a; /* Deeper Green */
+  --secondary-color: #d4a574; /* Warm Tan/Earth tone */
+  --success-color: #38a169; /* Healthy Green */
+  --warning-color: #d69e2e; /* Harvest Gold */
+  --danger-color: #c53030; /* Rust Red */
+  --info-color: #3182ce; /* Sky Blue */
+  
+  /* Background Colors - Nature Inspired */
+  --background-color: #f7f5f0; /* Warm Off-White (Soil/Paper tone) */
+  --sidebar-bg: #2a623d; /* Dark Green - Sidebar */
+  --sidebar-border: #1a472a; /* Deeper Green border */
+  --sidebar-text: #f0fdf4; /* Light Greenish White */
+  --header-bg: #ffffff; /* White header */
+  
+  /* Text Colors */
+  --text-primary: #1a202c; /* Almost Black */
+  --text-secondary: #4a5568; /* Gray */
+  --text-tertiary: #718096; /* Lighter Gray */
+  
+  /* Card Backgrounds */
+  --card-bg: #ffffff; /* White */
+  --card-secondary-bg: #f8f9fa; /* Very Light Gray */
+  --card-hover-bg: #f0fdf4; /* Light Green tint */
+  
+  /* Border Colors - Earthy */
+  --border-color: #e2e8f0; /* Light Gray */
+  --border-light: #f1f5f9; /* Very Light Gray */
+  --border-dark: #cbd5e0; /* Medium Gray */
+  
+  /* Farm Status Colors */
+  --status-planted: #38a169; /* Green - Planted/Active */
+  --status-growing: #d69e2e; /* Gold - In Progress */
+  --status-harvested: #805ad5; /* Purple - Completed */
+  --status-fallow: #718096; /* Gray - Inactive */
+  --status-irrigation: #3182ce; /* Blue - Watering */
+  --status-fertilized: #d69e2e; /* Amber - Fertilized */
+  
+  /* Crop Status */
+  --crop-healthy: #38a169; /* Green */
+  --crop-stressed: #d69e2e; /* Amber */
+  --crop-diseased: #c53030; /* Red */
+  --crop-harvest-ready: #805ad5; /* Purple */
+  
+  /* Worker Status */
+  --worker-active: #38a169; /* Green */
+  --worker-inactive: #718096; /* Gray */
+  --worker-onleave: #d69e2e; /* Amber */
+  --worker-assigned: #3182ce; /* Blue */
+  
+  /* Equipment Status */
+  --equipment-available: #38a169; /* Green */
+  --equipment-inuse: #d69e2e; /* Amber */
+  --equipment-maintenance: #c53030; /* Red */
+  --equipment-retired: #718096; /* Gray */
+  
+  /* Accent Colors - Nature Inspired */
+  --accent-green: #2a623d;
+  --accent-green-hover: #1a472a;
+  --accent-green-light: rgba(42, 98, 61, 0.1);
+  --accent-green-dark: #1a472a;
+  
+  --accent-earth: #d4a574;
+  --accent-earth-hover: #b5895c;
+  --accent-earth-light: rgba(212, 165, 116, 0.1);
+  --accent-earth-dark: #b5895c;
+  
+  --accent-sky: #3182ce;
+  --accent-sky-hover: #2c5282;
+  --accent-sky-light: rgba(49, 130, 206, 0.1);
+  --accent-sky-dark: #2c5282;
+  
+  --accent-gold: #d69e2e;
+  --accent-gold-hover: #b7791f;
+  --accent-gold-light: rgba(214, 158, 46, 0.1);
+  --accent-gold-dark: #b7791f;
+  
+  --accent-rust: #c53030;
+  --accent-rust-hover: #9b2c2c;
+  --accent-rust-light: rgba(197, 48, 48, 0.1);
+  --accent-rust-dark: #9b2c2c;
+  
+  /* Status Backgrounds */
+  --status-planted-bg: rgba(56, 161, 105, 0.15);
+  --status-growing-bg: rgba(214, 158, 46, 0.15);
+  --status-harvested-bg: rgba(128, 90, 213, 0.15);
+  --status-fallow-bg: rgba(113, 128, 150, 0.15);
+  --status-irrigation-bg: rgba(49, 130, 206, 0.15);
+  
+  /* Crop Status Backgrounds */
+  --crop-healthy-bg: rgba(56, 161, 105, 0.15);
+  --crop-stressed-bg: rgba(214, 158, 46, 0.15);
+  --crop-diseased-bg: rgba(197, 48, 48, 0.15);
+  --crop-harvest-ready-bg: rgba(128, 90, 213, 0.15);
+  
+  /* Button Colors */
+  --btn-primary-bg: var(--accent-green);
+  --btn-primary-hover: var(--accent-green-hover);
+  --btn-primary-text: #ffffff;
+  
+  --btn-success-bg: var(--accent-green);
+  --btn-success-hover: var(--accent-green-hover);
+  --btn-success-text: #ffffff;
+  
+  --btn-danger-bg: var(--accent-rust);
+  --btn-danger-hover: var(--accent-rust-hover);
+  --btn-danger-text: #ffffff;
+  
+  --btn-warning-bg: var(--accent-gold);
+  --btn-warning-hover: var(--accent-gold-hover);
+  --btn-warning-text: #ffffff;
+  
+  --btn-earth-bg: var(--accent-earth);
+  --btn-earth-hover: var(--accent-earth-hover);
+  --btn-earth-text: #1a202c;
+  
+  /* Action Buttons */
+  --btn-plant-bg: linear-gradient(135deg, #38a169 0%, #2a623d 100%);
+  --btn-plant-hover: linear-gradient(135deg, #2a623d 0%, #1a472a 100%);
+  --btn-plant-text: #ffffff;
+  
+  --btn-harvest-bg: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+  --btn-harvest-hover: linear-gradient(135deg, #b7791f 0%, #975a16 100%);
+  --btn-harvest-text: #ffffff;
+  
+  /* Report & Invoice Colors */
+  --report-bg: #ffffff;
+  --report-border: #e2e8f0;
+  --report-header: #f0fdf4;
+  --report-total: #2a623d;
+  
+  /* Data Table */
+  --table-header-bg: #f0fdf4;
+  --table-row-even: #ffffff;
+  --table-row-odd: #f8f9fa;
+  --table-row-hover: #f0fdf4;
+  --table-border: #e2e8f0;
+  
+  /* Form Colors */
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --input-focus: var(--accent-green);
+  --select-option-bg: #ffffff;
+  --select-option-hover: #f0fdf4;
+  
+  /* Topbar Colors */
+  --topbar-bg: #ffffff;
+  --topbar-border: #e2e8f0;
+  --topbar-hover: var(--accent-green);
+  --topbar-search-bg: #f8f9fa;
+  --topbar-search-border: #e2e8f0;
+  
+  /* Gradient Colors */
+  --gradient-primary: linear-gradient(135deg, #2a623d 0%, #1a472a 100%);
+  --gradient-success: linear-gradient(135deg, #38a169 0%, #2a623d 100%);
+  --gradient-harvest: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+  --gradient-earth: linear-gradient(135deg, #d4a574 0%, #b5895c 100%);
+}
+
+/* Kabisilya Specific Components */
+.farm-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.farm-card:hover {
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 20px rgba(42, 98, 61, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Status Badges */
+.status-badge-planted {
+  background-color: var(--status-planted-bg);
+  color: var(--status-planted);
+  border: 1px solid rgba(56, 161, 105, 0.3);
+}
+
+.status-badge-growing {
+  background-color: var(--status-growing-bg);
+  color: var(--status-growing);
+  border: 1px solid rgba(214, 158, 46, 0.3);
+}
+
+.status-badge-harvested {
+  background-color: var(--status-harvested-bg);
+  color: var(--status-harvested);
+  border: 1px solid rgba(128, 90, 213, 0.3);
+}
+
+.status-badge-fallow {
+  background-color: var(--status-fallow-bg);
+  color: var(--status-fallow);
+  border: 1px solid rgba(113, 128, 150, 0.3);
+}
+
+/* Crop Status Badges */
+.crop-badge-healthy {
+  background-color: var(--crop-healthy-bg);
+  color: var(--crop-healthy);
+  border: 1px solid rgba(56, 161, 105, 0.3);
+}
+
+.crop-badge-stressed {
+  background-color: var(--crop-stressed-bg);
+  color: var(--crop-stressed);
+  border: 1px solid rgba(214, 158, 46, 0.3);
+}
+
+.crop-badge-diseased {
+  background-color: var(--crop-diseased-bg);
+  color: var(--crop-diseased);
+  border: 1px solid rgba(197, 48, 48, 0.3);
+}
+
+/* Worker Status Badges */
+.worker-badge-active {
+  background-color: var(--status-planted-bg);
+  color: var(--worker-active);
+  border: 1px solid rgba(56, 161, 105, 0.3);
+}
+
+.worker-badge-inactive {
+  background-color: var(--status-fallow-bg);
+  color: var(--worker-inactive);
+  border: 1px solid rgba(113, 128, 150, 0.3);
+}
+
+.worker-badge-onleave {
+  background-color: var(--status-growing-bg);
+  color: var(--worker-onleave);
+  border: 1px solid rgba(214, 158, 46, 0.3);
+}
+
+/* Plot/Farmland Cards */
+.plot-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.plot-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent-green);
+}
+
+.plot-card:hover {
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 20px rgba(42, 98, 61, 0.1);
+}
+
+.plot-card-fertile {
+  border-left: 4px solid var(--accent-green);
+}
+
+.plot-card-average {
+  border-left: 4px solid var(--accent-gold);
+}
+
+.plot-card-poor {
+  border-left: 4px solid var(--accent-rust);
+}
+
+/* Season Indicators */
+.season-indicator-dry {
+  background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+  color: white;
+}
+
+.season-indicator-wet {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  color: white;
+}
+
+.season-indicator-planting {
+  background: linear-gradient(135deg, #38a169 0%, #2a623d 100%);
+  color: white;
+}
+
+.season-indicator-harvest {
+  background: linear-gradient(135deg, #d69e2e 0%, #805ad5 100%);
+  color: white;
+}
+
+/* Action Buttons */
+.btn-plant {
+  background: var(--btn-plant-bg);
+  color: var(--btn-plant-text);
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-plant:hover {
+  background: var(--btn-plant-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(42, 98, 61, 0.3);
+}
+
+.btn-harvest {
+  background: var(--btn-harvest-bg);
+  color: var(--btn-harvest-text);
+  border: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-harvest:hover {
+  background: var(--btn-harvest-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(214, 158, 46, 0.3);
+}
+
+.btn-earth {
+  background: var(--btn-earth-bg);
+  color: var(--btn-earth-text);
+  border: 1px solid var(--accent-earth);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-earth:hover {
+  background: var(--accent-earth-hover);
+  color: var(--btn-earth-text);
+  border-color: var(--accent-earth-hover);
+}
+
+/* Data Table */
+.data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  border: 1px solid var(--table-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.data-table thead {
+  background-color: var(--table-header-bg);
+}
+
+.data-table th {
+  border-bottom: 1px solid var(--table-border);
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 1rem;
+  text-align: left;
+}
+
+.data-table td {
+  padding: 1rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--table-border);
+}
+
+.data-table tr:nth-child(even) {
+  background-color: var(--table-row-even);
+}
+
+.data-table tr:nth-child(odd) {
+  background-color: var(--table-row-odd);
+}
+
+.data-table tr:hover {
+  background-color: var(--table-row-hover);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Farm Dashboard Cards */
+.dashboard-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  border-color: var(--accent-green);
+  box-shadow: 0 4px 20px rgba(42, 98, 61, 0.1);
+}
+
+.dashboard-card-crops {
+  border-top: 4px solid var(--accent-green);
+}
+
+.dashboard-card-workers {
+  border-top: 4px solid var(--accent-sky);
+}
+
+.dashboard-card-equipment {
+  border-top: 4px solid var(--accent-earth);
+}
+
+.dashboard-card-finance {
+  border-top: 4px solid var(--accent-gold);
+}
+
+/* Weather Widget */
+.weather-widget {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  color: white;
+  border-radius: 0.75rem;
+}
+
+.weather-widget-sunny {
+  background: linear-gradient(135deg, #d69e2e 0%, #b7791f 100%);
+}
+
+.weather-widget-rainy {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+}
+
+.weather-widget-cloudy {
+  background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+}
+
+/* Calendar for Farming Schedule */
+.farming-calendar {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+}
+
+.calendar-planting-day {
+  background-color: var(--accent-green-light);
+  color: var(--accent-green);
+  border: 1px solid var(--accent-green);
+}
+
+.calendar-harvest-day {
+  background-color: rgba(214, 158, 46, 0.15);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+}
+
+.calendar-irrigation-day {
+  background-color: rgba(49, 130, 206, 0.15);
+  color: var(--accent-sky);
+  border: 1px solid var(--accent-sky);
+}
+
+/* Progress Bars for Growth */
+.growth-progress {
+  background-color: var(--border-light);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.growth-progress-fill {
+  background: linear-gradient(90deg, #38a169 0%, #2a623d 100%);
+  border-radius: 1rem;
+  transition: width 0.5s ease;
+}
+
+/* Inventory Items */
+.inventory-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.inventory-item:hover {
+  border-color: var(--accent-green);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.inventory-seed {
+  border-left: 4px solid var(--accent-green);
+}
+
+.inventory-fertilizer {
+  border-left: 4px solid var(--accent-earth);
+}
+
+.inventory-equipment {
+  border-left: 4px solid var(--accent-sky);
+}
+
+.inventory-chemical {
+  border-left: 4px solid var(--accent-rust);
+}
+
+/* Charts */
+.crop-yield-chart {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+}
+
+/* Animations */
+@keyframes grow {
+  0% {
+    transform: scaleY(0.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.growth-animation {
+  animation: grow 1.5s ease-out;
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(56, 161, 105, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(56, 161, 105, 0);
+  }
+}
+
+.pulse-healthy {
+  animation: pulse-green 2s infinite;
+}
+
+/* Form Elements */
+input, select, textarea {
+  background-color: var(--input-bg) !important;
+  border: 1px solid var(--input-border) !important;
+  color: var(--text-primary) !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--input-focus) !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(42, 98, 61, 0.1);
+}
+
+/* Sidebar Styling */
+.sidebar {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+}
+
+.sidebar-item {
+  transition: all 0.2s ease;
+  border-radius: 0.5rem;
+}
+
+.sidebar-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item-active {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-left: 4px solid var(--accent-earth);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .farm-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .farm-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .data-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+/* Print Styles for Reports */
+@media print {
+  .report {
+    border: none;
+    box-shadow: none;
+    background: white !important;
+    color: black !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Custom Scrollbar */
+.kabisilya-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kabisilya-scrollbar::-webkit-scrollbar-track {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+.kabisilya-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-dark);
+  border-radius: 3px;
+}
+
+.kabisilya-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Utility Classes */
+.bg-field-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(42, 98, 61, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(42, 98, 61, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.bg-soil-texture {
+  background-color: #f7f5f0;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(212, 165, 116, 0.1) 0%, transparent 20%),
+    radial-gradient(circle at 90% 80%, rgba(212, 165, 116, 0.1) 0%, transparent 20%);
+}
+
+.text-gradient-green {
+  background: linear-gradient(135deg, #2a623d 0%, #38a169 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

@@ -80,7 +80,7 @@ const Debt = new EntitySchema({
     },
     {
       name: "IDX_DEBT_WORKER",
-      columns: ["workerId"]
+      columns: ["worker"]
     }
   ]
 });

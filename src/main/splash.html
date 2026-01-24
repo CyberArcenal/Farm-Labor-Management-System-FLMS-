@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kabisilya Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a472a 0%, #2a623d 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Background pattern */
+        .bg-pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 2px, transparent 2px),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.2) 2px, transparent 2px);
+            background-size: 50px 50px;
+        }
+
+        /* Main container */
+        .splash-container {
+            text-align: center;
+            z-index: 10;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 90%;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        /* Logo */
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            font-size: 60px;
+            color: #4ade80;
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .logo-text {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(to right, #4ade80, #22c55e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .logo-subtitle {
+            font-size: 16px;
+            opacity: 0.8;
+            font-weight: 300;
+            margin-bottom: 30px;
+        }
+
+        /* Progress section */
+        .progress-container {
+            margin: 30px 0;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4ade80, #22c55e);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        /* Status messages */
+        .status-message {
+            font-size: 14px;
+            margin-top: 20px;
+            min-height: 20px;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+
+        /* Footer */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        .version {
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Migration status */
+        .migration-status {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .migration-count {
+            color: #4ade80;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    
+    <div class="splash-container">
+        <div class="logo">
+            <div class="logo-icon">🌾</div>
+            <div class="logo-text">Kabisilya</div>
+            <div class="logo-subtitle">Farm Management System</div>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-text">Initializing application...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="loading">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
+        <div class="status-message" id="statusMessage">
+            Starting up...
+        </div>
+
+        <div class="migration-status" id="migrationStatus" style="display: none;">
+            <span id="migrationText">Updating database: </span>
+            <span class="migration-count" id="migrationCount">0</span> migrations pending
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="version">v1.0.0</div>
+        <div style="margin-top: 5px;">© 2026 CyberArcenal</div>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const progressFill = document.getElementById('progressFill');
+        const statusMessage = document.getElementById('statusMessage');
+        const migrationStatus = document.getElementById('migrationStatus');
+        const migrationText = document.getElementById('migrationText');
+        const migrationCount = document.getElementById('migrationCount');
+
+        // Simulate progress animation
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 5;
+            if (progress > 90) {
+                progress = 90; // Hold at 90% until app is ready
+            }
+            progressFill.style.width = `${progress}%`;
+        }, 200);
+
+        // Listen for migration events from main process
+        window.electronAPI?.onMigrationStart((data) => {
+            migrationStatus.style.display = 'block';
+            migrationText.textContent = data.message || 'Updating database: ';
+            migrationCount.textContent = data.pendingCount || 0;
+            statusMessage.textContent = 'Updating database schema...';
+        });
+
+        window.electronAPI?.onMigrationComplete((data) => {
+            migrationStatus.style.display = 'none';
+            statusMessage.textContent = data.message || 'Database updated successfully';
+            progressFill.style.width = '95%';
+        });
+
+        window.electronAPI?.onMigrationFailed((data) => {
+            migrationStatus.style.display = 'block';
+            migrationStatus.style.background = 'rgba(239, 68, 68, 0.2)';
+            statusMessage.textContent = 'Database update failed. Restoring from backup...';
+            statusMessage.style.color = '#ef4444';
+        });
+
+        // When app is ready, complete progress
+        window.electronAPI?.onAppReady(() => {
+            clearInterval(progressInterval);
+            progressFill.style.width = '100%';
+            statusMessage.textContent = 'Application ready! Launching...';
+            
+            // Add a slight delay before window closes
+            setTimeout(() => {
+                statusMessage.textContent = 'Welcome to Kabisilya Management!';
+            }, 500);
+        });
+
+        // Fallback: If no IPC communication, simulate completion
+        setTimeout(() => {
+            if (progress < 100) {
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                statusMessage.textContent = 'Loading main application...';
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
