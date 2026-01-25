@@ -10,6 +10,8 @@ const assignmentAnalytics = require("./handlers/assignmentAnalytics");
 const kabisilyaAnalytics = require("./handlers/kabisilyaAnalytics");
 const realTimeDashboard = require("./handlers/realTimeDashboard");
 const mobileDashboard = require("./handlers/mobileDashboard");
+const bukidAnalytics = require("./handlers/bukidAnalytics");
+const pitakProductivity = require("./handlers/pitakProductivity");
 const { logger } = require("../../../utils/logger");
 const { withErrorHandling } = require("../../../utils/errorHandler");
 
@@ -32,7 +34,7 @@ class KabisilyaDashboardHandler {
         payment: AppDataSource.getRepository("Payment"),
         paymentHistory: AppDataSource.getRepository("PaymentHistory"),
         auditTrail: AppDataSource.getRepository("AuditTrail"),
-        notification: AppDataSource.getRepository("Notification")
+        notification: AppDataSource.getRepository("Notification"),
       };
     } catch (error) {
       console.error("Failed to initialize repositories:", error);
@@ -43,11 +45,10 @@ class KabisilyaDashboardHandler {
     }
   }
 
-
   /**
-     * @param {{ sender: { id: any; }; }} event
-     * @param {{ method: any; params: {}; }} payload
-     */
+   * @param {{ sender: { id: any; }; }} event
+   * @param {{ method: any; params: {}; }} payload
+   */
   async handleRequest(event, payload) {
     try {
       const method = payload.method;
@@ -73,113 +74,272 @@ class KabisilyaDashboardHandler {
       switch (method) {
         // 👤 WORKER ANALYTICS
         case "getWorkersOverview":
-          return await workerAnalytics.getWorkersOverview(this.repositories, params);
-        
+          return await workerAnalytics.getWorkersOverview(
+            this.repositories,
+            params,
+          );
+
         case "getWorkerPerformance":
-          return await workerAnalytics.getWorkerPerformance(this.repositories, params);
-        
+          return await workerAnalytics.getWorkerPerformance(
+            this.repositories,
+            params,
+          );
+
         case "getWorkerStatusSummary":
-          return await workerAnalytics.getWorkerStatusSummary(this.repositories, params);
-        
+          return await workerAnalytics.getWorkerStatusSummary(
+            this.repositories,
+            params,
+          );
+
         case "getTopPerformers":
-          return await workerAnalytics.getTopPerformers(this.repositories, params);
-        
+          return await workerAnalytics.getTopPerformers(
+            this.repositories,
+            params,
+          );
+
         case "getWorkerAttendance":
-          return await workerAnalytics.getWorkerAttendance(this.repositories, params);
+          return await workerAnalytics.getWorkerAttendance(
+            this.repositories,
+            params,
+          );
 
         // 💰 FINANCIAL ANALYTICS
         case "getFinancialOverview":
-          return await financialAnalytics.getFinancialOverview(this.repositories, params);
-        
+          return await financialAnalytics.getFinancialOverview(
+            this.repositories,
+            params,
+          );
+
         case "getDebtSummary":
           // @ts-ignore
-          return await financialAnalytics.getDebtSummary(this.repositories, params);
-        
+          return await financialAnalytics.getDebtSummary(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
         case "getPaymentSummary":
           // @ts-ignore
-          return await financialAnalytics.getPaymentSummary(this.repositories, params);
-        
+          return await financialAnalytics.getPaymentSummary(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
         case "getRevenueTrend":
-          return await financialAnalytics.getRevenueTrend(this.repositories, params);
-        
+          return await financialAnalytics.getRevenueTrend(
+            this.repositories,
+            params,
+          );
+
         case "getDebtCollectionRate":
-          return await financialAnalytics.getDebtCollectionRate(this.repositories, params);
+          return await financialAnalytics.getDebtCollectionRate(
+            this.repositories,
+            params,
+          );
 
         // 📝 ASSIGNMENT ANALYTICS
         case "getAssignmentOverview":
-          return await assignmentAnalytics.getAssignmentOverview(this.repositories, params);
-        
+          return await assignmentAnalytics.getAssignmentOverview(
+            this.repositories,
+            params,
+          );
+
         case "getAssignmentTrend":
-          return await assignmentAnalytics.getAssignmentTrend(this.repositories, params);
-        
+          return await assignmentAnalytics.getAssignmentTrend(
+            this.repositories,
+            params,
+          );
+
         case "getLuwangSummary":
           // @ts-ignore
-          return await assignmentAnalytics.getLuwangSummary(this.repositories, params);
-        
+          return await assignmentAnalytics.getLuwangSummary(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
         case "getAssignmentCompletionRate":
-          return await assignmentAnalytics.getAssignmentCompletionRate(this.repositories, params);
-        
+          return await assignmentAnalytics.getAssignmentCompletionRate(
+            this.repositories,
+            params,
+          );
+
         case "getPitakUtilization":
-          return await assignmentAnalytics.getPitakUtilization(this.repositories, params);
+          return await assignmentAnalytics.getPitakUtilization(
+            this.repositories,
+            params,
+          );
 
         // 🌾 KABISILYA ANALYTICS
         case "getKabisilyaOverview":
-          return await kabisilyaAnalytics.getKabisilyaOverview(this.repositories, params);
-        
+          return await kabisilyaAnalytics.getKabisilyaOverview(
+            this.repositories,
+            params,
+          );
+
         case "getBukidSummary":
           // @ts-ignore
-          return await kabisilyaAnalytics.getBukidSummary(this.repositories, params);
-        
+          return await kabisilyaAnalytics.getBukidSummary(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
         case "getPitakSummary":
           // @ts-ignore
-          return await kabisilyaAnalytics.getPitakSummary(this.repositories, params);
-        
+          return await kabisilyaAnalytics.getPitakSummary(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
         case "getProductionByKabisilya":
           // @ts-ignore
-          return await kabisilyaAnalytics.getProductionByKabisilya(this.repositories, params);
-        
+          return await kabisilyaAnalytics.getProductionByKabisilya(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
         case "getLandUtilization":
-          return await kabisilyaAnalytics.getLandUtilization(this.repositories, params);
+          return await kabisilyaAnalytics.getLandUtilization(
+            this.repositories,
+            params,
+          );
 
         // 📈 REAL-TIME DASHBOARD
         case "getLiveDashboard":
-          return await realTimeDashboard.getLiveDashboard(this.repositories, params);
-        
+          return await realTimeDashboard.getLiveDashboard(
+            this.repositories,
+            params,
+          );
+
         case "getTodayStats":
-          return await realTimeDashboard.getTodayStats(this.repositories, params);
-        
+          return await realTimeDashboard.getTodayStats(
+            this.repositories,
+            params,
+          );
+
         case "getRealTimeAssignments":
           // @ts-ignore
-          return await realTimeDashboard.getRealTimeAssignments(this.repositories, params);
-        
+          return await realTimeDashboard.getRealTimeAssignments(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
         case "getRecentPayments":
-          return await realTimeDashboard.getRecentPayments(this.repositories, params);
-        
+          return await realTimeDashboard.getRecentPayments(
+            this.repositories,
+            params,
+          );
+
         case "getPendingDebts":
-          return await realTimeDashboard.getPendingDebts(this.repositories, params);
-        
+          return await realTimeDashboard.getPendingDebts(
+            this.repositories,
+            params,
+          );
+
         case "getSystemHealth":
           return await this.getSystemHealth(this.repositories, params);
-        
+
         case "getAuditSummary":
           return await this.getAuditSummary(this.repositories, params);
-        
+
         case "getRecentActivities":
           return await this.getRecentActivities(this.repositories, params);
-        
+
         case "getNotifications":
           return await this.getNotifications(this.repositories, params);
 
         // 📱 MOBILE DASHBOARD
         case "getMobileDashboard":
-          return await mobileDashboard.getMobileDashboard(this.repositories, params);
-        
+          return await mobileDashboard.getMobileDashboard(
+            this.repositories,
+            params,
+          );
+
         case "getQuickStats":
           return await mobileDashboard.getQuickStats(this.repositories, params);
-        
+
         case "getWorkerQuickView":
           // @ts-ignore
-          return await mobileDashboard.getWorkerQuickView(this.repositories, params);
+          return await mobileDashboard.getWorkerQuickView(
+            this.repositories,
+            // @ts-ignore
+            params,
+          );
+
+        case "getBukidOverview":
+          return await bukidAnalytics.getBukidOverview(
+            this.repositories,
+            params,
+          );
+
+        case "getBukidDetails":
+          return await bukidAnalytics.getBukidDetails(
+            this.repositories,
+            params,
+          );
+
+        case "getBukidProductionTrend":
+          return await bukidAnalytics.getBukidProductionTrend(
+            this.repositories,
+            params,
+          );
+
+        case "getBukidWorkerDistribution":
+          return await bukidAnalytics.getBukidWorkerDistribution(
+            this.repositories,
+            params,
+          );
+
+        case "getBukidFinancialSummary":
+          return await bukidAnalytics.getBukidFinancialSummary(
+            this.repositories,
+            params,
+          );
+
+        case "compareBukids":
+          return await bukidAnalytics.compareBukids(this.repositories, params);
+
+        // 📊 PITAK PRODUCTIVITY ANALYTICS
+        case "getPitakProductivityOverview":
+          return await pitakProductivity.getPitakProductivityOverview(
+            this.repositories,
+            params,
+          );
+
+        case "getPitakProductivityDetails":
+          return await pitakProductivity.getPitakProductivityDetails(
+            this.repositories,
+            params,
+          );
+
+        case "getPitakProductionTimeline":
+          return await pitakProductivity.getPitakProductionTimeline(
+            this.repositories,
+            params,
+          );
+
+        case "getPitakWorkerProductivity":
+          return await pitakProductivity.getPitakWorkerProductivity(
+            this.repositories,
+            params,
+          );
+
+        case "getPitakEfficiencyAnalysis":
+          return await pitakProductivity.getPitakEfficiencyAnalysis(
+            this.repositories,
+            params,
+          );
+
+        case "comparePitaksProductivity":
+          return await pitakProductivity.comparePitaksProductivity(
+            this.repositories,
+            params,
+          );
 
         default:
           return {
@@ -206,25 +366,28 @@ class KabisilyaDashboardHandler {
   // System Health Check
   // @ts-ignore
   // @ts-ignore
+  // @ts-ignore
   async getSystemHealth(repositories, params) {
     try {
       // Check database connection
-      const isDbConnected = await AppDataSource.query("SELECT 1 as health_check");
-      
+      const isDbConnected = await AppDataSource.query(
+        "SELECT 1 as health_check",
+      );
+
       // Get entity counts for health monitoring
       const workerCount = await repositories.worker.count();
       const assignmentCount = await repositories.assignment.count();
       const debtCount = await repositories.debt.count({
-        where: { status: "pending" }
+        where: { status: "pending" },
       });
-      
+
       return {
         status: true,
         message: "System health check completed",
         data: {
-          database: { 
-            status: isDbConnected ? "connected" : "disconnected", 
-            uptime: process.uptime() 
+          database: {
+            status: isDbConnected ? "connected" : "disconnected",
+            uptime: process.uptime(),
           },
           memory: process.memoryUsage(),
           platform: process.platform,
@@ -232,10 +395,10 @@ class KabisilyaDashboardHandler {
           entityCounts: {
             workers: workerCount,
             activeAssignments: assignmentCount,
-            pendingDebts: debtCount
+            pendingDebts: debtCount,
           },
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       };
     } catch (error) {
       return {
@@ -244,8 +407,8 @@ class KabisilyaDashboardHandler {
         data: {
           database: { status: "disconnected" },
           // @ts-ignore
-          error: error.message
-        }
+          error: error.message,
+        },
       };
     }
   }
@@ -257,21 +420,22 @@ class KabisilyaDashboardHandler {
   async getAuditSummary(repositories, params) {
     const { auditTrail: auditRepo } = repositories;
     const { startDate, endDate } = params;
-    
-    const query = auditRepo.createQueryBuilder("audit")
+
+    const query = auditRepo
+      .createQueryBuilder("audit")
       .select([
         "audit.action",
         "COUNT(*) as count",
         "MIN(audit.timestamp) as first",
-        "MAX(audit.timestamp) as last"
+        "MAX(audit.timestamp) as last",
       ])
       .groupBy("audit.action")
       .orderBy("count", "DESC");
 
     if (startDate && endDate) {
-      query.where("audit.timestamp BETWEEN :start AND :end", { 
-        start: new Date(startDate), 
-        end: new Date(endDate) 
+      query.where("audit.timestamp BETWEEN :start AND :end", {
+        start: new Date(startDate),
+        end: new Date(endDate),
       });
     }
 
@@ -281,18 +445,26 @@ class KabisilyaDashboardHandler {
       status: true,
       message: "Audit summary retrieved",
       data: {
-        summary: auditSummary.map((/** @type {{ audit_action: any; count: string; first: any; last: any; }} */ a) => ({
-          action: a.audit_action,
-          count: parseInt(a.count),
-          first: a.first,
-          last: a.last
-        })),
-        total: auditSummary.reduce((/** @type {number} */ sum, /** @type {{ count: string; }} */ a) => sum + parseInt(a.count), 0),
+        summary: auditSummary.map(
+          (
+            /** @type {{ audit_action: any; count: string; first: any; last: any; }} */ a,
+          ) => ({
+            action: a.audit_action,
+            count: parseInt(a.count),
+            first: a.first,
+            last: a.last,
+          }),
+        ),
+        total: auditSummary.reduce(
+          (/** @type {number} */ sum, /** @type {{ count: string; }} */ a) =>
+            sum + parseInt(a.count),
+          0,
+        ),
         period: {
           start: startDate,
-          end: endDate
-        }
-      }
+          end: endDate,
+        },
+      },
     };
   }
 
@@ -303,14 +475,15 @@ class KabisilyaDashboardHandler {
   async getRecentActivities(repositories, params) {
     const { auditTrail: auditRepo } = repositories;
     const { limit = 20 } = params;
-    
-    const activities = await auditRepo.createQueryBuilder("audit")
+
+    const activities = await auditRepo
+      .createQueryBuilder("audit")
       .select([
         "audit.id",
         "audit.action",
         "audit.actor",
         "audit.details",
-        "audit.timestamp"
+        "audit.timestamp",
       ])
       .orderBy("audit.timestamp", "DESC")
       .limit(limit)
@@ -320,15 +493,19 @@ class KabisilyaDashboardHandler {
       status: true,
       message: "Recent activities retrieved",
       data: {
-        activities: activities.map((/** @type {{ id: any; action: any; actor: any; details: any; timestamp: any; }} */ a) => ({
-          id: a.id,
-          action: a.action,
-          actor: a.actor,
-          details: a.details,
-          timestamp: a.timestamp
-        })),
-        total: activities.length
-      }
+        activities: activities.map(
+          (
+            /** @type {{ id: any; action: any; actor: any; details: any; timestamp: any; }} */ a,
+          ) => ({
+            id: a.id,
+            action: a.action,
+            actor: a.actor,
+            details: a.details,
+            timestamp: a.timestamp,
+          }),
+        ),
+        total: activities.length,
+      },
     };
   }
 
@@ -339,13 +516,14 @@ class KabisilyaDashboardHandler {
   async getNotifications(repositories, params) {
     const { notification: notificationRepo } = repositories;
     const { unreadOnly = false, limit = 50 } = params;
-    
-    const query = notificationRepo.createQueryBuilder("notification")
+
+    const query = notificationRepo
+      .createQueryBuilder("notification")
       .select([
         "notification.id",
         "notification.type",
         "notification.context",
-        "notification.timestamp"
+        "notification.timestamp",
       ])
       .orderBy("notification.timestamp", "DESC")
       .limit(limit);
@@ -361,16 +539,20 @@ class KabisilyaDashboardHandler {
       status: true,
       message: "Notifications retrieved",
       data: {
-        notifications: notifications.map((/** @type {{ id: any; type: any; context: any; timestamp: any; }} */ n) => ({
-          id: n.id,
-          type: n.type,
-          context: n.context,
-          timestamp: n.timestamp,
-          isUnread: true // Placeholder for future implementation
-        })),
+        notifications: notifications.map(
+          (
+            /** @type {{ id: any; type: any; context: any; timestamp: any; }} */ n,
+          ) => ({
+            id: n.id,
+            type: n.type,
+            context: n.context,
+            timestamp: n.timestamp,
+            isUnread: true, // Placeholder for future implementation
+          }),
+        ),
         unreadCount: notifications.length, // Update when read status is implemented
-        total: notifications.length
-      }
+        total: notifications.length,
+      },
     };
   }
 }
@@ -383,8 +565,8 @@ ipcMain.handle(
   withErrorHandling(
     // @ts-ignore
     kabisilyaDashboardHandler.handleRequest.bind(kabisilyaDashboardHandler),
-    "IPC:kabisilyaDashboard"
-  )
+    "IPC:kabisilyaDashboard",
+  ),
 );
 
 module.exports = { KabisilyaDashboardHandler, kabisilyaDashboardHandler };

@@ -1,3 +1,4 @@
+// src/ipc/debt/get/collection_report.ipc
 //@ts-check
 
 const { AppDataSource } = require("../../../db/dataSource");
@@ -5,80 +6,122 @@ const { AppDataSource } = require("../../../db/dataSource");
 // @ts-ignore
 module.exports = async (dateRange = {}, /** @type {any} */ userId) => {
   try {
-    // @ts-ignore
-    const { startDate, endDate } = dateRange;
-    const defaultStartDate = new Date();
-    defaultStartDate.setMonth(defaultStartDate.getMonth() - 1);
-    
-    const queryStartDate = startDate || defaultStartDate;
-    const queryEndDate = endDate || new Date();
-
+    const debtRepository = AppDataSource.getRepository("Debt");
     const debtHistoryRepository = AppDataSource.getRepository("DebtHistory");
     
-    // Get all payment transactions within date range
-    const payments = await debtHistoryRepository
-      .createQueryBuilder("history")
-      .leftJoinAndSelect("history.debt", "debt")
-      .leftJoinAndSelect("debt.worker", "worker")
-      .where("history.transactionType = :type", { type: "payment" })
-      .andWhere("history.transactionDate BETWEEN :startDate AND :endDate", {
-        startDate: queryStartDate,
-        endDate: queryEndDate
-      })
-      .orderBy("history.transactionDate", "DESC")
-      .getMany();
+    // @ts-ignore
+    const { startDate, endDate } = dateRange;
+    const queryStartDate = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+    const queryEndDate = endDate || new Date();
 
-    // Calculate totals
-    const totalCollected = payments.reduce((/** @type {number} */ sum, /** @type {{ amountPaid: string; }} */ payment) => sum + parseFloat(payment.amountPaid), 0);
-    
-    // Group by payment method
-    const byPaymentMethod = payments.reduce((/** @type {{ [x: string]: number; }} */ acc, /** @type {{ paymentMethod: string; amountPaid: string; }} */ payment) => {
-      const method = payment.paymentMethod || 'Unknown';
-      if (!acc[method]) acc[method] = 0;
-      acc[method] += parseFloat(payment.amountPaid);
-      return acc;
-    }, {});
+    // Get payments made in the date range
+    const payments = await debtHistoryRepository.find({
+      where: {
+        transactionType: "payment",
+        transactionDate: {
+          $between: [queryStartDate, queryEndDate]
+        }
+      },
+      relations: ["debt", "debt.worker"],
+      order: { transactionDate: "DESC" }
+    });
 
-    // Group by worker
-    const byWorker = payments.reduce((/** @type {{ [x: string]: { payments: number; }; }} */ acc, /** @type {{ debt: { worker: { id: any; name: any; }; }; amountPaid: string; }} */ payment) => {
-      const workerId = payment.debt.worker.id;
-      if (!acc[workerId]) {
-        acc[workerId] = {
-          // @ts-ignore
-          workerName: payment.debt.worker.name,
-          totalPaid: 0,
-          payments: 0
+    // Group payments by date
+    const paymentsByDate = payments.reduce((acc, payment) => {
+      const date = payment.transactionDate.toISOString().split('T')[0];
+      if (!acc[date]) {
+        acc[date] = {
+          date,
+          totalAmount: 0,
+          paymentCount: 0,
+          payments: []
         };
       }
-      // @ts-ignore
-      acc[workerId].totalPaid += parseFloat(payment.amountPaid);
-      acc[workerId].payments++;
+      acc[date].totalAmount += parseFloat(payment.amountPaid);
+      acc[date].paymentCount++;
+      acc[date].payments.push(payment);
       return acc;
     }, {});
 
-    // Daily collection trend
-    const dailyTrend = payments.reduce((/** @type {{ [x: string]: number; }} */ acc, /** @type {{ transactionDate: { toISOString: () => string; }; amountPaid: string; }} */ payment) => {
-      const date = payment.transactionDate.toISOString().split('T')[0];
-      if (!acc[date]) acc[date] = 0;
-      acc[date] += parseFloat(payment.amountPaid);
-      return acc;
-    }, {});
+    // Get overdue debts
+    const today = new Date();
+    const overdueDebts = await debtRepository.find({
+      where: {
+        balance: { $gt: 0 },
+        dueDate: { $lt: today },
+        status: { $notIn: ["paid", "cancelled"] }
+      },
+      relations: ["worker"],
+      order: { dueDate: "ASC" }
+    });
+
+    // Calculate collection efficiency
+    const totalCollected = payments.reduce((sum, payment) => sum + parseFloat(payment.amountPaid), 0);
+    const totalOverdue = overdueDebts.reduce((sum, debt) => sum + parseFloat(debt.balance), 0);
+    const totalActiveDebts = await debtRepository.sum("balance", {
+      balance: { $gt: 0 },
+      status: { $notIn: ["paid", "cancelled"] }
+    }) || 0;
+
+    const collectionRate = totalActiveDebts > 0 
+      ? (totalCollected / (totalCollected + totalActiveDebts)) * 100 
+      : 0;
+
+    const report = {
+      dateRange: {
+        startDate: queryStartDate,
+        endDate: queryEndDate
+      },
+      summary: {
+        totalCollected,
+        totalPayments: payments.length,
+        totalOverdue,
+        totalActiveDebts,
+        collectionRate: parseFloat(collectionRate.toFixed(2)),
+        overdueCount: overdueDebts.length
+      },
+      paymentsByDate: Object.values(paymentsByDate),
+      topCollectors: Array.from(
+        // @ts-ignore
+        payments.reduce((map, payment) => {
+          const workerName = payment.debt.worker.name;
+          const amount = parseFloat(payment.amountPaid);
+          if (!map.has(workerName)) {
+            map.set(workerName, { workerName, totalCollected: 0, paymentCount: 0 });
+          }
+          const entry = map.get(workerName);
+          entry.totalCollected += amount;
+          entry.paymentCount++;
+          return map;
+        }, new Map())
+      ).map(([_, value]) => value).sort((a, b) => b.totalCollected - a.totalCollected).slice(0, 10),
+      overdueDebts: overdueDebts.map(debt => ({
+        id: debt.id,
+        workerName: debt.worker.name,
+        balance: debt.balance,
+        dueDate: debt.dueDate,
+        // @ts-ignore
+        overdueDays: Math.floor((today - new Date(debt.dueDate)) / (1000 * 60 * 60 * 24))
+      })),
+      paymentMethods: Array.from(
+        // @ts-ignore
+        payments.reduce((map, payment) => {
+          const method = payment.paymentMethod || 'Unknown';
+          if (!map.has(method)) {
+            map.set(method, { method, count: 0, totalAmount: 0 });
+          }
+          const entry = map.get(method);
+          entry.count++;
+          entry.totalAmount += parseFloat(payment.amountPaid);
+          return map;
+        }, new Map())
+      ).map(([_, value]) => value)
+    };
 
     return {
       status: true,
-      message: "Collection report generated successfully",
-      data: {
-        totalCollected,
-        paymentCount: payments.length,
-        byPaymentMethod,
-        byWorker,
-        dailyTrend,
-        payments: payments.slice(0, 50), // Last 50 payments
-        dateRange: {
-          startDate: queryStartDate,
-          endDate: queryEndDate
-        }
-      }
+      message: "Debt collection report generated successfully",
+      data: report
     };
   } catch (error) {
     console.error("Error generating collection report:", error);

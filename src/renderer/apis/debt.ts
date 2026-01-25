@@ -1,6 +1,6 @@
-// src/api/debtAPI.ts
+
 // Debt Management API - Similar structure to activationAPI.ts
-import { Worker } from '../entities/Worker';
+
 
 export interface DebtData {
   id: number;

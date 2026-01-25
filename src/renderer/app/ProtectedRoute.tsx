@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import ActivationDialog from '../components/activations/ActivationDialog';
-import { posAuthStore } from '../lib/authStore';
+import { kabAuthStore } from '../lib/kabAuthStore';
 import activationAPI from '../apis/activation';
 
 interface ProtectedRouteProps {
@@ -11,11 +11,11 @@ interface ProtectedRouteProps {
   requiredModule?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requiredPermission, 
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredPermission,
   requiredRole,
-  requiredModule 
+  requiredModule
 }) => {
   const [isActivationRequired, setIsActivationRequired] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   useEffect(() => {
     const checkAuth = () => {
-      const isAuthenticated = posAuthStore.isAuthenticated();
+      const isAuthenticated = kabAuthStore.isAuthenticated();
 
       if (!isAuthenticated) {
         setIsAuthorized(false);
@@ -51,7 +51,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
       // Check module access if required
       if (requiredModule) {
-        const canAccessModule = posAuthStore.canAccessModule(requiredModule);
+        const canAccessModule = kabAuthStore.canAccessModule(requiredModule);
         if (!canAccessModule) {
           setIsAuthorized(false);
           return;
@@ -60,13 +60,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
       // Check role if required
       if (requiredRole) {
-        const userRole = posAuthStore.getRole();
+        const userRole = kabAuthStore.getRole();
         const requiredRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-        const hasRequiredRole = requiredRoles.some(role => 
+        const hasRequiredRole = requiredRoles.some(role =>
           userRole.toLowerCase() === role.toLowerCase()
         );
-        
-        if (!hasRequiredRole && !posAuthStore.isAdmin()) {
+
+        if (!hasRequiredRole && !kabAuthStore.isAdmin()) {
           setIsAuthorized(false);
           return;
         }
@@ -74,8 +74,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
       // Check permission if required
       if (requiredPermission) {
-        const hasPermission = posAuthStore.hasPermission(requiredPermission);
-        if (!hasPermission && !posAuthStore.isAdmin()) {
+        const hasPermission = kabAuthStore.hasPermission(requiredPermission);
+        if (!hasPermission && !kabAuthStore.isAdmin()) {
           setIsAuthorized(false);
           return;
         }
@@ -182,8 +182,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (!isAuthorized) {
     // Get user info for better error message
-    const userInfo = posAuthStore.getUserDisplayInfo();
-    const isAuthenticated = posAuthStore.isAuthenticated();
+    const userInfo = kabAuthStore.getUserDisplayInfo();
+    const isAuthenticated = kabAuthStore.isAuthenticated();
 
     if (!isAuthenticated) {
       return <Navigate to="/login" replace />;
@@ -274,32 +274,32 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 // POS-specific route protection hooks
 export const usePOSAuth = () => {
   const checkPermission = (permission: string): boolean => {
-    return posAuthStore.hasPermission(permission) || posAuthStore.isAdmin();
+    return kabAuthStore.hasPermission(permission) || kabAuthStore.isAdmin();
   };
 
   const checkRole = (role: string | string[]): boolean => {
-    const userRole = posAuthStore.getRole();
+    const userRole = kabAuthStore.getRole();
     const requiredRoles = Array.isArray(role) ? role : [role];
-    
-    if (posAuthStore.isAdmin()) return true;
-    
-    return requiredRoles.some(reqRole => 
+
+    if (kabAuthStore.isAdmin()) return true;
+
+    return requiredRoles.some(reqRole =>
       userRole.toLowerCase() === reqRole.toLowerCase()
     );
   };
 
   const checkModuleAccess = (module: string): boolean => {
-    return posAuthStore.canAccessModule(module);
+    return kabAuthStore.canAccessModule(module);
   };
 
   return {
-    isAuthenticated: posAuthStore.isAuthenticated(),
-    user: posAuthStore.getUserDisplayInfo(),
-    permissions: posAuthStore.getDashboardPermissions(),
+    isAuthenticated: kabAuthStore.isAuthenticated(),
+    user: kabAuthStore.getUserDisplayInfo(),
+    permissions: kabAuthStore.getDashboardPermissions(),
     checkPermission,
     checkRole,
     checkModuleAccess,
-    logout: () => posAuthStore.logout()
+    logout: () => kabAuthStore.logout()
   };
 };
 

@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { useSystemInfo } from "../../contexts/SystemInfoContext";
 import { dialogs } from "../../utils/dialogs";
-import { posAuthStore } from "../../lib/authStore";
+import { kabAuthStore } from "../../lib/kabAuthStore";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -65,87 +65,42 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
   // Dashboard
   { path: "/", name: "Dashboard", icon: LayoutDashboard, category: "core" },
 
-  // Farm Management
+  // Bukid & Pitak Management
   {
     path: "/farms",
-    name: "Farm Management",
+    name: "Bukid & Pitak",
     icon: Trees,
     category: "core",
     children: [
       { path: "/farms/bukid", name: "Mga Bukid", icon: Trees },
       { path: "/farms/pitak", name: "Mga Pitak", icon: Wheat },
-      { path: "/farms/map", name: "Farm Map", icon: ClipboardList },
-      { path: "/farms/calendar", name: "Farming Calendar", icon: CalendarDays },
+      { path: "/farms/assignments", name: "Assignments", icon: ClipboardList },
     ],
   },
 
-  // Crop Management
-  {
-    path: "/crops",
-    name: "Crop Management",
-    icon: Sprout,
-    category: "core",
-    children: [
-      { path: "/crops/kabisilya", name: "Kabisilya", icon: Sprout },
-      { path: "/crops/planting", name: "Planting Schedule", icon: CalendarDays },
-      { path: "/crops/harvest", name: "Harvest Schedule", icon: Wheat },
-      { path: "/crops/growth", name: "Growth Tracking", icon: TrendingUp },
-    ],
-  },
-
-  // Workers Management
+  // Kabisilya & Workers
   {
     path: "/workers",
-    name: "Workers Management",
+    name: "Kabisilya & Workers",
     icon: Users,
     category: "core",
     children: [
+      { path: "/workers/kabisilya", name: "Mga Kabisilya", icon: Sprout },
       { path: "/workers/list", name: "Worker Directory", icon: Users2 },
-      { path: "/workers/assignments", name: "Assignments", icon: ClipboardList },
       { path: "/workers/attendance", name: "Attendance", icon: CalendarDays },
-      { path: "/workers/payments", name: "Payments", icon: DollarSign },
     ],
   },
 
-  // Inventory & Equipment
+  // Payroll & Finance
   {
-    path: "/inventory",
-    name: "Inventory & Equipment",
-    icon: Warehouse,
-    category: "core",
-    children: [
-      { path: "/inventory/seeds", name: "Seeds & Inputs", icon: Package },
-      { path: "/inventory/fertilizers", name: "Fertilizers", icon: Droplets },
-      { path: "/inventory/equipment", name: "Equipment", icon: Tractor },
-      { path: "/inventory/vehicles", name: "Vehicles", icon: Tractor },
-    ],
-  },
-
-  // Sales & Finance
-  {
-    path: "/sales",
-    name: "Sales & Finance",
+    path: "/finance",
+    name: "Payroll & Finance",
     icon: DollarSign,
     category: "core",
     children: [
-      { path: "/sales/transactions", name: "Sales Transactions", icon: Receipt },
-      { path: "/sales/customers", name: "Customers", icon: Users2 },
-      { path: "/sales/debts", name: "Debt Management", icon: DollarSign },
-      { path: "/sales/payments", name: "Payment History", icon: DollarSign },
-    ],
-  },
-
-  // Weather & Environment
-  {
-    path: "/weather",
-    name: "Weather & Environment",
-    icon: CloudRain,
-    category: "core",
-    children: [
-      { path: "/weather/forecast", name: "Weather Forecast", icon: CloudRain },
-      { path: "/weather/history", name: "Weather History", icon: Thermometer },
-      { path: "/weather/alerts", name: "Weather Alerts", icon: Bell },
-      { path: "/weather/soil", name: "Soil Conditions", icon: Droplets },
+      { path: "/finance/payments", name: "Payments", icon: DollarSign },
+      { path: "/finance/debts", name: "Debt Management", icon: Receipt },
+      // { path: "/finance/history", name: "Payment History", icon: ClipboardList },
     ],
   },
 
@@ -156,10 +111,10 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
     icon: BarChart2,
     category: "analytics",
     children: [
-      { path: "/analytics/farm", name: "Farm Analytics", icon: PieChart },
-      { path: "/analytics/crop", name: "Crop Yield Reports", icon: Wheat },
-      { path: "/analytics/financial", name: "Financial Reports", icon: DollarSign },
-      { path: "/analytics/worker", name: "Worker Performance", icon: Users },
+      { path: "/analytics/bukid", name: "Bukid Reports", icon: PieChart },
+      { path: "/analytics/pitak", name: "Pitak Productivity", icon: Wheat },
+      { path: "/analytics/finance", name: "Financial Reports", icon: DollarSign },
+      { path: "/analytics/workers", name: "Worker Performance", icon: Users },
     ],
   },
 
@@ -170,7 +125,7 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
     icon: Settings,
     category: "system",
     children: [
-      { path: "/users", name: "User Management", icon: User2 },
+      { path: "/system/users", name: "User Management", icon: User2 },
       { path: "/system/audit", name: "Audit Trail", icon: ListChecks },
       { path: "/system/notifications", name: "Notifications", icon: Bell },
       { path: "/system/backup", name: "Backup & Restore", icon: Shield },
@@ -235,31 +190,27 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
               <div
                 onClick={() => toggleDropdown(item.name)}
                 className={`group flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer
-            ${
-              is_active
-                ? "bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-green-hover)] text-white shadow-lg"
-                : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)] hover:text-white"
-            }
+            ${is_active
+                    ? "bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-green-hover)] text-white shadow-lg"
+                    : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)] hover:text-white"
+                  }
           `}
               >
                 <div className="flex items-center gap-3">
                   <item.icon
-                    className={`w-5 h-5 ${
-                      is_active
+                    className={`w-5 h-5 ${is_active
                         ? "text-white"
                         : "text-[var(--sidebar-text)] group-hover:text-white"
-                    }`}
+                      }`}
                   />
                   <span className="font-medium">{item.name}</span>
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    isOpen ? "rotate-180" : ""
-                  } ${
-                    is_active
+                  className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                    } ${is_active
                       ? "text-white"
                       : "text-[var(--sidebar-text)] group-hover:text-white"
-                  }`}
+                    }`}
                 />
               </div>
 
@@ -275,11 +226,10 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
                         <Link
                           to={child.path}
                           className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
-                      ${
-                        isChildActive
-                          ? "text-white bg-[var(--accent-green)]/20 font-semibold border-l-2 border-[var(--accent-green)] pl-2"
-                          : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)] hover:text-white"
-                      }
+                      ${isChildActive
+                              ? "text-white bg-[var(--accent-green)]/20 font-semibold border-l-2 border-[var(--accent-green)] pl-2"
+                              : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)] hover:text-white"
+                            }
                     `}
                         >
                           <child.icon className="w-4 h-4" />
@@ -295,29 +245,26 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
             <Link
               to={item.path}
               className={`group flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200
-          ${
-            is_active
-              ? "bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-green-hover)] text-white shadow-lg"
-              : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)] hover:text-white"
-          }
+          ${is_active
+                  ? "bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-green-hover)] text-white shadow-lg"
+                  : "text-[var(--sidebar-text)] hover:bg-[var(--card-hover-bg)] hover:text-white"
+                }
         `}
             >
               <div className="flex items-center gap-3">
                 <item.icon
-                  className={`w-5 h-5 ${
-                    is_active
+                  className={`w-5 h-5 ${is_active
                       ? "text-white"
                       : "text-[var(--sidebar-text)] group-hover:text-white"
-                  }`}
+                    }`}
                 />
                 <span className="font-medium">{item.name}</span>
               </div>
               <ChevronRight
-                className={`w-4 h-4 transition-opacity duration-200 ${
-                  is_active
+                className={`w-4 h-4 transition-opacity duration-200 ${is_active
                     ? "opacity-100 text-white"
                     : "opacity-0 group-hover:opacity-50 text-[var(--sidebar-text)]"
-                }`}
+                  }`}
               />
             </Link>
           )}
@@ -338,7 +285,7 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
       message: "Are you sure do you want to logout?",
     });
     if (!confirm) return;
-    posAuthStore.logout();
+    kabAuthStore.logout();
   };
 
   return (

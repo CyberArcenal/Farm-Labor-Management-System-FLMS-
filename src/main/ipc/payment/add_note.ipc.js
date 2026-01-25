@@ -10,6 +10,7 @@ module.exports = async function addPaymentNote(params = {}, queryRunner = null) 
   let shouldRelease = false;
   
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();

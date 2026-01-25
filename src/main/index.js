@@ -667,12 +667,13 @@ function registerIpcHandlers() {
   require("./ipc/dashboard/index.ipc");
   require("./ipc/debt/index.ipc");
   require("./ipc/kabisilya/index.ipc");
-  require("./ipc/notification/index.ipc");
+  // require("./ipc/notification/index.ipc");
   require("./ipc/payment/index.ipc");
   require("./ipc/pitak/index.ipc");
   require("./ipc/user/index.ipc");
   require("./ipc/worker/index.ipc");
   require("./ipc/system_config.ipc");
+  require("./ipc/windows_control.ipc");
 }
 
 // Application event handlers

@@ -1242,7 +1242,7 @@ class PaymentAPI {
   async calculateWorkerTotalPaid(workerId: number): Promise<number> {
     try {
       const summary = await this.getWorkerPaymentSummary(workerId);
-      return parseFloat(summary.data.summary.totalNet);
+      return parseFloat(summary.data.summary.totalNet.toString());
     } catch (error) {
       console.error("Error calculating worker total paid:", error);
       return 0;
@@ -1305,23 +1305,23 @@ class PaymentAPI {
   }
 
   // Event listeners
-  onPaymentCreated(callback: (data: PaymentData) => void) {
-    if (window.backendAPI && window.backendAPI.onPaymentCreated) {
-      window.backendAPI.onPaymentCreated(callback);
-    }
-  }
+  // onPaymentCreated(callback: (data: PaymentData) => void) {
+  //   if (window.backendAPI && window.backendAPI.onPaymentCreated) {
+  //     window.backendAPI.onPaymentCreated(callback);
+  //   }
+  // }
 
-  onPaymentUpdated(callback: (data: PaymentData) => void) {
-    if (window.backendAPI && window.backendAPI.onPaymentUpdated) {
-      window.backendAPI.onPaymentUpdated(callback);
-    }
-  }
+  // onPaymentUpdated(callback: (data: PaymentData) => void) {
+  //   if (window.backendAPI && window.backendAPI.onPaymentUpdated) {
+  //     window.backendAPI.onPaymentUpdated(callback);
+  //   }
+  // }
 
-  onPaymentDeleted(callback: (paymentId: number) => void) {
-    if (window.backendAPI && window.backendAPI.onPaymentDeleted) {
-      window.backendAPI.onPaymentDeleted(callback);
-    }
-  }
+  // onPaymentDeleted(callback: (paymentId: number) => void) {
+  //   if (window.backendAPI && window.backendAPI.onPaymentDeleted) {
+  //     window.backendAPI.onPaymentDeleted(callback);
+  //   }
+  // }
 
   onPaymentProcessed(callback: (data: PaymentData) => void) {
     if (window.backendAPI && window.backendAPI.onPaymentProcessed) {

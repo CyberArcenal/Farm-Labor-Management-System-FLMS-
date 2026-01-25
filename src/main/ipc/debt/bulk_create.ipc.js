@@ -1,90 +1,132 @@
+// src/ipc/payment/bulk_create.ipc
 //@ts-check
-
-const validateDebtData = require("./validate_data.ipc");
-
-module.exports = async (/** @type {{ debts: any; }} */ params, /** @type {{ manager: { getRepository: (arg0: string) => any; }; }} */ queryRunner) => {
+module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params, /** @type {{ manager: { getRepository: (arg0: string) => any; }; }} */ queryRunner) => {
   try {
-    const { debts } = params; // Array of debt objects
-
-    if (!Array.isArray(debts) || debts.length === 0) {
+    const { payments } = params;
+    
+    if (!payments || !Array.isArray(payments) || payments.length === 0) {
       return {
         status: false,
-        message: "Debts array is required and must not be empty",
+        message: "Payments array is required and cannot be empty",
         data: null
       };
     }
 
-    const debtRepository = queryRunner.manager.getRepository("Debt");
+    const paymentRepository = queryRunner.manager.getRepository("Payment");
+    const paymentHistoryRepository = queryRunner.manager.getRepository("PaymentHistory");
     const workerRepository = queryRunner.manager.getRepository("Worker");
-    const results = {
-      success: [],
-      failed: []
-    };
+    // @ts-ignore
+    const debtRepository = queryRunner.manager.getRepository("Debt");
 
-    for (const debtData of debts) {
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < payments.length; i++) {
+      const paymentData = payments[i];
+      
       try {
-        // Validate each debt data
-        const validation = await validateDebtData(debtData);
-        if (!validation.status) {
-          // @ts-ignore
-          results.failed.push({
-            data: debtData,
-            error: validation.message
-          });
+        // Validate required fields
+        if (!paymentData.worker_id || !paymentData.grossPay) {
+          errors.push(`Payment ${i + 1}: Missing required fields (worker_id or grossPay)`);
           continue;
         }
 
         // Check if worker exists
-        const worker = await workerRepository.findOne({ where: { id: debtData.worker_id } });
+        const worker = await workerRepository.findOne({ where: { id: paymentData.worker_id } });
         if (!worker) {
-          // @ts-ignore
-          results.failed.push({
-            data: debtData,
-            error: "Worker not found"
-          });
+          errors.push(`Payment ${i + 1}: Worker with ID ${paymentData.worker_id} not found`);
           continue;
         }
 
-        // Create debt
-        const debt = debtRepository.create({
-          worker: { id: debtData.worker_id },
-          originalAmount: debtData.amount,
-          amount: debtData.amount,
-          balance: debtData.amount,
-          reason: debtData.reason,
-          dueDate: debtData.dueDate,
-          interestRate: debtData.interestRate || 0,
-          paymentTerm: debtData.paymentTerm,
-          status: "pending",
-          dateIncurred: new Date()
+        // Calculate net pay
+        const grossPay = parseFloat(paymentData.grossPay);
+        const manualDeduction = parseFloat(paymentData.manualDeduction || 0);
+        const totalDebtDeduction = parseFloat(paymentData.totalDebtDeduction || 0);
+        const otherDeductions = parseFloat(paymentData.otherDeductions || 0);
+        
+        const netPay = grossPay - manualDeduction - totalDebtDeduction - otherDeductions;
+
+        // Create payment
+        const payment = paymentRepository.create({
+          worker: { id: paymentData.worker_id },
+          pitak: paymentData.pitak_id ? { id: paymentData.pitak_id } : null,
+          grossPay: grossPay,
+          manualDeduction: manualDeduction,
+          netPay: netPay,
+          totalDebtDeduction: totalDebtDeduction,
+          otherDeductions: otherDeductions,
+          deductionBreakdown: paymentData.deductionBreakdown || null,
+          status: paymentData.status || "pending",
+          paymentDate: paymentData.paymentDate || null,
+          paymentMethod: paymentData.paymentMethod || null,
+          referenceNumber: paymentData.referenceNumber || null,
+          periodStart: paymentData.periodStart || null,
+          periodEnd: paymentData.periodEnd || null,
+          notes: paymentData.notes || null
         });
 
-        const savedDebt = await debtRepository.save(debt);
+        const savedPayment = await paymentRepository.save(payment);
 
-        // Update worker's total debt summary
-        worker.totalDebt = parseFloat(worker.totalDebt) + parseFloat(debtData.amount);
-        worker.currentBalance = parseFloat(worker.currentBalance) + parseFloat(debtData.amount);
-        await workerRepository.save(worker);
+        // Create payment history record
+        const paymentHistory = paymentHistoryRepository.create({
+          payment: { id: savedPayment.id },
+          actionType: "create",
+          changedField: "all",
+          oldValue: null,
+          newValue: "Payment created",
+          oldAmount: 0,
+          newAmount: grossPay,
+          notes: "Bulk payment creation",
+          performedBy: params._userId ? String(params._userId) : "system",
+          changeDate: new Date()
+        });
 
-        // @ts-ignore
-        results.success.push(savedDebt);
+        await paymentHistoryRepository.save(paymentHistory);
+
+        // If there's debt deduction, update worker's debt summary
+        if (totalDebtDeduction > 0) {
+          worker.totalPaid = parseFloat(worker.totalPaid) + totalDebtDeduction;
+          worker.currentBalance = Math.max(0, parseFloat(worker.currentBalance) - totalDebtDeduction);
+          await workerRepository.save(worker);
+        }
+
+        results.push({
+          index: i,
+          paymentId: savedPayment.id,
+          workerId: paymentData.worker_id,
+          status: "success",
+          message: "Payment created successfully"
+        });
+        
       } catch (error) {
         // @ts-ignore
-        results.failed.push({
-          data: debtData,
+        errors.push(`Payment ${i + 1}: ${error.message}`);
+        results.push({
+          index: i,
+          status: "error",
           // @ts-ignore
-          error: error.message
+          message: error.message
         });
       }
     }
 
     return {
-      status: true,
-      message: `Bulk create completed. Success: ${results.success.length}, Failed: ${results.failed.length}`,
-      data: results
+      status: errors.length === 0,
+      message: errors.length > 0 
+        ? `Processed ${results.length} payments with ${errors.length} errors` 
+        : `Successfully created ${results.length} payments`,
+      data: {
+        results,
+        errors: errors.length > 0 ? errors : null,
+        summary: {
+          total: payments.length,
+          successful: results.filter(r => r.status === "success").length,
+          failed: results.filter(r => r.status === "error").length
+        }
+      }
     };
   } catch (error) {
-    console.error("Error in bulk create debts:", error);
+    console.error("Error in bulk create payments:", error);
     return {
       status: false,
       // @ts-ignore

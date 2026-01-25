@@ -635,7 +635,7 @@ class BukidAPI {
   async getTotalCount(): Promise<number> {
     try {
       const response = await this.getStats();
-      return response.data.summary.totalBukid;
+      return response.data.summary.total;
     } catch (error) {
       console.error("Error getting total count:", error);
       return 0;
@@ -645,7 +645,7 @@ class BukidAPI {
   async getActiveCount(): Promise<number> {
     try {
       const response = await this.getStats();
-      return response.data.summary.activeBukid;
+      return response.data.summary.active;
     } catch (error) {
       console.error("Error getting active count:", error);
       return 0;
@@ -655,7 +655,7 @@ class BukidAPI {
   async getInactiveCount(): Promise<number> {
     try {
       const response = await this.getStats();
-      return response.data.summary.inactiveBukid;
+      return response.data.summary.inactive;
     } catch (error) {
       console.error("Error getting inactive count:", error);
       return 0;
@@ -792,7 +792,7 @@ class BukidAPI {
       const updates = ids.map(id => ({ id, status }));
       const response = await this.bulkUpdate(updates);
       return response.data.results;
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error batch updating status:", error);
       return {
         successful: [],
@@ -878,9 +878,9 @@ class BukidAPI {
       const recentGrowth = this.calculateRecentGrowth(bukids);
       
       return {
-        total: statsResponse.data.summary.totalBukid,
-        active: statsResponse.data.summary.activeBukid,
-        inactive: statsResponse.data.summary.inactiveBukid,
+        total: statsResponse.data.summary.total,
+        active: statsResponse.data.summary.active,
+        inactive: statsResponse.data.summary.inactive,
         byKabisilya,
         byLocation,
         recentGrowth
@@ -920,23 +920,23 @@ class BukidAPI {
 
   // 🎯 EVENT LISTENERS (if supported by IPC)
 
-  onBukidCreated(callback: (bukid: BukidData) => void) {
-    if (window.backendAPI && window.backendAPI.onBukidCreated) {
-      window.backendAPI.onBukidCreated(callback);
-    }
-  }
+  // onBukidCreated(callback: (bukid: BukidData) => void) {
+  //   if (window.backendAPI && window.backendAPI.onBukidCreated) {
+  //     window.backendAPI.onBukidCreated(callback);
+  //   }
+  // }
 
-  onBukidUpdated(callback: (bukid: BukidData) => void) {
-    if (window.backendAPI && window.backendAPI.onBukidUpdated) {
-      window.backendAPI.onBukidUpdated(callback);
-    }
-  }
+  // onBukidUpdated(callback: (bukid: BukidData) => void) {
+  //   if (window.backendAPI && window.backendAPI.onBukidUpdated) {
+  //     window.backendAPI.onBukidUpdated(callback);
+  //   }
+  // }
 
-  onBukidDeleted(callback: (id: number) => void) {
-    if (window.backendAPI && window.backendAPI.onBukidDeleted) {
-      window.backendAPI.onBukidDeleted(callback);
-    }
-  }
+  // onBukidDeleted(callback: (id: number) => void) {
+  //   if (window.backendAPI && window.backendAPI.onBukidDeleted) {
+  //     window.backendAPI.onBukidDeleted(callback);
+  //   }
+  // }
 
   // 📱 REACT HOOKS READY
 

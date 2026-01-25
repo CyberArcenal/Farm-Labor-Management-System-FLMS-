@@ -6,6 +6,7 @@ const { withErrorHandling } = require("../../../utils/errorHandler");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/dataSource");
 const UserActivity = require("../../../entities/UserActivity");
+const { assignmentHandler } = require("../assignment/index.ipc");
 
 class DebtHandler {
   constructor() {
@@ -22,13 +23,15 @@ class DebtHandler {
     this.getOverdueDebts = this.importHandler("./get/overdue.ipc");
     this.getDebtHistory = this.importHandler("./get/history.ipc");
     this.searchDebts = this.importHandler("./search.ipc");
-    
+
     // 📊 REPORT HANDLERS
     this.getDebtReport = this.importHandler("./get/report.ipc");
     this.getWorkerDebtSummary = this.importHandler("./get/worker_summary.ipc");
-    this.getDebtCollectionReport = this.importHandler("./get/collection_report.ipc");
+    this.getDebtCollectionReport = this.importHandler(
+      "./get/collection_report.ipc",
+    );
     this.getPaymentHistory = this.importHandler("./get/payment_history.ipc"); // NEW
-    
+
     // ✏️ WRITE OPERATION HANDLERS (with transactions)
     this.createDebt = this.importHandler("./create.ipc.js");
     this.updateDebt = this.importHandler("./update.ipc.js");
@@ -37,17 +40,17 @@ class DebtHandler {
     this.makePayment = this.importHandler("./make_payment.ipc.js");
     this.addInterest = this.importHandler("./add_interest.ipc.js");
     this.adjustDebt = this.importHandler("./adjust_debt.ipc.js");
-    
+
     // 🔄 BATCH OPERATIONS
     this.bulkCreateDebts = this.importHandler("./bulk_create.ipc.js");
     this.importDebtsFromCSV = this.importHandler("./import_csv.ipc.js");
     this.exportDebtsToCSV = this.importHandler("./export_csv.ipc.js");
     this.bulkUpdateStatus = this.importHandler("./bulk_update_status.ipc.js");
     this.processPayment = this.importHandler("./process_payment.ipc.js"); // NEW
-    
+
     // 💰 PAYMENT OPERATIONS
     this.reversePayment = this.importHandler("./reverse_payment.ipc.js");
-    
+
     // ⚙️ VALIDATION HANDLERS
     this.validateDebtData = this.importHandler("./validate_data.ipc.js");
     this.checkDebtLimit = this.importHandler("./check_debt_limit.ipc.js");
@@ -299,7 +302,8 @@ class DebtHandler {
           params._userId,
           handler.name,
           `Successfully executed ${handler.name}`,
-          queryRunner
+          // @ts-ignore
+          queryRunner,
         );
       } else {
         await queryRunner.rollbackTransaction();

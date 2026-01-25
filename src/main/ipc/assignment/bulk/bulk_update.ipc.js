@@ -1,5 +1,5 @@
 // src/ipc/assignment/bulk/bulk_update.ipc.js
-const { AppDataSource } = require("../../../../db/dataSource");
+//@ts-check
 const Assignment = require("../../../../entities/Assignment");
 
 /**
@@ -10,6 +10,7 @@ const Assignment = require("../../../../entities/Assignment");
  */
 module.exports = async (params, queryRunner) => {
   try {
+    // @ts-ignore
     const { assignments, updateData, filters, _userId } = params;
 
     if (!assignments && !filters) {
@@ -31,6 +32,9 @@ module.exports = async (params, queryRunner) => {
     const assignmentRepo = queryRunner.manager.getRepository(Assignment);
     
     // Get assignments to update
+    /**
+     * @type {any[]}
+     */
     let assignmentsToUpdate = [];
     
     if (assignments && Array.isArray(assignments)) {
@@ -71,7 +75,13 @@ module.exports = async (params, queryRunner) => {
     }
 
     // Validate update data
+    /**
+     * @type {{ assignmentId: any; errors: string[]; }[]}
+     */
     const validationErrors = [];
+    /**
+     * @type {any[]}
+     */
     const validUpdates = [];
     
     assignmentsToUpdate.forEach(assignment => {
@@ -177,6 +187,7 @@ module.exports = async (params, queryRunner) => {
       } catch (error) {
         skippedAssignments.push({
           assignmentId: assignment.id,
+          // @ts-ignore
           error: error.message
         });
       }
@@ -190,6 +201,7 @@ module.exports = async (params, queryRunner) => {
       totalFailed: validationErrors.length,
       updatedStatuses: updatedAssignments.reduce((acc, item) => {
         const status = item.newValues.status;
+        // @ts-ignore
         acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {})
@@ -210,6 +222,7 @@ module.exports = async (params, queryRunner) => {
     console.error("Error in bulk assignment update:", error);
     return {
       status: false,
+      // @ts-ignore
       message: `Bulk update failed: ${error.message}`,
       data: null
     };

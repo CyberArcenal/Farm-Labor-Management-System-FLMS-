@@ -1,9 +1,9 @@
 // ipc/bukid/get_kabisilya_info.ipc.js
 //@ts-check
 
-const { AppDataSource } = require("../../../db/dataSource");
-const Bukid = require("../../../../entities/Bukid");
-const Kabisilya = require("../../../../entities/Kabisilya");
+const { AppDataSource } = require("../../db/dataSource");
+const Bukid = require("../../../entities/Bukid");
+const Kabisilya = require("../../../entities/Kabisilya");
 
 module.exports = async function getKabisilyaInfo(params = {}) {
   try {

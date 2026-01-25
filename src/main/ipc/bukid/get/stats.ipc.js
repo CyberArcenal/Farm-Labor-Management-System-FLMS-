@@ -1,8 +1,8 @@
 // ipc/bukid/stats.ipc.js
 //@ts-check
 
-const Bukid = require("../../../entities/Bukid");
-const { AppDataSource } = require("../../db/dataSource");
+const Bukid = require("../../../../entities/Bukid");
+const { AppDataSource } = require("../../../db/dataSource");
 
 
 module.exports = async function getBukidStats(params = {}) {

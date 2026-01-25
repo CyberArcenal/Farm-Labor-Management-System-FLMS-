@@ -1,11 +1,11 @@
-// ipc/bukid/assign_to_kabisilya.ipc.js
+// ipc/bukid/remove_from_kabisilya.ipc.js
 //@ts-check
 
-const { AppDataSource } = require("../../../db/dataSource");
-const Bukid = require("../../../../entities/Bukid");
-const UserActivity = require("../../../../entities/UserActivity");
+const { AppDataSource } = require("../../db/dataSource");
+const Bukid = require("../../../entities/Bukid");
+const UserActivity = require("../../../entities/UserActivity");
 
-module.exports = async function assignToKabisilya(params = {}, queryRunner = null) {
+module.exports = async function removeFromKabisilya(params = {}, queryRunner = null) {
   let shouldRelease = false;
   
   if (!queryRunner) {
@@ -19,12 +19,12 @@ module.exports = async function assignToKabisilya(params = {}, queryRunner = nul
 
   try {
     // @ts-ignore
-    const { bukidId, kabisilyaId, _userId } = params;
+    const { id, _userId } = params;
     
-    if (!bukidId || !kabisilyaId) {
+    if (!id) {
       return {
         status: false,
-        message: 'Bukid ID and Kabisilya ID are required',
+        message: 'Bukid ID is required',
         data: null
       };
     }
@@ -32,7 +32,7 @@ module.exports = async function assignToKabisilya(params = {}, queryRunner = nul
     // Find bukid
     // @ts-ignore
     const bukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id: bukidId }
+      where: { id }
     });
 
     if (!bukid) {
@@ -43,18 +43,17 @@ module.exports = async function assignToKabisilya(params = {}, queryRunner = nul
       };
     }
 
-    // Assign to kabisilya
+    // Remove from kabisilya
     // @ts-ignore
-    await queryRunner.manager.update(Bukid, bukidId, {
-      kabisilya: { id: kabisilyaId },
+    await queryRunner.manager.update(Bukid, id, {
+      kabisilya: null,
       updatedAt: new Date()
     });
     
     // Get updated bukid
     // @ts-ignore
     const updatedBukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id: bukidId },
-      relations: ['kabisilya']
+      where: { id }
     });
 
     // Log activity
@@ -62,8 +61,8 @@ module.exports = async function assignToKabisilya(params = {}, queryRunner = nul
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'assign_bukid_to_kabisilya',
-      description: `Assigned bukid ${bukidId} to kabisilya ${kabisilyaId}`,
+      action: 'remove_bukid_from_kabisilya',
+      description: `Removed bukid ${id} from kabisilya`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
       created_at: new Date()
@@ -77,7 +76,7 @@ module.exports = async function assignToKabisilya(params = {}, queryRunner = nul
 
     return {
       status: true,
-      message: 'Bukid assigned to kabisilya successfully',
+      message: 'Bukid removed from kabisilya successfully',
       data: { bukid: updatedBukid }
     };
   } catch (error) {
@@ -85,11 +84,11 @@ module.exports = async function assignToKabisilya(params = {}, queryRunner = nul
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in assignToKabisilya:', error);
+    console.error('Error in removeFromKabisilya:', error);
     return {
       status: false,
       // @ts-ignore
-      message: `Failed to assign bukid to kabisilya: ${error.message}`,
+      message: `Failed to remove bukid from kabisilya: ${error.message}`,
       data: null
     };
   } finally {

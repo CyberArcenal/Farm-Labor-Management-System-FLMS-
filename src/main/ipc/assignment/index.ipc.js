@@ -25,7 +25,7 @@ class AssignmentHandler {
     this.getCancelledAssignments = this.importHandler("./get/cancelled.ipc");
     this.getAssignmentStats = this.importHandler("./get/stats.ipc");
     this.getAssignmentHistory = this.importHandler("./get/history.ipc");
-    this.searchAssignments = this.importHandler("./search.ipc");
+    this.searchAssignments = this.importHandler("./search/search.ipc");
 
     // 📊 REPORT HANDLERS
     this.getAssignmentReport = this.importHandler("./get/report.ipc");
@@ -34,10 +34,10 @@ class AssignmentHandler {
 
     // ✏️ WRITE OPERATION HANDLERS (with transactions)
     this.createAssignment = this.importHandler("./create.ipc.js");
-    this.updateAssignment = this.importHandler("./update.ipc.js");
-    this.deleteAssignment = this.importHandler("./delete.ipc.js");
+    this.updateAssignment = this.importHandler("./update/update.ipc.js");
+    this.deleteAssignment = this.importHandler("./delete/delete.ipc.js");
     this.updateAssignmentStatus = this.importHandler("./update_status.ipc.js");
-    this.bulkUpdateAssignments = this.importHandler("./bulk_update.ipc.js");
+    this.bulkUpdateAssignments = this.importHandler("./bulk/bulk_update.ipc.js");
     this.reassignWorker = this.importHandler("./reassign_worker.ipc.js");
     this.updateLuWangCount = this.importHandler("./update_luwang_count.ipc.js");
     this.addAssignmentNote = this.importHandler("./add_note.ipc.js");
@@ -49,9 +49,9 @@ class AssignmentHandler {
     this.syncAssignmentsFromExternal = this.importHandler("./sync_external.ipc.js");
 
     // ⚙️ VALIDATION HANDLERS
-    this.validateAssignmentData = this.importHandler("./validate_data.ipc.js");
+    this.validateAssignmentData = this.importHandler("./validation/validate_data.ipc.js");
     this.checkWorkerAvailability = this.importHandler("./check_worker_availability.ipc.js");
-    this.validateLuWangCount = this.importHandler("./validate_luwang_count.ipc.js");
+    this.validateLuWangCount = this.importHandler("./validation/validate_luwang_count.ipc.js");
   }
 
   /**
@@ -94,6 +94,7 @@ class AssignmentHandler {
       switch (method) {
         // 📋 READ-ONLY OPERATIONS
         case "getAllAssignments":
+          // @ts-ignore
           return await this.getAllAssignments(enrichedParams.filters, userId);
 
         case "getAssignmentById":

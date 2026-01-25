@@ -280,3 +280,20 @@ export function getCurrentCurrencySymbol(): string {
   const currency = systemCache.getCurrency();
   return getCurrencySymbol(currency);
 }
+
+
+export function formatPercentage(rate:number): string {
+  if (typeof rate !== "number" || isNaN(rate)) {
+    return "0%";
+  }
+  return `${(rate * 100).toFixed(2)}%`;
+}
+
+export function formatNumber(value: number | null | undefined, minimumFractionDigits = 0, maximumFractionDigits = 2): string {
+  if (typeof value !== "number" || isNaN(value))
+    return "0";
+  return new Intl.NumberFormat("en", {
+    minimumFractionDigits,
+    maximumFractionDigits,
+  }).format(value);
+}

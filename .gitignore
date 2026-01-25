@@ -4,3 +4,5 @@ kabisilyaManagement.db-shm
 kabisilyaManagement.db-wal
 kabisilyaManagement.db
 /.vs
+/src/main/ipc/notification2
+*.csv

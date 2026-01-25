@@ -1,5 +1,5 @@
-// src/ipc/assignment/delete/delete.ipc.js
-const { AppDataSource } = require("../../../../db/dataSource");
+// src/ipc/assignment/delete/delete.ipc.js\
+//@ts-check
 const Assignment = require("../../../../entities/Assignment");
 
 /**
@@ -10,6 +10,7 @@ const Assignment = require("../../../../entities/Assignment");
  */
 module.exports = async (params, queryRunner) => {
   try {
+    // @ts-ignore
     const { assignmentId, reason, _userId } = params;
 
     if (!assignmentId) {
@@ -48,18 +49,27 @@ module.exports = async (params, queryRunner) => {
     // Store assignment data for response before deletion
     const deletedAssignment = {
       id: assignment.id,
+      // @ts-ignore
       workerId: assignment.workerId,
+      // @ts-ignore
       pitakId: assignment.pitakId,
+      // @ts-ignore
       luwangCount: parseFloat(assignment.luwangCount),
       assignmentDate: assignment.assignmentDate,
       status: assignment.status,
       notes: assignment.notes,
+      // @ts-ignore
       worker: assignment.worker ? {
+        // @ts-ignore
         id: assignment.worker.id,
+        // @ts-ignore
         name: assignment.worker.name
       } : null,
+      // @ts-ignore
       pitak: assignment.pitak ? {
+        // @ts-ignore
         id: assignment.pitak.id,
+        // @ts-ignore
         name: assignment.pitak.name
       } : null
     };
@@ -97,6 +107,7 @@ module.exports = async (params, queryRunner) => {
     console.error("Error deleting assignment:", error);
     return {
       status: false,
+      // @ts-ignore
       message: `Failed to delete assignment: ${error.message}`,
       data: null
     };

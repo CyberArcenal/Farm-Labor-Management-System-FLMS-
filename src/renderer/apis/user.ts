@@ -1040,7 +1040,7 @@ class UserAPI {
 
   // Helper methods
 
-  private validateEmail(email: string): boolean {
+  validateEmail(email: string): boolean {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   }

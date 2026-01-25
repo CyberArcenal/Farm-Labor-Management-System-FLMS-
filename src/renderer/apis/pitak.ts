@@ -4,7 +4,7 @@ export interface PitakData {
   bukidId: number;
   location?: string | null;
   totalLuwang: number;
-  status: 'active' | 'inactive' | 'harvested';
+  status: "active" | "inactive" | "harvested";
   createdAt: string;
   updatedAt: string;
 }
@@ -121,7 +121,7 @@ export interface PitakUtilizationData {
   recommendations: Array<{
     type: string;
     message: string;
-    priority: 'low' | 'medium' | 'high';
+    priority: "low" | "medium" | "high";
   }>;
 }
 
@@ -133,7 +133,7 @@ export interface PitakForecastData {
     forecastedLuWang: number;
     projectedUtilization: number;
     capacityRemaining: number;
-    riskLevel: 'low' | 'medium' | 'high';
+    riskLevel: "low" | "medium" | "high";
   }>;
   metrics: {
     basedOnDays: number;
@@ -171,11 +171,11 @@ export interface PitakTrendData {
   insights: Array<{
     type: string;
     message: string;
-    severity: 'info' | 'warning' | 'critical';
+    severity: "info" | "warning" | "critical";
   }>;
   recommendations: Array<{
     action: string;
-    priority: 'low' | 'medium' | 'high';
+    priority: "low" | "medium" | "high";
     timeframe: string;
   }>;
 }
@@ -232,7 +232,7 @@ export interface DuplicateCheck {
   hasDuplicates: boolean;
   riskAssessment: {
     score: number;
-    level: 'none' | 'low' | 'medium' | 'high';
+    level: "none" | "low" | "medium" | "high";
     reasons: string[];
     recommendation: string;
   };
@@ -260,7 +260,7 @@ export interface CapacityValidation {
   recommendations: Array<{
     type: string;
     message: string;
-    severity?: 'warning' | 'error';
+    severity?: "warning" | "error";
     options?: string[];
   }>;
 }
@@ -439,7 +439,7 @@ export interface PitakFilters {
   createdAfter?: string;
   createdBefore?: string;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
 }
@@ -497,7 +497,10 @@ class PitakAPI {
     }
   }
 
-  async getPitaksByStatus(status: string, filters: PitakFilters = {}): Promise<PitakListResponse> {
+  async getPitaksByStatus(
+    status: string,
+    filters: PitakFilters = {},
+  ): Promise<PitakListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -517,7 +520,10 @@ class PitakAPI {
     }
   }
 
-  async getPitaksByBukid(bukidId: number, filters: PitakFilters = {}): Promise<PitakListResponse> {
+  async getPitaksByBukid(
+    bukidId: number,
+    filters: PitakFilters = {},
+  ): Promise<PitakListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -537,7 +543,9 @@ class PitakAPI {
     }
   }
 
-  async getActivePitaks(filters: PitakFilters = {}): Promise<PitakListResponse> {
+  async getActivePitaks(
+    filters: PitakFilters = {},
+  ): Promise<PitakListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -557,7 +565,9 @@ class PitakAPI {
     }
   }
 
-  async getInactivePitaks(filters: PitakFilters = {}): Promise<PitakListResponse> {
+  async getInactivePitaks(
+    filters: PitakFilters = {},
+  ): Promise<PitakListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -577,7 +587,9 @@ class PitakAPI {
     }
   }
 
-  async getHarvestedPitaks(filters: PitakFilters = {}): Promise<PitakListResponse> {
+  async getHarvestedPitaks(
+    filters: PitakFilters = {},
+  ): Promise<PitakListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -617,7 +629,10 @@ class PitakAPI {
     }
   }
 
-  async getPitakWithAssignments(pitakId: number, dateRange?: DateRange): Promise<PitakDetailResponse> {
+  async getPitakWithAssignments(
+    pitakId: number,
+    dateRange?: DateRange,
+  ): Promise<PitakDetailResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -631,13 +646,18 @@ class PitakAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get pitak with assignments");
+      throw new Error(
+        response.message || "Failed to get pitak with assignments",
+      );
     } catch (error: any) {
       throw new Error(error.message || "Failed to get pitak with assignments");
     }
   }
 
-  async getPitakWithPayments(pitakId: number, dateRange?: DateRange): Promise<PitakDetailResponse> {
+  async getPitakWithPayments(
+    pitakId: number,
+    dateRange?: DateRange,
+  ): Promise<PitakDetailResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -679,7 +699,10 @@ class PitakAPI {
 
   // 📊 REPORT OPERATIONS
 
-  async getPitakReport(dateRange: DateRange, filters: PitakFilters = {}): Promise<ReportResponse> {
+  async getPitakReport(
+    dateRange: DateRange,
+    filters: PitakFilters = {},
+  ): Promise<ReportResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -699,7 +722,10 @@ class PitakAPI {
     }
   }
 
-  async getPitakSummaryReport(bukidId?: number, status?: string): Promise<ReportResponse> {
+  async getPitakSummaryReport(
+    bukidId?: number,
+    status?: string,
+  ): Promise<ReportResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -719,7 +745,10 @@ class PitakAPI {
     }
   }
 
-  async getPitakPerformanceReport(pitakId: number, dateRange: DateRange): Promise<PitakProductivityResponse> {
+  async getPitakPerformanceReport(
+    pitakId: number,
+    dateRange: DateRange,
+  ): Promise<PitakProductivityResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -733,13 +762,20 @@ class PitakAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get pitak performance report");
+      throw new Error(
+        response.message || "Failed to get pitak performance report",
+      );
     } catch (error: any) {
-      throw new Error(error.message || "Failed to get pitak performance report");
+      throw new Error(
+        error.message || "Failed to get pitak performance report",
+      );
     }
   }
 
-  async getPitakLuWangReport(pitakId: number, dateRange: DateRange): Promise<LuWangReportResponse> {
+  async getPitakLuWangReport(
+    pitakId: number,
+    dateRange: DateRange,
+  ): Promise<LuWangReportResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -786,11 +822,14 @@ class PitakAPI {
     }
   }
 
-  async updatePitak(id: number, data: {
-    location?: string;
-    totalLuwang?: number;
-    status?: string;
-  }): Promise<PitakDetailResponse> {
+  async updatePitak(
+    id: number,
+    data: {
+      location?: string;
+      totalLuwang?: number;
+      status?: string;
+    },
+  ): Promise<PitakDetailResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -810,7 +849,10 @@ class PitakAPI {
     }
   }
 
-  async deletePitak(id: number, force: boolean = false): Promise<PitakResponse> {
+  async deletePitak(
+    id: number,
+    force: boolean = false,
+  ): Promise<PitakResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -830,7 +872,11 @@ class PitakAPI {
     }
   }
 
-  async updatePitakStatus(id: number, status: string, notes?: string): Promise<PitakDetailResponse> {
+  async updatePitakStatus(
+    id: number,
+    status: string,
+    notes?: string,
+  ): Promise<PitakDetailResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -850,7 +896,12 @@ class PitakAPI {
     }
   }
 
-  async updatePitakLuWang(id: number, totalLuwang: number, adjustmentType: 'add' | 'subtract' | 'set' = 'set', notes?: string): Promise<PitakDetailResponse> {
+  async updatePitakLuWang(
+    id: number,
+    totalLuwang: number,
+    adjustmentType: "add" | "subtract" | "set" = "set",
+    notes?: string,
+  ): Promise<PitakDetailResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -870,7 +921,10 @@ class PitakAPI {
     }
   }
 
-  async updatePitakLocation(id: number, location: string): Promise<PitakDetailResponse> {
+  async updatePitakLocation(
+    id: number,
+    location: string,
+  ): Promise<PitakDetailResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -890,7 +944,10 @@ class PitakAPI {
     }
   }
 
-  async transferPitakBukid(id: number, newBukidId: number): Promise<PitakDetailResponse> {
+  async transferPitakBukid(
+    id: number,
+    newBukidId: number,
+  ): Promise<PitakDetailResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -910,11 +967,14 @@ class PitakAPI {
     }
   }
 
-  async bulkUpdatePitaks(pitakIds: number[], updates: {
-    location?: string;
-    totalLuwang?: number;
-    status?: string;
-  }): Promise<PitakResponse> {
+  async bulkUpdatePitaks(
+    pitakIds: number[],
+    updates: {
+      location?: string;
+      totalLuwang?: number;
+      status?: string;
+    },
+  ): Promise<PitakResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -936,12 +996,14 @@ class PitakAPI {
 
   // 🔄 BATCH OPERATIONS
 
-  async bulkCreatePitaks(pitaks: Array<{
-    bukidId: number;
-    location?: string;
-    totalLuwang?: number;
-    status?: string;
-  }>): Promise<BulkCreateResponse> {
+  async bulkCreatePitaks(
+    pitaks: Array<{
+      bukidId: number;
+      location?: string;
+      totalLuwang?: number;
+      status?: string;
+    }>,
+  ): Promise<BulkCreateResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -961,12 +1023,15 @@ class PitakAPI {
     }
   }
 
-  async importPitaksFromCSV(csvData: string, options: {
-    hasHeaders?: boolean;
-    delimiter?: string;
-    skipFirst?: number;
-    maxRows?: number;
-  } = {}): Promise<ImportResponse> {
+  async importPitaksFromCSV(
+    csvData: string,
+    options: {
+      hasHeaders?: boolean;
+      delimiter?: string;
+      skipFirst?: number;
+      maxRows?: number;
+    } = {},
+  ): Promise<ImportResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1006,7 +1071,10 @@ class PitakAPI {
     }
   }
 
-  async exportPitakAssignments(pitakId: number, dateRange?: DateRange): Promise<ExportResponse> {
+  async exportPitakAssignments(
+    pitakId: number,
+    dateRange?: DateRange,
+  ): Promise<ExportResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1026,7 +1094,10 @@ class PitakAPI {
     }
   }
 
-  async exportPitakPayments(pitakId: number, dateRange?: DateRange): Promise<ExportResponse> {
+  async exportPitakPayments(
+    pitakId: number,
+    dateRange?: DateRange,
+  ): Promise<ExportResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1048,7 +1119,10 @@ class PitakAPI {
 
   // 📈 ANALYTICS OPERATIONS
 
-  async getPitakProductivity(pitakId: number, dateRange: DateRange): Promise<PitakProductivityResponse> {
+  async getPitakProductivity(
+    pitakId: number,
+    dateRange: DateRange,
+  ): Promise<PitakProductivityResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1068,7 +1142,10 @@ class PitakAPI {
     }
   }
 
-  async getPitakUtilization(bukidId: number, dateRange: DateRange): Promise<PitakUtilizationResponse> {
+  async getPitakUtilization(
+    bukidId: number,
+    dateRange: DateRange,
+  ): Promise<PitakUtilizationResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1088,7 +1165,10 @@ class PitakAPI {
     }
   }
 
-  async getPitakForecast(bukidId: number, period: string = '30d'): Promise<PitakForecastResponse> {
+  async getPitakForecast(
+    bukidId: number,
+    period: string = "30d",
+  ): Promise<PitakForecastResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1108,7 +1188,10 @@ class PitakAPI {
     }
   }
 
-  async getPitakTrends(bukidId: number, period: string = '90d'): Promise<PitakTrendResponse> {
+  async getPitakTrends(
+    bukidId: number,
+    period: string = "90d",
+  ): Promise<PitakTrendResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1130,12 +1213,15 @@ class PitakAPI {
 
   // ⚙️ VALIDATION OPERATIONS
 
-  async validatePitakData(data: {
-    bukidId?: number;
-    location?: string;
-    totalLuwang?: number;
-    status?: string;
-  }, excludePitakId?: number): Promise<ValidationResponse> {
+  async validatePitakData(
+    data: {
+      bukidId?: number;
+      location?: string;
+      totalLuwang?: number;
+      status?: string;
+    },
+    excludePitakId?: number,
+  ): Promise<ValidationResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1155,7 +1241,11 @@ class PitakAPI {
     }
   }
 
-  async checkPitakAvailability(pitakId: number, date?: string, workerId?: number): Promise<AvailabilityResponse> {
+  async checkPitakAvailability(
+    pitakId: number,
+    date?: string,
+    workerId?: number,
+  ): Promise<AvailabilityResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1175,7 +1265,11 @@ class PitakAPI {
     }
   }
 
-  async validateLuWangCapacity(pitakId: number, requestedLuWang: number, date?: string): Promise<CapacityResponse> {
+  async validateLuWangCapacity(
+    pitakId: number,
+    requestedLuWang: number,
+    date?: string,
+  ): Promise<CapacityResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1195,10 +1289,13 @@ class PitakAPI {
     }
   }
 
-  async checkDuplicatePitak(data: {
-    bukidId: number;
-    location?: string;
-  }, excludePitakId?: number): Promise<DuplicateResponse> {
+  async checkDuplicatePitak(
+    data: {
+      bukidId: number;
+      location?: string;
+    },
+    excludePitakId?: number,
+  ): Promise<DuplicateResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.pitak) {
         throw new Error("Electron API not available");
@@ -1230,13 +1327,17 @@ class PitakAPI {
       // First validate
       const validation = await this.validatePitakData(data);
       if (!validation.data.isValid) {
-        throw new Error(`Validation failed: ${validation.data.errors.join(', ')}`);
+        throw new Error(
+          `Validation failed: ${validation.data.errors.join(", ")}`,
+        );
       }
 
       // Check for duplicates
       const duplicateCheck = await this.checkDuplicatePitak(data);
       if (duplicateCheck.data.hasDuplicates) {
-        throw new Error(`Potential duplicates found: ${duplicateCheck.data.riskAssessment.reasons.join(', ')}`);
+        throw new Error(
+          `Potential duplicates found: ${duplicateCheck.data.riskAssessment.reasons.join(", ")}`,
+        );
       }
 
       // Create if valid
@@ -1250,7 +1351,7 @@ class PitakAPI {
     try {
       const response = await this.getPitakById(id);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to get pitak summary: ${error.message}`);
     }
   }
@@ -1258,10 +1359,10 @@ class PitakAPI {
   async getPitaksByBukidName(bukidName: string): Promise<PitakWithDetails[]> {
     try {
       const allResponse = await this.getAllPitaks();
-      return allResponse.data.filter(pitak => 
-        pitak.bukid?.name?.toLowerCase().includes(bukidName.toLowerCase())
+      return allResponse.data.filter((pitak) =>
+        pitak.bukid?.name?.toLowerCase().includes(bukidName.toLowerCase()),
       );
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to get pitaks by bukid name: ${error.message}`);
     }
   }
@@ -1270,78 +1371,112 @@ class PitakAPI {
     try {
       const response = await this.searchPitaks(location);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to search pitaks by location: ${error.message}`);
     }
   }
 
-  async getPitaksWithHighUtilization(threshold: number = 80): Promise<PitakWithDetails[]> {
+  async getPitaksWithHighUtilization(
+    threshold: number = 80,
+  ): Promise<PitakWithDetails[]> {
     try {
       const response = await this.getAllPitaks();
-      return response.data.filter(pitak => {
+      return response.data.filter((pitak) => {
         const utilization = pitak.stats?.utilizationRate || 0;
         return utilization >= threshold;
       });
-    } catch (error) {
-      throw new Error(`Failed to get pitaks with high utilization: ${error.message}`);
+    } catch (error: any) {
+      throw new Error(
+        `Failed to get pitaks with high utilization: ${error.message}`,
+      );
     }
   }
 
-  async getPitaksWithLowUtilization(threshold: number = 20): Promise<PitakWithDetails[]> {
+  async getPitaksWithLowUtilization(
+    threshold: number = 20,
+  ): Promise<PitakWithDetails[]> {
     try {
       const response = await this.getAllPitaks();
-      return response.data.filter(pitak => {
+      return response.data.filter((pitak) => {
         const utilization = pitak.stats?.utilizationRate || 0;
         return utilization <= threshold;
       });
-    } catch (error) {
-      throw new Error(`Failed to get pitaks with low utilization: ${error.message}`);
+    } catch (error: any) {
+      throw new Error(
+        `Failed to get pitaks with low utilization: ${error.message}`,
+      );
     }
   }
 
-  async isPitakAvailable(pitakId: number, date?: string, workerId?: number): Promise<boolean> {
+  async isPitakAvailable(
+    pitakId: number,
+    date?: string,
+    workerId?: number,
+  ): Promise<boolean> {
     try {
-      const response = await this.checkPitakAvailability(pitakId, date, workerId);
+      const response = await this.checkPitakAvailability(
+        pitakId,
+        date,
+        workerId,
+      );
       return response.data.isAvailable;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking pitak availability:", error);
       return false;
     }
   }
 
-  async hasSufficientCapacity(pitakId: number, requestedLuWang: number, date?: string): Promise<boolean> {
+  async hasSufficientCapacity(
+    pitakId: number,
+    requestedLuWang: number,
+    date?: string,
+  ): Promise<boolean> {
     try {
-      const response = await this.validateLuWangCapacity(pitakId, requestedLuWang, date);
+      const response = await this.validateLuWangCapacity(
+        pitakId,
+        requestedLuWang,
+        date,
+      );
       return response.data.canAccommodate;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error checking pitak capacity:", error);
       return false;
     }
   }
 
-  async generatePitakReport(pitakId: number, startDate: string, endDate: string): Promise<any> {
+  async generatePitakReport(
+    pitakId: number,
+    startDate: string,
+    endDate: string,
+  ): Promise<any> {
     try {
       const dateRange: DateRange = { startDate, endDate };
       const [report, productivity, luWangReport] = await Promise.all([
         this.getPitakReport(dateRange, { bukidId: pitakId }),
         this.getPitakProductivity(pitakId, dateRange),
-        this.getPitakLuWangReport(pitakId, dateRange)
+        this.getPitakLuWangReport(pitakId, dateRange),
       ]);
 
       return {
         ...report.data,
         productivity: productivity.data,
-        luWangReport: luWangReport.data
+        luWangReport: luWangReport.data,
       };
-    } catch (error) {
-      throw new Error(`Failed to generate comprehensive pitak report: ${error.message}`);
+    } catch (error: any) {
+      throw new Error(
+        `Failed to generate comprehensive pitak report: ${error.message}`,
+      );
     }
   }
 
-  async exportPitakData(pitakId: number, includeAssignments: boolean = true, includePayments: boolean = true): Promise<ExportResult[]> {
+  async exportPitakData(
+    pitakId: number,
+    includeAssignments: boolean = true,
+    includePayments: boolean = true,
+  ): Promise<ExportResult[]> {
     try {
       const exports: ExportResult[] = [];
-      
+
       // Export pitak details
       const pitakResponse = await this.exportPitaksToCSV({ bukidId: pitakId });
       exports.push(pitakResponse.data);
@@ -1359,34 +1494,44 @@ class PitakAPI {
       }
 
       return exports;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to export pitak data: ${error.message}`);
     }
   }
 
-  async validateAndUpdate(id: number, updates: {
-    location?: string;
-    totalLuwang?: number;
-    status?: string;
-  }): Promise<PitakDetailResponse> {
+  async validateAndUpdate(
+    id: number,
+    updates: {
+      location?: string;
+      totalLuwang?: number;
+      status?: string;
+    },
+  ): Promise<PitakDetailResponse> {
     try {
       // Validate the updates
       const validation = await this.validatePitakData(updates, id);
       if (!validation.data.isValid) {
-        throw new Error(`Validation failed: ${validation.data.errors.join(', ')}`);
+        throw new Error(
+          `Validation failed: ${validation.data.errors.join(", ")}`,
+        );
       }
 
       // Check for duplicates if location is being updated
       if (updates.location) {
         // Need to get current bukidId for duplicate check
         const currentPitak = await this.getPitakById(id);
-        const duplicateCheck = await this.checkDuplicatePitak({
-          bukidId: currentPitak.data.bukidId,
-          location: updates.location
-        }, id);
-        
+        const duplicateCheck = await this.checkDuplicatePitak(
+          {
+            bukidId: currentPitak.data.bukidId,
+            location: updates.location,
+          },
+          id,
+        );
+
         if (duplicateCheck.data.hasDuplicates) {
-          throw new Error(`Potential duplicates found: ${duplicateCheck.data.riskAssessment.reasons.join(', ')}`);
+          throw new Error(
+            `Potential duplicates found: ${duplicateCheck.data.riskAssessment.reasons.join(", ")}`,
+          );
         }
       }
 
@@ -1397,167 +1542,208 @@ class PitakAPI {
     }
   }
 
-  async adjustPitakLuWang(id: number, amount: number, operation: 'increase' | 'decrease' = 'increase', notes?: string): Promise<PitakDetailResponse> {
+  async adjustPitakLuWang(
+    id: number,
+    amount: number,
+    operation: "increase" | "decrease" = "increase",
+    notes?: string,
+  ): Promise<PitakDetailResponse> {
     try {
-      const adjustmentType = operation === 'increase' ? 'add' : 'subtract';
+      const adjustmentType = operation === "increase" ? "add" : "subtract";
       return await this.updatePitakLuWang(id, amount, adjustmentType, notes);
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to adjust pitak LuWang: ${error.message}`);
     }
   }
 
-  async markPitakAsHarvested(id: number, notes?: string): Promise<PitakDetailResponse> {
+  async markPitakAsHarvested(
+    id: number,
+    notes?: string,
+  ): Promise<PitakDetailResponse> {
     try {
-      return await this.updatePitakStatus(id, 'harvested', notes);
-    } catch (error) {
+      return await this.updatePitakStatus(id, "harvested", notes);
+    } catch (error: any) {
       throw new Error(`Failed to mark pitak as harvested: ${error.message}`);
     }
   }
 
-  async activatePitak(id: number, notes?: string): Promise<PitakDetailResponse> {
+  async activatePitak(
+    id: number,
+    notes?: string,
+  ): Promise<PitakDetailResponse> {
     try {
-      return await this.updatePitakStatus(id, 'active', notes);
-    } catch (error) {
+      return await this.updatePitakStatus(id, "active", notes);
+    } catch (error: any) {
       throw new Error(`Failed to activate pitak: ${error.message}`);
     }
   }
 
-  async deactivatePitak(id: number, notes?: string): Promise<PitakDetailResponse> {
+  async deactivatePitak(
+    id: number,
+    notes?: string,
+  ): Promise<PitakDetailResponse> {
     try {
-      return await this.updatePitakStatus(id, 'inactive', notes);
-    } catch (error) {
+      return await this.updatePitakStatus(id, "inactive", notes);
+    } catch (error: any) {
       throw new Error(`Failed to deactivate pitak: ${error.message}`);
     }
   }
 
-  async getPitakAssignmentHistory(pitakId: number, limit: number = 10): Promise<AssignmentSummary[]> {
+  async getPitakAssignmentHistory(
+    pitakId: number,
+    limit: number = 10,
+  ): Promise<AssignmentSummary[]> {
     try {
       const response = await this.getPitakWithAssignments(pitakId);
       return response.data.assignments?.slice(0, limit) || [];
-    } catch (error) {
-      throw new Error(`Failed to get pitak assignment history: ${error.message}`);
+    } catch (error: any) {
+      throw new Error(
+        `Failed to get pitak assignment history: ${error.message}`,
+      );
     }
   }
 
-  async getPitakPaymentHistory(pitakId: number, limit: number = 10): Promise<PaymentSummary[]> {
+  async getPitakPaymentHistory(
+    pitakId: number,
+    limit: number = 10,
+  ): Promise<PaymentSummary[]> {
     try {
       const response = await this.getPitakWithPayments(pitakId);
       return response.data.payments?.slice(0, limit) || [];
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to get pitak payment history: ${error.message}`);
     }
   }
 
-  async getAvailablePitaksForAssignment(date: string, bukidId?: number): Promise<PitakWithDetails[]> {
+  async getAvailablePitaksForAssignment(
+    date: string,
+    bukidId?: number,
+  ): Promise<PitakWithDetails[]> {
     try {
-      const filters: PitakFilters = { status: 'active' };
+      const filters: PitakFilters = { status: "active" };
       if (bukidId) filters.bukidId = bukidId;
-      
+
       const response = await this.getActivePitaks(filters);
       const availablePitaks: PitakWithDetails[] = [];
-      
+
       for (const pitak of response.data) {
         const availability = await this.checkPitakAvailability(pitak.id, date);
         if (availability.data.isAvailable) {
           availablePitaks.push(pitak);
         }
       }
-      
+
       return availablePitaks;
-    } catch (error) {
-      throw new Error(`Failed to get available pitaks for assignment: ${error.message}`);
+    } catch (error: any) {
+      throw new Error(
+        `Failed to get available pitaks for assignment: ${error.message}`,
+      );
     }
   }
 
   // 📊 ANALYTICS UTILITIES
 
-  async getProductivityTrend(pitakId: number, periods: string[] = ['7d', '30d', '90d']): Promise<any[]> {
+  async getProductivityTrend(
+    pitakId: number,
+    periods: string[] = ["7d", "30d", "90d"],
+  ): Promise<any[]> {
     try {
       const trends = await Promise.all(
-        periods.map(period => this.getPitakProductivity(pitakId, {
-          startDate: this.calculateStartDate(period),
-          endDate: new Date().toISOString().split('T')[0]
-        }))
+        periods.map((period) =>
+          this.getPitakProductivity(pitakId, {
+            startDate: this.calculateStartDate(period),
+            endDate: new Date().toISOString().split("T")[0],
+          }),
+        ),
       );
       return trends.map((trend, index) => ({
+        ...trend.data,
         period: periods[index],
-        ...trend.data
       }));
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to get productivity trend: ${error.message}`);
     }
   }
 
-  async getUtilizationComparison(bukidId: number, dateRange: DateRange): Promise<PitakUtilizationData> {
+  async getUtilizationComparison(
+    bukidId: number,
+    dateRange: DateRange,
+  ): Promise<PitakUtilizationData> {
     try {
       const response = await this.getPitakUtilization(bukidId, dateRange);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to get utilization comparison: ${error.message}`);
     }
   }
 
-  async getForecastComparison(bukidId: number, period: string = '30d'): Promise<PitakForecastData> {
+  async getForecastComparison(
+    bukidId: number,
+    period: string = "30d",
+  ): Promise<PitakForecastData> {
     try {
       const response = await this.getPitakForecast(bukidId, period);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to get forecast comparison: ${error.message}`);
     }
   }
 
-  async getTrendAnalysis(bukidId: number, period: string = '90d'): Promise<PitakTrendData> {
+  async getTrendAnalysis(
+    bukidId: number,
+    period: string = "90d",
+  ): Promise<PitakTrendData> {
     try {
       const response = await this.getPitakTrends(bukidId, period);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Failed to get trend analysis: ${error.message}`);
     }
   }
 
   // 🎯 EVENT LISTENERS (if supported by backend)
 
-  onPitakCreated(callback: (data: PitakData) => void) {
-    if (window.backendAPI && window.backendAPI.onPitakCreated) {
-      window.backendAPI.onPitakCreated(callback);
-    }
-  }
+  // onPitakCreated(callback: (data: PitakData) => void) {
+  //   if (window.backendAPI && window.backendAPI.onPitakCreated) {
+  //     window.backendAPI.onPitakCreated(callback);
+  //   }
+  // }
 
-  onPitakUpdated(callback: (data: PitakData) => void) {
-    if (window.backendAPI && window.backendAPI.onPitakUpdated) {
-      window.backendAPI.onPitakUpdated(callback);
-    }
-  }
+  // onPitakUpdated(callback: (data: PitakData) => void) {
+  //   if (window.backendAPI && window.backendAPI.onPitakUpdated) {
+  //     window.backendAPI.onPitakUpdated(callback);
+  //   }
+  // }
 
-  onPitakDeleted(callback: (id: number) => void) {
-    if (window.backendAPI && window.backendAPI.onPitakDeleted) {
-      window.backendAPI.onPitakDeleted(callback);
-    }
-  }
+  // onPitakDeleted(callback: (id: number) => void) {
+  //   if (window.backendAPI && window.backendAPI.onPitakDeleted) {
+  //     window.backendAPI.onPitakDeleted(callback);
+  //   }
+  // }
 
-  onPitakStatusChanged(callback: (data: { id: number, oldStatus: string, newStatus: string }) => void) {
-    if (window.backendAPI && window.backendAPI.onPitakStatusChanged) {
-      window.backendAPI.onPitakStatusChanged(callback);
-    }
-  }
+  // onPitakStatusChanged(callback: (data: { id: number, oldStatus: string, newStatus: string }) => void) {
+  //   if (window.backendAPI && window.backendAPI.onPitakStatusChanged) {
+  //     window.backendAPI.onPitakStatusChanged(callback);
+  //   }
+  // }
 
   // 🔧 PRIVATE HELPER METHODS
 
   private calculateStartDate(period: string): string {
     const today = new Date();
     let days = 7; // default 7 days
-    
-    if (period.includes('d')) {
+
+    if (period.includes("d")) {
       days = parseInt(period);
-    } else if (period.includes('w')) {
+    } else if (period.includes("w")) {
       days = parseInt(period) * 7;
-    } else if (period.includes('m')) {
+    } else if (period.includes("m")) {
       days = parseInt(period) * 30;
     }
-    
+
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - days);
-    return startDate.toISOString().split('T')[0];
+    return startDate.toISOString().split("T")[0];
   }
 }
 

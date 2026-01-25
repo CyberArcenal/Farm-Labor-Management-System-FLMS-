@@ -4,6 +4,32 @@ import userAPI from '../apis/user';
 import ProtectedRoute from '../app/ProtectedRoute';
 import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
+import KabisilyaDashboardPage from '../pages/dashboard';
+import KabisilyaFirstRunSetup from '../pages/Setup';
+import Login from '../pages/Auth/Login';
+import BukidTablePage from '../pages/Bukid/Table';
+import PitakTablePage from '../pages/Pitak/Table/PitakTable';
+import AssignmentTablePage from '../pages/Assignment/Table';
+import KabisilyaTablePage from '../pages/Kabisilya/Table';
+import WorkerTablePage from '../pages/Worker/Table/WorkerTable';
+import WorkerAttendancePage from '../pages/WorkerAttendance';
+import PaymentTablePage from '../pages/Payment/Table/PaymentTable';
+import DebtTablePage from '../pages/Debt/Table/DebtTable';
+import UserTablePage from '../pages/User/Table';
+import AuditTrailTablePage from '../pages/Audit/AuditTrail';
+import BukidReportsPage from '../pages/Analytics/Bukid';
+import PitakProductivityPage from '../pages/Analytics/PitakProductivity';
+import FinancialReportsPage from '../pages/Analytics/FinancialReports';
+import WorkerPerformancePage from '../pages/Analytics/WorkerPerformance';
+import BukidFormPage from '../pages/Bukid/Form';
+
+// 🔹 Placeholder components para hindi mag red mark
+const Placeholder = ({ title }: { title: string }) => (
+  <div style={{ padding: '2rem' }}>
+    <h1>{title}</h1>
+    <p>Placeholder page for {title}</p>
+  </div>
+);
 
 function App() {
   const [setupRequired, setSetupRequired] = useState<boolean | null>(false);
@@ -16,12 +42,11 @@ function App() {
   const checkSetup = async () => {
     try {
       const response = await userAPI.getAllUsers();
-      console.log(response)
       const hasUsers = response.data && response.data.users.length > 0;
       setSetupRequired(!hasUsers);
     } catch (error) {
       console.error('Error checking setup:', error);
-      setSetupRequired(true); // Default to setup required on error
+      setSetupRequired(true);
     } finally {
       setLoading(false);
     }
@@ -51,19 +76,17 @@ function App() {
       </div>
     );
   }
+
   return (
     <Routes>
-      {/* Setup route - only accessible when no users exist */}
       {setupRequired && (
-        <Route path="*" element={<FirstRunSetup />} />
+        <Route path="*" element={<KabisilyaFirstRunSetup />} />
       )}
 
       {!setupRequired && (
         <>
-          {/* Public routes */}
           <Route path="/login" element={<Login />} />
 
-          {/* Protected routes - wrap with ProtectedRoute */}
           <Route path="/" element={
             <ProtectedRoute>
               <Layout />
@@ -71,26 +94,54 @@ function App() {
           }>
             <Route index element={<Navigate to="/dashboard" replace />} />
 
-            {/* Core POS */}
-            <Route path="dashboard" element={<DashboardPage />} />
+            {/* Dashboard */}
+            <Route path="dashboard" element={<KabisilyaDashboardPage />} />
 
-            {/* Define protected routes here */}
+            {/* Bukid & Pitak */}
+            <Route path="/farms/bukid" element={<BukidTablePage />} />
+            <Route path="/bukid/create" element={<BukidFormPage />} />
+            <Route path="/bukid/edit/:id" element={<BukidFormPage />} />
+            <Route path="/farms/pitak" element={<PitakTablePage />} />
+            <Route path="/farms/assignments" element={<AssignmentTablePage />} />
+            {/* Kabisilya & Workers */}
+            <Route path="/workers/kabisilya" element={<KabisilyaTablePage />} />
+            <Route path="/workers/list" element={<WorkerTablePage />} />
+            <Route path="/workers" element={<WorkerTablePage />} />
+            {/* <Route path="/worker/create" element={<WorkerCreatePage />} />
+            <Route path="/worker/edit/:id" element={<WorkerEditPage />} />
+            <Route path="/worker/view/:id" element={<WorkerViewPage />} />
+            <Route path="/worker/financial/:id" element={<WorkerFinancialPage />} /> */}
+            <Route path="/workers/attendance" element={<WorkerAttendancePage />} />
+
+            {/* Payroll & Finance */}
+            <Route path="/finance/payments" element={<PaymentTablePage />} />
+            <Route path="/finance/debts" element={<DebtTablePage />} />
+            {/* <Route path="finance/history" element={<Placeholder title="Payment History" />} /> */}
+
+            {/* Reports & Analytics */}
+            <Route path="/analytics/bukid" element={<BukidReportsPage />} />
+            <Route path="/analytics/pitak" element={<PitakProductivityPage />} />
+            <Route path="/analytics/finance" element={<FinancialReportsPage />} />
+            <Route path="/analytics/workers" element={<WorkerPerformancePage />} />
+
+            {/* System */}
+            <Route path="/system/users" element={<UserTablePage />} />
+            <Route path="/system/audit" element={<AuditTrailTablePage />} />
+            <Route path="/system/notifications" element={<Placeholder title="Notifications" />} />
+            <Route path="/system/backup" element={<Placeholder title="Backup & Restore" />} />
 
             {/* Default redirect */}
             <Route path="/" element={
               setupRequired ? <Navigate to="/setup" replace /> : <Navigate to="/login" replace />
             } />
 
-            {/* 404 Page - Must be the last route */}
+            {/* 404 */}
             <Route path="*" element={<PageNotFound />} />
           </Route>
 
-          {/* Fallback redirect for unauthenticated */}
           <Route path="*" element={<Navigate to="/login" replace />} />
-
         </>
       )}
-
     </Routes>
   );
 }

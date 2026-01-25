@@ -58,6 +58,7 @@ export interface SearchResultData {
   workerCount: number;
   bukidCount: number;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AssignmentResult {

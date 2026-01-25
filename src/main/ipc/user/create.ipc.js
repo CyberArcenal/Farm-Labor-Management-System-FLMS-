@@ -1,8 +1,6 @@
 // ipc/user/create.ipc.js
 //@ts-check
 
-const User = require("../../../entities/User");
-const UserActivity = require("../../../entities/UserActivity");
 const bcrypt = require("bcryptjs");
 const { AppDataSource } = require("../../db/dataSource");
 
@@ -10,6 +8,7 @@ module.exports = async function createUser(params = {}, queryRunner = null) {
   let shouldRelease = false;
   
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -20,7 +19,7 @@ module.exports = async function createUser(params = {}, queryRunner = null) {
 
   try {
     // @ts-ignore
-    const { username, email, password, role, isActive, _userId } = params;
+    const { username, email, password, role, isActive, userId } = params;
     
     // Validate required fields
     if (!username || !email || !password) {
@@ -31,9 +30,14 @@ module.exports = async function createUser(params = {}, queryRunner = null) {
       };
     }
 
-    // Check if username already exists
+    // Get repositories
     // @ts-ignore
-    const existingUserByUsername = await queryRunner.manager.findOne(User, {
+    const userRepository = queryRunner.manager.getRepository('User');
+    // @ts-ignore
+    const userActivityRepository = queryRunner.manager.getRepository('UserActivity');
+
+    // Check if username already exists
+    const existingUserByUsername = await userRepository.findOne({
       where: { username }
     });
 
@@ -46,8 +50,7 @@ module.exports = async function createUser(params = {}, queryRunner = null) {
     }
 
     // Check if email already exists
-    // @ts-ignore
-    const existingUserByEmail = await queryRunner.manager.findOne(User, {
+    const existingUserByEmail = await userRepository.findOne({
       where: { email }
     });
 
@@ -64,8 +67,7 @@ module.exports = async function createUser(params = {}, queryRunner = null) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create new user
-    // @ts-ignore
-    const user = queryRunner.manager.create(User, {
+    const user = userRepository.create({
       username,
       email,
       password: hashedPassword,
@@ -75,24 +77,24 @@ module.exports = async function createUser(params = {}, queryRunner = null) {
       updatedAt: new Date()
     });
 
-    // @ts-ignore
-    const savedUser = await queryRunner.manager.save(user);
+    const savedUser = await userRepository.save(user);
     
     // Remove password from response
     const { password: _, ...userWithoutPassword } = savedUser;
     
-    // Log activity
-    // @ts-ignore
-    const activityRepo = queryRunner.manager.getRepository(UserActivity);
-    const activity = activityRepo.create({
-      user_id: _userId,
+    // Log activity - Use repository.create() and repository.save()
+    const activity = userActivityRepository.create({
+      user_id: savedUser.id, // This should be the ID of the user performing the action
       action: 'create_user',
-      description: `Created user: ${username} (${email})`,
+      details: JSON.stringify({
+        message: `Created user: ${username} (${email})`,
+        newUserId: savedUser.id
+      }),
       ip_address: "127.0.0.1",
-      user_agent: "Kabisilya-Management-System",
-      created_at: new Date()
+      user_agent: "Kabisilya-Management-System"
     });
-    await activityRepo.save(activity);
+    
+    await userActivityRepository.save(activity);
 
     if (shouldRelease) {
       // @ts-ignore

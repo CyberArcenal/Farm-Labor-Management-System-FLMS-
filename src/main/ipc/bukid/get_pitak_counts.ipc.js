@@ -1,8 +1,8 @@
 // ipc/bukid/get_pitak_counts.ipc.js
 //@ts-check
 
-const { AppDataSource } = require("../../../db/dataSource");
-const Bukid = require("../../../../entities/Bukid");
+const { AppDataSource } = require("../../db/dataSource");
+const Bukid = require("../../../entities/Bukid");
 
 module.exports = async function getPitakCounts(params = {}) {
   try {

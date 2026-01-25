@@ -2,6 +2,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("backendAPI", {
+  kabisilyaDashboard: (payload) => ipcRenderer.invoke("kabisilyaDashboard", payload),
   // 🪟 Window controls
   windowControl: (payload) => ipcRenderer.invoke("window-control", payload),
   
@@ -35,6 +36,8 @@ contextBridge.exposeInMainWorld("backendAPI", {
   },
 
   // 🪟 Window Events
+  windowControl: (payload) => ipcRenderer.invoke("window-control", payload),
+  
   onWindowMaximized: (callback) =>
     ipcRenderer.on("window:maximized", () => callback()),
   

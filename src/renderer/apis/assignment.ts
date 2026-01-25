@@ -1086,29 +1086,29 @@ class AssignmentAPI {
         { startDate: firstDay, endDate: lastDay },
         { status: 'completed' }
       );
-    } catch (error) {
+    } catch (error:any) {
       throw new Error(`Failed to generate current month report: ${error.message}`);
     }
   }
 
   // Event listeners (if supported by backend)
-  onAssignmentCreated(callback: (assignment: Assignment) => void) {
-    if (window.backendAPI && window.backendAPI.onAssignmentCreated) {
-      window.backendAPI.onAssignmentCreated(callback);
-    }
-  }
+  // onAssignmentCreated(callback: (assignment: Assignment) => void) {
+  //   if (window.backendAPI && window.backendAPI.onAssignmentCreated) {
+  //     window.backendAPI.onAssignmentCreated(callback);
+  //   }
+  // }
 
-  onAssignmentUpdated(callback: (assignment: Assignment) => void) {
-    if (window.backendAPI && window.backendAPI.onAssignmentUpdated) {
-      window.backendAPI.onAssignmentUpdated(callback);
-    }
-  }
+  // onAssignmentUpdated(callback: (assignment: Assignment) => void) {
+  //   if (window.backendAPI && window.backendAPI.onAssignmentUpdated) {
+  //     window.backendAPI.onAssignmentUpdated(callback);
+  //   }
+  // }
 
-  onAssignmentDeleted(callback: (assignmentId: number) => void) {
-    if (window.backendAPI && window.backendAPI.onAssignmentDeleted) {
-      window.backendAPI.onAssignmentDeleted(callback);
-    }
-  }
+  // onAssignmentDeleted(callback: (assignmentId: number) => void) {
+  //   if (window.backendAPI && window.backendAPI.onAssignmentDeleted) {
+  //     window.backendAPI.onAssignmentDeleted(callback);
+  //   }
+  // }
 }
 
 const assignmentAPI = new AssignmentAPI();

@@ -21,6 +21,7 @@ module.exports = async (params) => {
       // @ts-ignore
       outputPath,
       // @ts-ignore
+      // @ts-ignore
       _userId 
     } = params;
 
@@ -63,18 +64,23 @@ module.exports = async (params) => {
     }
 
     // Prepare data for CSV
-    const csvData = assignments.map((/** @type {{ id: any; assignmentDate: { toISOString: () => string; }; luwangCount: string; status: any; notes: any; createdAt: { toISOString: () => any; }; updatedAt: { toISOString: () => any; }; worker: { id: any; code: any; name: any; contactNumber: string; }; pitak: { id: any; code: any; name: any; location: string; }; }} */ assignment) => {
+    const csvData = assignments.map((assignment) => {
       const baseData = {
         id: assignment.id,
+        // @ts-ignore
         assignment_date: assignment.assignmentDate.toISOString().split('T')[0],
+        // @ts-ignore
         luwang_count: parseFloat(assignment.luwangCount).toFixed(2),
         status: assignment.status,
         notes: assignment.notes || '',
+        // @ts-ignore
         created_at: assignment.createdAt.toISOString(),
+        // @ts-ignore
         updated_at: assignment.updatedAt.toISOString()
       };
 
       // Add worker information
+      // @ts-ignore
       if (assignment.worker) {
         // @ts-ignore
         baseData.worker_id = assignment.worker.id;
@@ -87,6 +93,7 @@ module.exports = async (params) => {
       }
 
       // Add pitak information
+      // @ts-ignore
       if (assignment.pitak) {
         // @ts-ignore
         baseData.pitak_id = assignment.pitak.id;
@@ -145,6 +152,7 @@ module.exports = async (params) => {
         from: filters.dateFrom,
         to: filters.dateTo
       } : null,
+      // @ts-ignore
       statusBreakdown: assignments.reduce((/** @type {{ [x: string]: any; }} */ acc, /** @type {{ status: string | number; }} */ assignment) => {
         acc[assignment.status] = (acc[assignment.status] || 0) + 1;
         return acc;

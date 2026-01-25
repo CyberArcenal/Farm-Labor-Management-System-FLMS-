@@ -46,8 +46,10 @@ module.exports = async (dateRange, userId) => {
     };
 
     // Process assignments
-    assignments.forEach((/** @type {{ luwangCount: string; assignmentDate: { toISOString: () => string; }; status: string | number; }} */ assignment) => {
+    assignments.forEach((assignment) => {
+      // @ts-ignore
       const luwang = parseFloat(assignment.luwangCount) || 0;
+      // @ts-ignore
       const date = assignment.assignmentDate.toISOString().split('T')[0];
       
       // Update totals

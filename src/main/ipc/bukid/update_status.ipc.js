@@ -1,11 +1,11 @@
-// ipc/bukid/add_note.ipc.js
+// ipc/bukid/update_status.ipc.js
 //@ts-check
 
-const { AppDataSource } = require("../../../db/dataSource");
-const Bukid = require("../../../../entities/Bukid");
-const UserActivity = require("../../../../entities/UserActivity");
+const { AppDataSource } = require("../../db/dataSource");
+const Bukid = require("../../../entities/Bukid");
+const UserActivity = require("../../../entities/UserActivity");
 
-module.exports = async function addBukidNote(params = {}, queryRunner = null) {
+module.exports = async function updateBukidStatus(params = {}, queryRunner = null) {
   let shouldRelease = false;
   
   if (!queryRunner) {
@@ -19,12 +19,12 @@ module.exports = async function addBukidNote(params = {}, queryRunner = null) {
 
   try {
     // @ts-ignore
-    const { id, note, _userId } = params;
+    const { id, status, _userId } = params;
     
-    if (!id || !note) {
+    if (!id || !status) {
       return {
         status: false,
-        message: 'Bukid ID and note are required',
+        message: 'Bukid ID and status are required',
         data: null
       };
     }
@@ -43,16 +43,10 @@ module.exports = async function addBukidNote(params = {}, queryRunner = null) {
       };
     }
 
-    // Add note (assuming we have a notes field in Bukid entity)
-    // If not, you need to add it to the entity first
-    const currentNotes = bukid.notes || '';
-    const newNotes = currentNotes 
-      ? `${currentNotes}\n${new Date().toISOString()}: ${note}`
-      : `${new Date().toISOString()}: ${note}`;
-
+    // Update status
     // @ts-ignore
     await queryRunner.manager.update(Bukid, id, {
-      notes: newNotes,
+      status,
       updatedAt: new Date()
     });
     
@@ -67,8 +61,8 @@ module.exports = async function addBukidNote(params = {}, queryRunner = null) {
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'add_bukid_note',
-      description: `Added note to bukid ID: ${id}`,
+      action: 'update_bukid_status',
+      description: `Updated bukid ${id} status to: ${status}`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
       created_at: new Date()
@@ -82,7 +76,7 @@ module.exports = async function addBukidNote(params = {}, queryRunner = null) {
 
     return {
       status: true,
-      message: 'Note added successfully',
+      message: 'Bukid status updated successfully',
       data: { bukid: updatedBukid }
     };
   } catch (error) {
@@ -90,11 +84,11 @@ module.exports = async function addBukidNote(params = {}, queryRunner = null) {
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in addBukidNote:', error);
+    console.error('Error in updateBukidStatus:', error);
     return {
       status: false,
       // @ts-ignore
-      message: `Failed to add note: ${error.message}`,
+      message: `Failed to update bukid status: ${error.message}`,
       data: null
     };
   } finally {
