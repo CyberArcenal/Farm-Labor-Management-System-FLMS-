@@ -22,6 +22,7 @@ import PitakProductivityPage from '../pages/Analytics/PitakProductivity';
 import FinancialReportsPage from '../pages/Analytics/FinancialReports';
 import WorkerPerformancePage from '../pages/Analytics/WorkerPerformance';
 import BukidFormPage from '../pages/Bukid/Form';
+import KabisilyaFormPage from '../pages/Kabisilya/Form';
 
 // 🔹 Placeholder components para hindi mag red mark
 const Placeholder = ({ title }: { title: string }) => (
@@ -105,6 +106,9 @@ function App() {
             <Route path="/farms/assignments" element={<AssignmentTablePage />} />
             {/* Kabisilya & Workers */}
             <Route path="/workers/kabisilya" element={<KabisilyaTablePage />} />
+            <Route path="/workers/kabisilya/form" element={<KabisilyaFormPage />} />
+            <Route path="/workers/kabisilya/form/:id" element={<KabisilyaFormPage />} />
+
             <Route path="/workers/list" element={<WorkerTablePage />} />
             <Route path="/workers" element={<WorkerTablePage />} />
             {/* <Route path="/worker/create" element={<WorkerCreatePage />} />
