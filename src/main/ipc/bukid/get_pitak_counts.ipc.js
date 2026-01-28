@@ -7,45 +7,46 @@ const Bukid = require("../../../entities/Bukid");
 module.exports = async function getPitakCounts(params = {}) {
   try {
     // @ts-ignore
-    const { bukidId, _userId } = params;
-    
-    const bukidRepository = AppDataSource.getRepository(Bukid);
+    const { bukidId } = params;
 
-    let query = bukidRepository
-      .createQueryBuilder('bukid')
-      .leftJoin('bukid.pitaks', 'pitak')
-      .select('bukid.id', 'id')
-      .addSelect('bukid.name', 'name')
-      .addSelect('COUNT(pitak.id)', 'pitakCount')
-      .addSelect('SUM(pitak.totalLuwang)', 'totalLuwang')
-      .addSelect('AVG(pitak.totalLuwang)', 'averageLuwang')
-      .groupBy('bukid.id');
+    const bukidRepo = AppDataSource.getRepository(Bukid);
+
+    let query = bukidRepo
+      .createQueryBuilder("bukid")
+      .leftJoin("bukid.pitaks", "pitak")
+      .select("bukid.id", "id")
+      .addSelect("bukid.name", "name")
+      .addSelect("COUNT(pitak.id)", "pitakCount")
+      .addSelect("COALESCE(SUM(pitak.totalLuwang), 0)", "totalLuwang")
+      .addSelect("COALESCE(AVG(pitak.totalLuwang), 0)", "averageLuwang")
+      .groupBy("bukid.id");
 
     if (bukidId) {
-      query = query.where('bukid.id = :bukidId', { bukidId });
+      query = query.where("bukid.id = :bukidId", { bukidId });
     }
 
     const pitakCounts = await query.getRawMany();
 
     return {
       status: true,
-      message: 'Pitak counts retrieved successfully',
-      data: { 
-        pitakCounts: pitakCounts.map((/** @type {{ pitakCount: string; totalLuwang: string; averageLuwang: string; }} */ item) => ({
-          ...item,
-          pitakCount: parseInt(item.pitakCount) || 0,
+      message: "Pitak counts retrieved successfully",
+      data: {
+        pitakCounts: pitakCounts.map((item) => ({
+          id: item.id,
+          name: item.name,
+          pitakCount: parseInt(item.pitakCount, 10) || 0,
           totalLuwang: parseFloat(item.totalLuwang) || 0,
-          averageLuwang: parseFloat(item.averageLuwang) || 0
-        }))
-      }
+          averageLuwang: parseFloat(item.averageLuwang) || 0,
+        })),
+      },
     };
   } catch (error) {
-    console.error('Error in getPitakCounts:', error);
+    console.error("Error in getPitakCounts:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to get pitak counts: ${error.message}`,
-      data: null
+      data: null,
     };
   }
 };

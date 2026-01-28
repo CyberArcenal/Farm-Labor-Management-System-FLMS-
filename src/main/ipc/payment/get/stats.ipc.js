@@ -45,6 +45,16 @@ module.exports = async function getPaymentStats(params = {}) {
       ])
       .getRawOne();
 
+    // Ensure overallStats is not null/undefined
+    const safeOverallStats = overallStats || {
+      totalpayments: 0,
+      totalgross: 0,
+      totalnet: 0,
+      averagepayment: 0,
+      minpayment: 0,
+      maxpayment: 0
+    };
+
     // Get status distribution
     const statusStats = await queryBuilder
       .select([
@@ -109,6 +119,14 @@ module.exports = async function getPaymentStats(params = {}) {
       ])
       .getRawOne();
 
+    // Ensure deductionStats is not null/undefined
+    const safeDeductionStats = deductionStats || {
+      totaldebtdeductions: 0,
+      totalmanualdeductions: 0,
+      totalotherdeductions: 0,
+      averagedebtdeduction: 0
+    };
+
     // Calculate completion rate (completed vs total)
     const completionRate = await paymentRepository
       .createQueryBuilder('payment')
@@ -117,6 +135,12 @@ module.exports = async function getPaymentStats(params = {}) {
         'COUNT(payment.id) as totalCount'
       ])
       .getRawOne();
+
+    // Ensure completionRate is not null/undefined
+    const safeCompletionRate = completionRate || {
+      completedcount: 0,
+      totalcount: 0
+    };
 
     return {
       status: true,
@@ -128,14 +152,14 @@ module.exports = async function getPaymentStats(params = {}) {
               : `${year}`)
           : 'All time',
         overall: {
-          totalPayments: parseInt(overallStats.totalpayments || 0),
-          totalGross: parseFloat(overallStats.totalgross || 0),
-          totalNet: parseFloat(overallStats.totalnet || 0),
-          averagePayment: parseFloat(overallStats.averagepayment || 0),
-          minPayment: parseFloat(overallStats.minpayment || 0),
-          maxPayment: parseFloat(overallStats.maxpayment || 0),
-          completionRate: completionRate.totalcount > 0 
-            ? (parseInt(completionRate.completedcount || 0) / parseInt(completionRate.totalcount)) * 100
+          totalPayments: parseInt(safeOverallStats.totalpayments || 0),
+          totalGross: parseFloat(safeOverallStats.totalgross || 0),
+          totalNet: parseFloat(safeOverallStats.totalnet || 0),
+          averagePayment: parseFloat(safeOverallStats.averagepayment || 0),
+          minPayment: parseFloat(safeOverallStats.minpayment || 0),
+          maxPayment: parseFloat(safeOverallStats.maxpayment || 0),
+          completionRate: safeCompletionRate.totalcount > 0 
+            ? (parseInt(safeCompletionRate.completedcount || 0) / parseInt(safeCompletionRate.totalcount)) * 100
             : 0
         },
         statusDistribution: statusStats.map((/** @type {{ payment_status: any; count: string; totalamount: any; averageamount: any; }} */ item) => ({
@@ -143,8 +167,8 @@ module.exports = async function getPaymentStats(params = {}) {
           count: parseInt(item.count),
           totalAmount: parseFloat(item.totalamount || 0),
           averageAmount: parseFloat(item.averageamount || 0),
-          percentage: overallStats.totalpayments > 0 
-            ? (parseInt(item.count) / parseInt(overallStats.totalpayments)) * 100
+          percentage: safeOverallStats.totalpayments > 0 
+            ? (parseInt(item.count) / parseInt(safeOverallStats.totalpayments)) * 100
             : 0
         })),
         monthlyTrend: monthlyTrend.map((/** @type {{ month: string; count: string; totalamount: any; averageamount: any; }} */ item) => ({
@@ -167,13 +191,13 @@ module.exports = async function getPaymentStats(params = {}) {
           totalAmount: parseFloat(item.totalamount || 0)
         })),
         deductions: {
-          totalDebtDeductions: parseFloat(deductionStats.totaldebtdeductions || 0),
-          totalManualDeductions: parseFloat(deductionStats.totalmanualdeductions || 0),
-          totalOtherDeductions: parseFloat(deductionStats.totalotherdeductions || 0),
-          averageDebtDeduction: parseFloat(deductionStats.averagedebtdeduction || 0),
-          totalDeductions: parseFloat(deductionStats.totaldebtdeductions || 0) + 
-                         parseFloat(deductionStats.totalmanualdeductions || 0) + 
-                         parseFloat(deductionStats.totalotherdeductions || 0)
+          totalDebtDeductions: parseFloat(safeDeductionStats.totaldebtdeductions || 0),
+          totalManualDeductions: parseFloat(safeDeductionStats.totalmanualdeductions || 0),
+          totalOtherDeductions: parseFloat(safeDeductionStats.totalotherdeductions || 0),
+          averageDebtDeduction: parseFloat(safeDeductionStats.averagedebtdeduction || 0),
+          totalDeductions: parseFloat(safeDeductionStats.totaldebtdeductions || 0) + 
+                         parseFloat(safeDeductionStats.totalmanualdeductions || 0) + 
+                         parseFloat(safeDeductionStats.totalotherdeductions || 0)
         }
       }
     };

@@ -269,19 +269,6 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
           </div>
         </button>
 
-        {/* Quick Actions */}
-        <div className="hidden md:flex items-center gap-2 border-r border-[var(--sidebar-border)] pr-3">
-          <button
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[var(--accent-blue)] to-[#3b82f6] text-white text-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 shadow-md"
-            onClick={() => navigate('/pos/cashier')}
-            title="New Sale"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden lg:inline font-medium">New Sale</span>
-            <span className="lg:hidden">Sale</span>
-          </button>
-        </div>
-
         {/* Profile */}
         <div className="flex items-center gap-3 p-2 group relative">
           <div className="relative">

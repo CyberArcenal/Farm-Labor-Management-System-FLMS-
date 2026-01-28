@@ -1,4 +1,6 @@
 // pitakAPI.ts - Complete API for Pitak Management
+import { kabAuthStore } from "../lib/kabAuthStore";
+
 export interface PitakData {
   id: number;
   bukidId: number;
@@ -455,6 +457,28 @@ export interface PitakPayload {
 }
 
 class PitakAPI {
+  // Helper method to get current user ID
+  private getCurrentUserId(): number | null {
+    try {
+      const user = kabAuthStore.getUser();
+      if (user && user.id) {
+        // Ensure we return a number
+        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        return isNaN(userId) ? null : userId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current user ID:", error);
+      return null;
+    }
+  }
+
+  // Helper method to enrich params with userId
+  private enrichParams(params: any = {}): any {
+    const userId = this.getCurrentUserId();
+    return { ...params, userId: userId !== null ? userId : 0 };
+  }
+
   // 📋 READ-ONLY OPERATIONS
 
   async getAllPitaks(filters: PitakFilters = {}): Promise<PitakListResponse> {
@@ -465,7 +489,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getAllPitaks",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -485,7 +509,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakById",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -508,7 +532,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitaksByStatus",
-        params: { status, filters },
+        params: this.enrichParams({ status, filters }),
       });
 
       if (response.status) {
@@ -531,7 +555,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitaksByBukid",
-        params: { bukidId, filters },
+        params: this.enrichParams({ bukidId, filters }),
       });
 
       if (response.status) {
@@ -553,7 +577,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getActivePitaks",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -575,7 +599,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getInactivePitaks",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -597,7 +621,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getHarvestedPitaks",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -617,7 +641,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakStats",
-        params: { dateRange },
+        params: this.enrichParams({ dateRange }),
       });
 
       if (response.status) {
@@ -640,7 +664,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakWithAssignments",
-        params: { pitakId, dateRange },
+        params: this.enrichParams({ pitakId, dateRange }),
       });
 
       if (response.status) {
@@ -665,7 +689,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakWithPayments",
-        params: { pitakId, dateRange },
+        params: this.enrichParams({ pitakId, dateRange }),
       });
 
       if (response.status) {
@@ -685,7 +709,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "searchPitaks",
-        params: { query },
+        params: this.enrichParams({ query }),
       });
 
       if (response.status) {
@@ -710,7 +734,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakReport",
-        params: { dateRange, filters },
+        params: this.enrichParams({ dateRange, filters }),
       });
 
       if (response.status) {
@@ -733,7 +757,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakSummaryReport",
-        params: { bukidId, status },
+        params: this.enrichParams({ bukidId, status }),
       });
 
       if (response.status) {
@@ -756,7 +780,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakPerformanceReport",
-        params: { pitakId, dateRange },
+        params: this.enrichParams({ pitakId, dateRange }),
       });
 
       if (response.status) {
@@ -783,7 +807,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakLuWangReport",
-        params: { pitakId, dateRange },
+        params: this.enrichParams({ pitakId, dateRange }),
       });
 
       if (response.status) {
@@ -810,7 +834,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "createPitak",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -837,7 +861,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "updatePitak",
-        params: { id, ...data },
+        params: this.enrichParams({ id, ...data }),
       });
 
       if (response.status) {
@@ -860,7 +884,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "deletePitak",
-        params: { id, force },
+        params: this.enrichParams({ id, force }),
       });
 
       if (response.status) {
@@ -884,7 +908,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "updatePitakStatus",
-        params: { id, status, notes },
+        params: this.enrichParams({ id, status, notes }),
       });
 
       if (response.status) {
@@ -909,7 +933,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "updatePitakLuWang",
-        params: { id, totalLuwang, adjustmentType, notes },
+        params: this.enrichParams({ id, totalLuwang, adjustmentType, notes }),
       });
 
       if (response.status) {
@@ -932,7 +956,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "updatePitakLocation",
-        params: { id, location },
+        params: this.enrichParams({ id, location }),
       });
 
       if (response.status) {
@@ -955,7 +979,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "transferPitakBukid",
-        params: { id, newBukidId },
+        params: this.enrichParams({ id, newBukidId }),
       });
 
       if (response.status) {
@@ -982,7 +1006,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "bulkUpdatePitaks",
-        params: { pitakIds, updates },
+        params: this.enrichParams({ pitakIds, updates }),
       });
 
       if (response.status) {
@@ -1011,7 +1035,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "bulkCreatePitaks",
-        params: { pitaks },
+        params: this.enrichParams({ pitaks }),
       });
 
       if (response.status) {
@@ -1039,7 +1063,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "importPitaksFromCSV",
-        params: { csvData, options },
+        params: this.enrichParams({ csvData, options }),
       });
 
       if (response.status) {
@@ -1059,7 +1083,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "exportPitaksToCSV",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -1082,7 +1106,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "exportPitakAssignments",
-        params: { pitakId, dateRange },
+        params: this.enrichParams({ pitakId, dateRange }),
       });
 
       if (response.status) {
@@ -1105,7 +1129,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "exportPitakPayments",
-        params: { pitakId, dateRange },
+        params: this.enrichParams({ pitakId, dateRange }),
       });
 
       if (response.status) {
@@ -1130,7 +1154,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakProductivity",
-        params: { pitakId, dateRange },
+        params: this.enrichParams({ pitakId, dateRange }),
       });
 
       if (response.status) {
@@ -1153,7 +1177,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakUtilization",
-        params: { bukidId, dateRange },
+        params: this.enrichParams({ bukidId, dateRange }),
       });
 
       if (response.status) {
@@ -1176,7 +1200,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakForecast",
-        params: { bukidId, period },
+        params: this.enrichParams({ bukidId, period }),
       });
 
       if (response.status) {
@@ -1199,7 +1223,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "getPitakTrends",
-        params: { bukidId, period },
+        params: this.enrichParams({ bukidId, period }),
       });
 
       if (response.status) {
@@ -1229,7 +1253,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "validatePitakData",
-        params: { ...data, excludePitakId },
+        params: this.enrichParams({ ...data, excludePitakId }),
       });
 
       if (response.status) {
@@ -1253,7 +1277,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "checkPitakAvailability",
-        params: { pitakId, date, workerId },
+        params: this.enrichParams({ pitakId, date, workerId }),
       });
 
       if (response.status) {
@@ -1277,7 +1301,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "validateLuWangCapacity",
-        params: { pitakId, requestedLuWang, date },
+        params: this.enrichParams({ pitakId, requestedLuWang, date }),
       });
 
       if (response.status) {
@@ -1303,7 +1327,7 @@ class PitakAPI {
 
       const response = await window.backendAPI.pitak({
         method: "checkDuplicatePitak",
-        params: { ...data, excludePitakId },
+        params: this.enrichParams({ ...data, excludePitakId }),
       });
 
       if (response.status) {

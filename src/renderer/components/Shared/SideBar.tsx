@@ -8,35 +8,17 @@ import {
   Users,
   Settings,
   ChevronDown,
-  ChevronRight,
-  TrendingUp,
-  Bell,
+  ChevronRight, Bell,
   LogOut,
-  HelpCircle,
-  Calculator,
-  ListChecks,
+  HelpCircle, ListChecks,
   CalendarDays,
   Users2,
   PieChart,
   User2,
   Receipt,
-  BarChart2,
-  ShoppingBag,
-  DollarSign,
-  ClipboardList,
-  Archive,
-  Trophy,
-  Sprout,
-  Tractor,
-  Droplets,
-  Warehouse,
-  Package,
-  Wheat,
-  Shield,
-  FileText,
-  CloudRain,
-  Sun,
-  Thermometer
+  BarChart2, DollarSign,
+  ClipboardList, Sprout, Wheat,
+  Shield
 } from "lucide-react";
 import { useSystemInfo } from "../../contexts/SystemInfoContext";
 import { dialogs } from "../../utils/dialogs";
@@ -61,77 +43,77 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     {},
   );
 
-const [menuItems, setMenuItems] = useState<MenuItem[]>([
-  // Dashboard
-  { path: "/", name: "Dashboard", icon: LayoutDashboard, category: "core" },
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([
+    // Dashboard
+    { path: "/", name: "Dashboard", icon: LayoutDashboard, category: "core" },
 
-  // Bukid & Pitak Management
-  {
-    path: "/farms",
-    name: "Bukid & Pitak",
-    icon: Trees,
-    category: "core",
-    children: [
-      { path: "/farms/bukid", name: "Mga Bukid", icon: Trees },
-      { path: "/farms/pitak", name: "Mga Pitak", icon: Wheat },
-      { path: "/farms/assignments", name: "Assignments", icon: ClipboardList },
-    ],
-  },
+    // Bukid & Pitak Management
+    {
+      path: "/farms",
+      name: "Bukid & Pitak",
+      icon: Trees,
+      category: "core",
+      children: [
+        { path: "/farms/bukid", name: "Mga Bukid", icon: Trees },
+        { path: "/farms/pitak", name: "Mga Pitak", icon: Wheat },
+        { path: "/farms/assignments", name: "Assignments", icon: ClipboardList },
+      ],
+    },
 
-  // Kabisilya & Workers
-  {
-    path: "/workers",
-    name: "Kabisilya & Workers",
-    icon: Users,
-    category: "core",
-    children: [
-      { path: "/workers/kabisilya", name: "Mga Kabisilya", icon: Sprout },
-      { path: "/workers/list", name: "Worker Directory", icon: Users2 },
-      { path: "/workers/attendance", name: "Attendance", icon: CalendarDays },
-    ],
-  },
+    // Kabisilya & Workers
+    {
+      path: "/workers",
+      name: "Kabisilya & Workers",
+      icon: Users,
+      category: "core",
+      children: [
+        { path: "/workers/kabisilya", name: "Mga Kabisilya", icon: Sprout },
+        { path: "/workers/list", name: "Worker Directory", icon: Users2 },
+        { path: "/workers/attendance", name: "Attendance", icon: CalendarDays },
+      ],
+    },
 
-  // Payroll & Finance
-  {
-    path: "/finance",
-    name: "Payroll & Finance",
-    icon: DollarSign,
-    category: "core",
-    children: [
-      { path: "/finance/payments", name: "Payments", icon: DollarSign },
-      { path: "/finance/debts", name: "Debt Management", icon: Receipt },
-      // { path: "/finance/history", name: "Payment History", icon: ClipboardList },
-    ],
-  },
+    // Payroll & Finance
+    {
+      path: "/finance",
+      name: "Payroll & Finance",
+      icon: DollarSign,
+      category: "core",
+      children: [
+        { path: "/finance/payments", name: "Payments", icon: DollarSign },
+        { path: "/finance/debts", name: "Debt Management", icon: Receipt },
+        // { path: "/finance/history", name: "Payment History", icon: ClipboardList },
+      ],
+    },
 
-  // Reports & Analytics
-  {
-    path: "/analytics",
-    name: "Reports & Analytics",
-    icon: BarChart2,
-    category: "analytics",
-    children: [
-      { path: "/analytics/bukid", name: "Bukid Reports", icon: PieChart },
-      { path: "/analytics/pitak", name: "Pitak Productivity", icon: Wheat },
-      { path: "/analytics/finance", name: "Financial Reports", icon: DollarSign },
-      { path: "/analytics/workers", name: "Worker Performance", icon: Users },
-    ],
-  },
+    // Reports & Analytics
+    {
+      path: "/analytics",
+      name: "Reports & Analytics",
+      icon: BarChart2,
+      category: "analytics",
+      children: [
+        { path: "/analytics/bukid", name: "Bukid Reports", icon: PieChart },
+        { path: "/analytics/pitak", name: "Pitak Productivity", icon: Wheat },
+        { path: "/analytics/finance", name: "Financial Reports", icon: DollarSign },
+        { path: "/analytics/workers", name: "Worker Performance", icon: Users },
+      ],
+    },
 
-  // System
-  {
-    path: "/system",
-    name: "System",
-    icon: Settings,
-    category: "system",
-    children: [
-      { path: "/system/users", name: "User Management", icon: User2 },
-      { path: "/system/audit", name: "Audit Trail", icon: ListChecks },
-      { path: "/system/notifications", name: "Notifications", icon: Bell },
-      { path: "/system/backup", name: "Backup & Restore", icon: Shield },
-    ],
-  },
-]);
+    // System
+    {
+      path: "/system",
+      name: "System",
+      icon: Settings,
+      category: "system",
+      children: [
+        { path: "/system/users", name: "User Management", icon: User2 },
+        { path: "/system/audit", name: "Audit Trail", icon: ListChecks },
+        { path: "/system/notifications", name: "Notifications", icon: Bell },
+        { path: "/system/backup", name: "Backup & Restore", icon: Shield },
+      ],
+    },
+  ]);
 
   const filteredMenu = menuItems
     .map((item) => {
@@ -199,8 +181,8 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
                 <div className="flex items-center gap-3">
                   <item.icon
                     className={`w-5 h-5 ${is_active
-                        ? "text-white"
-                        : "text-[var(--sidebar-text)] group-hover:text-white"
+                      ? "text-white"
+                      : "text-[var(--sidebar-text)] group-hover:text-white"
                       }`}
                   />
                   <span className="font-medium">{item.name}</span>
@@ -254,16 +236,16 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
               <div className="flex items-center gap-3">
                 <item.icon
                   className={`w-5 h-5 ${is_active
-                      ? "text-white"
-                      : "text-[var(--sidebar-text)] group-hover:text-white"
+                    ? "text-white"
+                    : "text-[var(--sidebar-text)] group-hover:text-white"
                     }`}
                 />
                 <span className="font-medium">{item.name}</span>
               </div>
               <ChevronRight
                 className={`w-4 h-4 transition-opacity duration-200 ${is_active
-                    ? "opacity-100 text-white"
-                    : "opacity-0 group-hover:opacity-50 text-[var(--sidebar-text)]"
+                  ? "opacity-100 text-white"
+                  : "opacity-0 group-hover:opacity-50 text-[var(--sidebar-text)]"
                   }`}
               />
             </Link>
@@ -359,7 +341,7 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
             <div className="text-[10px]">Today's Sales</div>
           </div>
         </div>
-        <div className="flex justify-center">
+        {/* <div className="flex justify-center">
           <Link
             to="/crops/kabisilya"
             className="w-full bg-gradient-to-r from-[var(--accent-green)] to-[#38a169] text-white text-sm py-2 px-4 rounded-lg text-center hover:from-[var(--accent-green-hover)] hover:to-[#2a623d] transition-all duration-200 flex items-center justify-center gap-2 shadow-md"
@@ -367,7 +349,7 @@ const [menuItems, setMenuItems] = useState<MenuItem[]>([
             <Sprout className="w-4 h-4" />
             New Planting
           </Link>
-        </div>
+        </div> */}
       </div>
 
       {/* Footer - Fixed height */}

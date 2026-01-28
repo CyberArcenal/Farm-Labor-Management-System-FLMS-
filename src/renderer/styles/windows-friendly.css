@@ -1,0 +1,131 @@
+/* I-remove ang invalid Tailwind directives at gumamit ng regular CSS */
+
+/* Windows scrollbar */
+.pitak-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.pitak-table-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.pitak-table-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.pitak-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
+}
+
+.pitak-table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Windows-like buttons */
+.windows-button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.windows-button-primary {
+  background-color: #2563eb;
+  color: white;
+}
+
+.windows-button-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.windows-button-primary:active {
+  background-color: #1e40af;
+}
+
+.windows-button-secondary {
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.windows-button-secondary:hover {
+  background-color: #f9fafb;
+}
+
+.windows-button-secondary:active {
+  background-color: #f3f4f6;
+}
+
+/* Windows-like table */
+.windows-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.windows-table th {
+  padding: 0.75rem 0.75rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  background-color: #f9fafb;
+}
+
+.windows-table td {
+  padding: 0.75rem 0.75rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+/* Windows-like card */
+.windows-card {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* Windows-like input */
+.windows-input {
+  display: block;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.windows-input:focus {
+  border-color: #3b82f6;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Windows-like checkbox */
+.windows-checkbox {
+  height: 1rem;
+  width: 1rem;
+  border-radius: 0.25rem;
+  border-color: #d1d5db;
+}
+
+.windows-checkbox:checked {
+  background-color: #2563eb;
+}
+
+.windows-checkbox:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+

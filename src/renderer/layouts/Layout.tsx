@@ -42,7 +42,7 @@ const Layout: React.FC = () => {
         <TopBar toggleSidebar={toggleSidebar} />
 
         {/* Page content - NO PADDING */}
-        <main className="flex-1 overflow-y-auto bg-[var(--background-color)]">
+        <main className="flex-1 overflow-y-auto bg-[var(--background-color)] ">
           <Outlet />
         </main>
       </div>

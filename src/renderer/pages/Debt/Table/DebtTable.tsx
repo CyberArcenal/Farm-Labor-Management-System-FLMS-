@@ -196,11 +196,11 @@ const DebtTablePage: React.FC = () => {
     };
 
     const handleEditDebt = (id: number) => {
-        navigate(`/debt/edit/${id}`);
+        navigate(`/finance/debts/form/${id}`);
     };
 
     const handleCreateDebt = () => {
-        navigate('/debt/create');
+        navigate('/finance/debts/form');
     };
 
     const handleDeleteDebt = async (id: number) => {

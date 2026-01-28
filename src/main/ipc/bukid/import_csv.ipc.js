@@ -11,6 +11,7 @@ module.exports = async function importBukidFromCSV(params = {}, queryRunner = nu
   let shouldRelease = false;
   
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();

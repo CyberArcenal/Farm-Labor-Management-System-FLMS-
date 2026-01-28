@@ -53,10 +53,10 @@ const IconTemplates = {
 };
 
 const IconColors: Record<ConfirmIconType, string> = {
-  question: "text-blue-600 bg-emerald-100",
+  question: "text-blue-600 bg-blue-100",
   warning: "text-yellow-600 bg-yellow-100",
   danger: "text-red-600 bg-red-100",
-  info: "text-blue-600 bg-emerald-100",
+  info: "text-blue-600 bg-blue-100",
   success: "text-green-600 bg-green-100",
 };
 
@@ -82,37 +82,38 @@ class DialogManager {
     const styles = document.createElement("style");
     styles.id = "dialog-styles";
     styles.textContent = `
+      /* Windows-friendly dialog styles */
       .dialog-backdrop {
-        background-color: rgba(0, 0, 0, 0.2); /* Mas lighter na overlay */
-        backdrop-filter: blur(2px); /* Subtle blur lang */
+        background-color: rgba(0, 0, 0, 0.5);
         transition: opacity 150ms ease-out;
       }
       
+      /* Windows-like animation */
       .dialog-enter {
         opacity: 0;
-        transform: scale(0.9);
+        transform: translateY(-20px) scale(0.95);
       }
       
       .dialog-enter-active {
         opacity: 1;
-        transform: scale(1);
-        transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1), 
-                    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateY(0) scale(1);
+        transition: opacity 200ms cubic-bezier(0.2, 0, 0, 1), 
+                    transform 200ms cubic-bezier(0.2, 0, 0, 1);
       }
       
       .dialog-exit {
         opacity: 1;
-        transform: scale(1);
+        transform: translateY(0) scale(1);
       }
       
       .dialog-exit-active {
         opacity: 0;
-        transform: scale(0.9);
-        transition: opacity 150ms cubic-bezier(0.4, 0, 0.2, 1), 
-                    transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(-10px) scale(0.98);
+        transition: opacity 150ms cubic-bezier(0.2, 0, 0, 1), 
+                    transform 150ms cubic-bezier(0.2, 0, 0, 1);
       }
       
-      /* Para mas smooth ang backdrop */
+      /* Backdrop animation */
       .backdrop-enter {
         opacity: 0;
       }
@@ -129,6 +130,59 @@ class DialogManager {
       .backdrop-exit-active {
         opacity: 0;
         transition: opacity 150ms ease-in;
+      }
+
+      /* Windows-style button hover effects */
+      .windows-btn {
+        position: relative;
+        transition: all 100ms ease;
+        border: 2px solid transparent;
+      }
+
+      .windows-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .windows-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+
+      .windows-btn:focus {
+        outline: 2px solid rgba(59, 130, 246, 0.5);
+        outline-offset: 2px;
+      }
+
+      /* Windows-style typography */
+      .windows-title {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+      }
+
+      .windows-text {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        line-height: 1.5;
+      }
+
+      /* Scrollbar styling for Windows */
+      .dialog-scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .dialog-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      .dialog-scrollbar::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+
+      .dialog-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #555;
       }
     `;
     document.head.appendChild(styles);
@@ -147,19 +201,19 @@ class DialogManager {
   private createBackdrop(): HTMLDivElement {
     const backdrop = document.createElement("div");
     backdrop.className =
-      "fixed inset-0 bg-black/10 dialog-backdrop backdrop-enter pointer-events-auto"; /* Mas light */
+      "fixed inset-0 bg-black/50 dialog-backdrop backdrop-enter pointer-events-auto";
     return backdrop;
   }
 
   private createDialogElement(): HTMLDivElement {
     const dialog = document.createElement("div");
     dialog.className = `
-      bg-white rounded-xl shadow-2xl
+      bg-white rounded-lg shadow-2xl
       w-full max-w-md
       overflow-hidden
       transform transition-all duration-200
       pointer-events-auto
-      border border-gray-200
+      border border-gray-300
       dialog-enter
     `;
     return dialog;
@@ -184,7 +238,7 @@ class DialogManager {
   private getIconMarkup(iconType: ConfirmIconType): string {
     const colorClasses = IconColors[iconType];
     return `
-      <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${colorClasses}">
+      <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClasses}">
         ${IconTemplates[iconType]}
       </div>
     `;
@@ -207,46 +261,50 @@ class DialogManager {
       const backdrop = this.createBackdrop();
       const dialog = this.createDialogElement();
 
+      // Sanitize and format message
+      const formattedMessage = this.formatDialogMessage(message);
+
       dialog.innerHTML = `
-        <div class="p-6 flex items-start gap-4">
+        <div class="p-5 flex items-start gap-4">
           ${this.getIconMarkup(icon)}
           <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-semibold text-gray-900 leading-6">
+            <h3 class="windows-title text-lg font-semibold text-gray-900 mb-2">
               ${title}
             </h3>
-            <p class="mt-2 text-sm text-gray-600 leading-5">
-              ${message}
-            </p>
+            <div class="windows-text text-sm text-gray-700 dialog-scrollbar max-h-64 overflow-y-auto">
+              ${formattedMessage}
+            </div>
           </div>
           ${
             showCloseButton
               ? `
-            <button type="button" class="close-btn flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            <button type="button" class="close-btn flex-shrink-0 text-gray-500 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-100">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           `
               : ""
           }
         </div>
-        <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-200">
+        <div class="px-5 py-4 bg-gray-50 flex justify-end gap-2 border-t border-gray-200">
           <button type="button" class="
             cancel-btn
+            windows-btn
             px-4 py-2 text-sm font-medium
-            text-gray-700 hover:text-gray-800 hover:bg-gray-100
-            rounded-lg transition-colors duration-200
+            text-gray-700 bg-gray-100 hover:bg-gray-200
+            rounded
             border border-gray-300
           ">
             ${cancelText}
           </button>
           <button type="button" class="
             confirm-btn
+            windows-btn
             px-4 py-2 text-sm font-medium
-            bg-[#0E9D7C] hover:bg-[#1AB394]
+            bg-[#0E9D7C] hover:bg-[#0d8c6f]
             text-white
-            rounded-lg transition-colors duration-200
-            focus:outline-none focus:ring-2 focus:ring-[#0E9D7C] focus:ring-page-2
+            rounded
           ">
             ${confirmText}
           </button>
@@ -311,12 +369,11 @@ class DialogManager {
       };
 
       // Add event listeners
-      dialog
-        .querySelector<HTMLButtonElement>(".confirm-btn")!
-        .addEventListener("click", onConfirm);
-      dialog
-        .querySelector<HTMLButtonElement>(".cancel-btn")!
-        .addEventListener("click", onCancel);
+      const confirmBtn = dialog.querySelector<HTMLButtonElement>(".confirm-btn")!;
+      const cancelBtn = dialog.querySelector<HTMLButtonElement>(".cancel-btn")!;
+
+      confirmBtn.addEventListener("click", onConfirm);
+      cancelBtn.addEventListener("click", onCancel);
 
       if (showCloseButton) {
         dialog
@@ -329,9 +386,21 @@ class DialogManager {
 
       // Focus the confirm button for accessibility
       setTimeout(() => {
-        dialog.querySelector<HTMLButtonElement>(".confirm-btn")?.focus();
+        confirmBtn.focus();
       }, 200);
     });
+  }
+
+  private formatDialogMessage(message: string): string {
+    // Convert newlines to <br> and handle basic HTML
+    return message
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/&lt;(\/?)(br|strong|em|b|i|u|span|div|p|ul|ol|li|code|pre)&gt;/gi, '<$1$2>')
+      .replace(/\n/g, '<br>')
+      .replace(/\[b\](.*?)\[\/b\]/gi, '<strong>$1</strong>')
+      .replace(/\[i\](.*?)\[\/i\]/gi, '<em>$1</em>')
+      .replace(/\[u\](.*?)\[\/u\]/gi, '<u>$1</u>');
   }
 
   public showAlert(options: AlertOptions): Promise<void> {
@@ -348,26 +417,29 @@ class DialogManager {
       const backdrop = this.createBackdrop();
       const dialog = this.createDialogElement();
 
+      // Format message with proper HTML
+      const formattedMessage = this.formatDialogMessage(message);
+
       dialog.innerHTML = `
-        <div class="p-6 flex items-start gap-4">
+        <div class="p-5 flex items-start gap-4">
           ${this.getIconMarkup(icon)}
           <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-semibold text-gray-900 leading-6">
+            <h3 class="windows-title text-lg font-semibold text-gray-900 mb-3">
               ${title}
             </h3>
-            <p class="mt-2 text-sm text-gray-600 leading-5">
-              ${message}
-            </p>
+            <div class="windows-text text-sm text-gray-700 dialog-scrollbar max-h-96 overflow-y-auto">
+              ${formattedMessage}
+            </div>
           </div>
         </div>
-        <div class="px-6 py-4 bg-gray-50 flex justify-end border-t border-gray-200">
+        <div class="px-5 py-4 bg-gray-50 flex justify-end border-t border-gray-200">
           <button type="button" class="
             alert-btn
+            windows-btn
             px-4 py-2 text-sm font-medium
-            bg-[#0E9D7C] hover:bg-[#1AB394]
+            bg-[#0E9D7C] hover:bg-[#0d8c6f]
             text-white
-            rounded-lg transition-colors duration-200
-            focus:outline-none focus:ring-2 focus:ring-[#0E9D7C] focus:ring-page-2
+            rounded
           ">
             ${buttonText}
           </button>
@@ -394,7 +466,7 @@ class DialogManager {
       const cleanup = () => {
         // Animate out backdrop
         backdrop.classList.remove("backdrop-enter-active");
-        backdrop.classList.add("backdrop-exit-active");
+        backdrop.classList.add("backdrop-exit", "backdrop-exit-active");
 
         // Animate out dialog
         this.animateOut(dialog, () => {
@@ -421,15 +493,14 @@ class DialogManager {
       };
 
       // Add event listeners
-      dialog
-        .querySelector<HTMLButtonElement>(".alert-btn")!
-        .addEventListener("click", onConfirm);
+      const alertBtn = dialog.querySelector<HTMLButtonElement>(".alert-btn")!;
+      alertBtn.addEventListener("click", onConfirm);
       backdrop.addEventListener("click", onConfirm);
       document.addEventListener("keydown", onKeyDown);
 
       // Focus the button for accessibility
       setTimeout(() => {
-        dialog.querySelector<HTMLButtonElement>(".alert-btn")?.focus();
+        alertBtn.focus();
       }, 200);
     });
   }
@@ -474,8 +545,8 @@ export const dialogs = {
     showConfirm({
       title: "Delete Confirmation",
       message: itemName
-        ? `Are you sure you want to delete "${itemName}"? This action cannot be undone.`
-        : "Are you sure you want to delete this item? This action cannot be undone.",
+        ? `Are you sure you want to delete <strong>"${itemName}"</strong>?<br><br>This action cannot be undone.`
+        : "Are you sure you want to delete this item?<br><br>This action cannot be undone.",
       confirmText: "Delete",
       cancelText: "Cancel",
       icon: "danger",
@@ -508,29 +579,23 @@ export const dialogs = {
       message,
       icon: "info",
     }),
+
+  // Windows-style confirmation
+  windowsConfirm: (title: string, message: string) =>
+    showConfirm({
+      title,
+      message,
+      confirmText: "Yes",
+      cancelText: "No",
+      icon: "question",
+    }),
+
+  // Windows-style alert
+  windowsAlert: (title: string, message: string) =>
+    showAlert({
+      title,
+      message,
+      buttonText: "OK",
+      icon: "info",
+    }),
 };
-
-// // Basic confirmation
-// const confirmed = await showConfirm({
-//   title: 'Delete Product',
-//   message: 'Are you sure you want to delete this product?',
-//   icon: 'danger'
-// });
-
-// // Pre-configured dialogs
-// const confirmed = await dialogs.delete('iPhone 15 Pro');
-// await dialogs.success('Product created successfully!');
-// await dialogs.error('Failed to save product data.');
-
-// // Alert dialog
-// await showAlert({
-//   title: 'Information',
-//   message: 'Operation completed successfully.',
-//   icon: 'success'
-// });
-
-// // Persistent dialog (cannot be closed by clicking backdrop)
-// const confirmed = await showConfirm({
-//   message: 'This action requires attention.',
-//   persistent: true
-// });

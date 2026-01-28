@@ -1,7 +1,7 @@
+import { kabAuthStore } from "../lib/kabAuthStore";
+import type { WorkerData } from "./worker";
 
 // Debt Management API - Similar structure to activationAPI.ts
-
-
 export interface DebtData {
   id: number;
   originalAmount: number;
@@ -18,7 +18,7 @@ export interface DebtData {
   lastPaymentDate: string | null;
   createdAt: string;
   updatedAt: string;
-  worker: Worker;
+  worker: WorkerData;
   history?: DebtHistoryData[];
 }
 
@@ -105,7 +105,7 @@ export interface DebtReportData {
 }
 
 export interface WorkerDebtSummary {
-  worker: Worker;
+  worker: WorkerData;
   totalDebt: number;
   totalBalance: number;
   totalPaid: number;
@@ -155,7 +155,30 @@ export interface DebtPayload {
   params?: Record<string, any>;
 }
 
+
 class DebtAPI {
+  // Helper method to get current user ID
+  private getCurrentUserId(): number | null {
+    try {
+      const user = kabAuthStore.getUser();
+      if (user && user.id) {
+        // Ensure we return a number
+        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        return isNaN(userId) ? null : userId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current user ID:", error);
+      return null;
+    }
+  }
+
+  // Helper method to enrich params with userId
+  private enrichParams(params: any = {}): any {
+    const userId = this.getCurrentUserId();
+    return { ...params, userId: userId !== null ? userId : 0 };
+  }
+
   // 📋 Read-only methods
   async getAll(filters: DebtFilters = {}): Promise<DebtResponse<DebtData[]>> {
     try {
@@ -165,7 +188,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getAllDebts",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -185,7 +208,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getDebtById",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -205,7 +228,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getDebtsByWorker",
-        params: { worker_id: workerId, filters },
+        params: this.enrichParams({ worker_id: workerId, filters }),
       });
 
       if (response.status) {
@@ -225,7 +248,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getDebtsByStatus",
-        params: { status, filters },
+        params: this.enrichParams({ status, filters }),
       });
 
       if (response.status) {
@@ -245,7 +268,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getActiveDebts",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -265,7 +288,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getOverdueDebts",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -285,7 +308,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getDebtHistory",
-        params: { debt_id: debtId },
+        params: this.enrichParams({ debt_id: debtId }),
       });
 
       if (response.status) {
@@ -305,7 +328,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "searchDebts",
-        params: { query },
+        params: this.enrichParams({ query }),
       });
 
       if (response.status) {
@@ -326,7 +349,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getDebtReport",
-        params: { date_range: dateRange, filters },
+        params: this.enrichParams({ date_range: dateRange, filters }),
       });
 
       if (response.status) {
@@ -346,7 +369,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getWorkerDebtSummary",
-        params: { worker_id: workerId },
+        params: this.enrichParams({ worker_id: workerId }),
       });
 
       if (response.status) {
@@ -366,7 +389,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getDebtCollectionReport",
-        params: { date_range: dateRange },
+        params: this.enrichParams({ date_range: dateRange }),
       });
 
       if (response.status) {
@@ -387,7 +410,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "createDebt",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -407,7 +430,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "updateDebt",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -427,7 +450,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "deleteDebt",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -447,7 +470,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "updateDebtStatus",
-        params: { id, status },
+        params: this.enrichParams({ id, status }),
       });
 
       if (response.status) {
@@ -467,7 +490,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "makePayment",
-        params: payment,
+        params: this.enrichParams(payment),
       });
 
       if (response.status) {
@@ -487,7 +510,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "addInterest",
-        params: interest,
+        params: this.enrichParams(interest),
       });
 
       if (response.status) {
@@ -507,7 +530,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "adjustDebt",
-        params: { id, ...adjustmentData },
+        params: this.enrichParams({ id, ...adjustmentData }),
       });
 
       if (response.status) {
@@ -528,7 +551,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "bulkCreateDebts",
-        params: { debts },
+        params: this.enrichParams({ debts }),
       });
 
       if (response.status) {
@@ -548,7 +571,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "importDebtsFromCSV",
-        params: { filePath },
+        params: this.enrichParams({ filePath }),
       });
 
       if (response.status) {
@@ -568,7 +591,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "exportDebtsToCSV",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -588,7 +611,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "bulkUpdateStatus",
-        params: { debtIds, status },
+        params: this.enrichParams({ debtIds, status }),
       });
 
       if (response.status) {
@@ -609,7 +632,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "processPayment",
-        params: paymentData,
+        params: this.enrichParams(paymentData),
       });
 
       if (response.status) {
@@ -629,7 +652,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "reversePayment",
-        params: { debt_history_id: debtHistoryId, reason },
+        params: this.enrichParams({ debt_history_id: debtHistoryId, reason }),
       });
 
       if (response.status) {
@@ -649,7 +672,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getPaymentHistory",
-        params: { debt_id: debtId },
+        params: this.enrichParams({ debt_id: debtId }),
       });
 
       if (response.status) {
@@ -670,7 +693,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "validateDebtData",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -690,7 +713,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "checkDebtLimit",
-        params: { worker_id: workerId, newDebtAmount },
+        params: this.enrichParams({ worker_id: workerId, newDebtAmount }),
       });
 
       if (response.status) {
@@ -715,7 +738,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "calculateInterest",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {

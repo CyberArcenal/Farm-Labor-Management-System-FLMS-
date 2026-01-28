@@ -7,8 +7,9 @@ const UserActivity = require("../../../entities/UserActivity");
 
 module.exports = async function removeFromKabisilya(params = {}, queryRunner = null) {
   let shouldRelease = false;
-  
+
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -20,52 +21,46 @@ module.exports = async function removeFromKabisilya(params = {}, queryRunner = n
   try {
     // @ts-ignore
     const { id, _userId } = params;
-    
+
     if (!id) {
       return {
         status: false,
-        message: 'Bukid ID is required',
-        data: null
+        message: "Bukid ID is required",
+        data: null,
       };
     }
 
-    // Find bukid
+    // ✅ Use repository
     // @ts-ignore
-    const bukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id }
-    });
+    const bukidRepo = queryRunner.manager.getRepository(Bukid);
 
+    const bukid = await bukidRepo.findOne({ where: { id } });
     if (!bukid) {
       return {
         status: false,
-        message: 'Bukid not found',
-        data: null
+        message: "Bukid not found",
+        data: null,
       };
     }
 
-    // Remove from kabisilya
-    // @ts-ignore
-    await queryRunner.manager.update(Bukid, id, {
-      kabisilya: null,
-      updatedAt: new Date()
-    });
-    
-    // Get updated bukid
-    // @ts-ignore
-    const updatedBukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id }
-    });
+    // Remove kabisilya relation
+    bukid.kabisilya = null;
+    bukid.updatedAt = new Date();
+
+    const updatedBukid = await bukidRepo.save(bukid);
 
     // Log activity
     // @ts-ignore
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'remove_bukid_from_kabisilya',
+      action: "remove_bukid_from_kabisilya",
+      entity: "Bukid",
+      entity_id: updatedBukid.id,
       description: `Removed bukid ${id} from kabisilya`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
-      created_at: new Date()
+      created_at: new Date(),
     });
     await activityRepo.save(activity);
 
@@ -76,20 +71,28 @@ module.exports = async function removeFromKabisilya(params = {}, queryRunner = n
 
     return {
       status: true,
-      message: 'Bukid removed from kabisilya successfully',
-      data: { bukid: updatedBukid }
+      message: "Bukid removed from kabisilya successfully",
+      data: {
+        id: updatedBukid.id,
+        name: updatedBukid.name,
+        location: updatedBukid.location,
+        status: updatedBukid.status,
+        kabisilya: updatedBukid.kabisilya, // should be null now
+        createdAt: updatedBukid.createdAt,
+        updatedAt: updatedBukid.updatedAt,
+      },
     };
   } catch (error) {
     if (shouldRelease) {
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in removeFromKabisilya:', error);
+    console.error("Error in removeFromKabisilya:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to remove bukid from kabisilya: ${error.message}`,
-      data: null
+      data: null,
     };
   } finally {
     if (shouldRelease) {

@@ -6,3 +6,4 @@ kabisilyaManagement.db
 /.vs
 /src/main/ipc/notification2
 *.csv
+package-lock.json

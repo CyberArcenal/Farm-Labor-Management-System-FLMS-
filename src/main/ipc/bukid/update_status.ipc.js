@@ -7,8 +7,9 @@ const UserActivity = require("../../../entities/UserActivity");
 
 module.exports = async function updateBukidStatus(params = {}, queryRunner = null) {
   let shouldRelease = false;
-  
+
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -20,52 +21,46 @@ module.exports = async function updateBukidStatus(params = {}, queryRunner = nul
   try {
     // @ts-ignore
     const { id, status, _userId } = params;
-    
+
     if (!id || !status) {
       return {
         status: false,
-        message: 'Bukid ID and status are required',
-        data: null
+        message: "Bukid ID and status are required",
+        data: null,
       };
     }
 
-    // Find existing bukid
+    // ✅ Use repository
     // @ts-ignore
-    const bukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id }
-    });
+    const bukidRepo = queryRunner.manager.getRepository(Bukid);
 
+    const bukid = await bukidRepo.findOne({ where: { id } });
     if (!bukid) {
       return {
         status: false,
-        message: 'Bukid not found',
-        data: null
+        message: "Bukid not found",
+        data: null,
       };
     }
 
     // Update status
-    // @ts-ignore
-    await queryRunner.manager.update(Bukid, id, {
-      status,
-      updatedAt: new Date()
-    });
-    
-    // Get updated bukid
-    // @ts-ignore
-    const updatedBukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id }
-    });
+    bukid.status = status;
+    bukid.updatedAt = new Date();
+
+    const updatedBukid = await bukidRepo.save(bukid);
 
     // Log activity
     // @ts-ignore
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'update_bukid_status',
+      action: "update_bukid_status",
+      entity: "Bukid",
+      entity_id: updatedBukid.id,
       description: `Updated bukid ${id} status to: ${status}`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
-      created_at: new Date()
+      created_at: new Date(),
     });
     await activityRepo.save(activity);
 
@@ -76,20 +71,27 @@ module.exports = async function updateBukidStatus(params = {}, queryRunner = nul
 
     return {
       status: true,
-      message: 'Bukid status updated successfully',
-      data: { bukid: updatedBukid }
+      message: "Bukid status updated successfully",
+      data: {
+        id: updatedBukid.id,
+        name: updatedBukid.name,
+        location: updatedBukid.location,
+        status: updatedBukid.status,
+        createdAt: updatedBukid.createdAt,
+        updatedAt: updatedBukid.updatedAt,
+      },
     };
   } catch (error) {
     if (shouldRelease) {
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in updateBukidStatus:', error);
+    console.error("Error in updateBukidStatus:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to update bukid status: ${error.message}`,
-      data: null
+      data: null,
     };
   } finally {
     if (shouldRelease) {

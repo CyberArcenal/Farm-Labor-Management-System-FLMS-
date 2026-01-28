@@ -213,11 +213,11 @@ const KabisilyaTablePage: React.FC = () => {
     };
 
     const handleEditKabisilya = (id: number) => {
-        navigate(`/kabisilya/edit/${id}`);
+        navigate(`/workers/kabisilya/form/${id}`);
     };
 
     const handleCreateKabisilya = () => {
-        navigate('/kabisilya/create');
+        navigate('/workers/kabisilya/form');
     };
 
     const handleDeleteKabisilya = async (id: number) => {

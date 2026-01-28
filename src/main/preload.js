@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("backendAPI", {
   pitak: (payload) => ipcRenderer.invoke("pitak", payload),
   user: (payload) => ipcRenderer.invoke("user", payload),
   worker: (payload) => ipcRenderer.invoke("worker", payload),
+  attendance: (payload) => ipcRenderer.invoke("attendance", payload),
 
   // ⚙️ System & Configuration
   activation: (payload) => ipcRenderer.invoke("activation", payload),

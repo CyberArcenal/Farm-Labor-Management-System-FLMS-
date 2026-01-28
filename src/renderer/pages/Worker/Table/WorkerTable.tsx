@@ -210,11 +210,11 @@ const WorkerTablePage: React.FC = () => {
     };
 
     const handleEditWorker = (id: number) => {
-        navigate(`/worker/edit/${id}`);
+        navigate(`/workers/form/${id}`);
     };
 
     const handleCreateWorker = () => {
-        navigate('/worker/create');
+        navigate('/workers/form');
     };
 
     const handleDeleteWorker = async (id: number) => {

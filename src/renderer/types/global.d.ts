@@ -18,6 +18,7 @@ declare global {
       pitak?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
       debt?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
       payment?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
+      attendance?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
 
       // 👤 User Management
       user: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;

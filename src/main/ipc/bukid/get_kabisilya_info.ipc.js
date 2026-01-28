@@ -8,6 +8,7 @@ const Kabisilya = require("../../../entities/Kabisilya");
 module.exports = async function getKabisilyaInfo(params = {}) {
   try {
     // @ts-ignore
+    // @ts-ignore
     const { id, _userId } = params;
     
     if (!id) {
@@ -34,6 +35,7 @@ module.exports = async function getKabisilyaInfo(params = {}) {
       };
     }
 
+    // @ts-ignore
     if (!bukid.kabisilya) {
       return {
         status: true,
@@ -44,6 +46,7 @@ module.exports = async function getKabisilyaInfo(params = {}) {
 
     // Get detailed kabisilya info
     const kabisilya = await kabisilyaRepository.findOne({
+      // @ts-ignore
       where: { id: bukid.kabisilya.id },
       relations: ['workers', 'bukids']
     });
@@ -53,7 +56,9 @@ module.exports = async function getKabisilyaInfo(params = {}) {
       message: 'Kabisilya info retrieved successfully',
       data: { 
         kabisilya,
+        // @ts-ignore
         workerCount: kabisilya?.workers?.length || 0,
+        // @ts-ignore
         bukidCount: kabisilya?.bukids?.length || 0
       }
     };

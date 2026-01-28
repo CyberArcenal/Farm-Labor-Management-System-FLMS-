@@ -12,6 +12,7 @@ const Pitak = require("../../../../entities/Pitak");
  * @returns {Promise<Object>} Response object
  */
 // @ts-ignore
+// @ts-ignore
 module.exports = async (pitakId, filters = {}, userId) => {
   try {
     if (!pitakId) {
@@ -78,10 +79,12 @@ module.exports = async (pitakId, filters = {}, userId) => {
 
     // @ts-ignore
     const formattedAssignments = assignments.map(assignment => {
+      // @ts-ignore
       const luwang = parseFloat(assignment.luwangCount) || 0;
       
       // Update stats
       stats.totalLuWang += luwang;
+      // @ts-ignore
       stats.uniqueWorkers.add(assignment.workerId);
       // @ts-ignore
       stats.byStatus[assignment.status]++;
@@ -91,7 +94,9 @@ module.exports = async (pitakId, filters = {}, userId) => {
       if (!stats.workerPerformance[assignment.workerId]) {
         // @ts-ignore
         stats.workerPerformance[assignment.workerId] = {
+          // @ts-ignore
           workerId: assignment.workerId,
+          // @ts-ignore
           workerName: assignment.worker?.name || 'Unknown',
           assignments: 0,
           totalLuWang: 0
@@ -108,9 +113,13 @@ module.exports = async (pitakId, filters = {}, userId) => {
         assignmentDate: assignment.assignmentDate,
         status: assignment.status,
         notes: assignment.notes,
+        // @ts-ignore
         worker: assignment.worker ? {
+          // @ts-ignore
           id: assignment.worker.id,
+          // @ts-ignore
           name: assignment.worker.name,
+          // @ts-ignore
           code: assignment.worker.code
         } : null
       };
@@ -137,11 +146,14 @@ module.exports = async (pitakId, filters = {}, userId) => {
 
     return {
       status: true,
+      // @ts-ignore
       message: `Assignments for pitak '${pitak.name}' retrieved successfully`,
       data: {
         pitak: {
           id: pitak.id,
+          // @ts-ignore
           name: pitak.name,
+          // @ts-ignore
           code: pitak.code,
           location: pitak.location
         },

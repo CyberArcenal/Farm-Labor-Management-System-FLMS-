@@ -1,71 +1,48 @@
 // components/UserSelect.tsx
-import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, Loader, User, Mail, Shield, ShieldCheck, ShieldOff, Phone } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, ChevronDown, Loader, User } from 'lucide-react';
 import type { UserData } from '../../../apis/user';
 import userAPI from '../../../apis/user';
 
 interface UserSelectProps {
   value: number | null;
-  onChange: (userId: number, userData?: UserData) => void;
+  onChange: (userId: number | null) => void;
   disabled?: boolean;
-  showDetails?: boolean;
   placeholder?: string;
-  roleFilter?: 'admin' | 'manager' | 'user' | 'all';
-  activeOnly?: boolean;
-  includeInactive?: boolean;
 }
 
 const UserSelect: React.FC<UserSelectProps> = ({
   value,
   onChange,
   disabled = false,
-  showDetails = true,
-  placeholder = 'Select a user',
-  roleFilter = 'all',
-  activeOnly = true,
-  includeInactive = false
+  placeholder = 'Select a user'
 }) => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await userAPI.getAllUsers(1, 1000, 'name', 'ASC', !activeOnly);
-      
-      if (response.status && response.data?.users) {
-        let filtered = response.data.users;
-        
-        if (roleFilter !== 'all') {
-          filtered = filtered.filter(user => user.role === roleFilter);
-        }
-        
-        if (!includeInactive && activeOnly) {
-          filtered = filtered.filter(user => user.isActive);
-        }
-        
-        setUsers(filtered);
-        setFilteredUsers(filtered);
-      } else {
-        throw new Error(response.message || 'Failed to fetch users');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch users');
-      console.error('Error fetching users:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const response = await userAPI.getAllUsers(1, 1000, 'name', 'ASC', false);
+        
+        if (response.status && response.data?.users) {
+          setUsers(response.data.users);
+          setFilteredUsers(response.data.users);
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchUsers();
-  }, [roleFilter, activeOnly, includeInactive]);
+  }, []);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -74,113 +51,110 @@ const UserSelect: React.FC<UserSelectProps> = ({
       const filtered = users.filter(user =>
         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (user.contact && user.contact.toLowerCase().includes(searchTerm.toLowerCase()))
+        (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       setFilteredUsers(filtered);
     }
   }, [searchTerm, users]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleUserSelect = (user: UserData) => {
-    onChange(user.id, user);
+  const handleSelect = (userId: number) => {
+    onChange(userId);
     setIsOpen(false);
     setSearchTerm('');
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'status-badge-admin';
-      case 'manager': return 'status-badge-manager';
-      case 'user': return 'status-badge-user';
-      default: return 'status-badge-inactive';
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'admin': return <Shield className="icon-xs" />;
-      case 'manager': return <ShieldCheck className="icon-xs" />;
-      case 'user': return <ShieldOff className="icon-xs" />;
-      default: return null;
-    }
-  };
-
-  const getRoleText = (role: string) => {
-    return role.charAt(0).toUpperCase() + role.slice(1);
+  const handleClear = () => {
+    onChange(null);
   };
 
   const selectedUser = users.find(u => u.id === value);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`compact-input w-full rounded-md text-left flex justify-between items-center transition-all duration-200 ${
-          disabled
-            ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed'
-            : 'text-gray-900 dark:text-[#9ED9EC] hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+        className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         }`}
         style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: isOpen ? 'var(--accent-green)' : 'var(--border-color)',
-          borderWidth: '1px',
-          minHeight: '42px'
+          backgroundColor: 'var(--input-bg)',
+          border: '1px solid var(--input-border)',
+          color: 'var(--text-primary)',
+          minHeight: '44px'
         }}
       >
-        <div className="flex items-center truncate">
+        <div className="flex items-center gap-2 truncate">
           {selectedUser ? (
-            <div className="flex items-center space-x-2">
-              <User className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-              <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                {selectedUser.name || selectedUser.username}
-                {showDetails && (
-                  <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                    • {selectedUser.role}
-                  </span>
-                )}
-              </span>
-            </div>
+            <>
+              <User className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+              <span className="truncate">{selectedUser.name || selectedUser.username}</span>
+            </>
           ) : (
-            <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
-              {placeholder}
-            </span>
+            <span style={{ color: 'var(--text-secondary)' }}>{placeholder}</span>
           )}
         </div>
-        <ChevronDown
-          className={`icon-sm transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          style={{ color: 'var(--text-secondary)' }}
-        />
+        <div className="flex items-center gap-2">
+          {selectedUser && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+              style={{ color: 'var(--accent-rust)' }}
+            >
+              ×
+            </button>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            style={{ color: 'var(--text-secondary)' }}
+          />
+        </div>
       </button>
 
       {isOpen && (
         <div
-          className="absolute z-50 w-full mt-xs rounded-md shadow-lg max-h-80 overflow-hidden transition-all duration-200"
+          className="absolute z-50 w-full mt-1 rounded-lg shadow-lg"
           style={{
-            backgroundColor: 'var(--card-secondary-bg)',
-            borderColor: 'var(--border-color)',
-            borderWidth: '1px',
-            animation: 'slideDown 0.2s ease-out'
+            backgroundColor: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+            maxHeight: '300px',
+            overflow: 'hidden'
           }}
         >
-          <div className="compact-card border-b" style={{ borderColor: 'var(--border-color)' }}>
+          <div className="p-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 icon-sm" style={{ color: 'var(--text-secondary)' }} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                     style={{ color: 'var(--text-secondary)' }} />
               <input
                 type="text"
-                placeholder="Search users by name, username, or email..."
+                placeholder="Search users..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="compact-input w-full pl-8 rounded-md focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
                 style={{
-                  backgroundColor: 'var(--card-bg)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--sidebar-text)'
+                  backgroundColor: 'var(--input-bg)',
+                  border: '1px solid var(--input-border)',
+                  color: 'var(--text-primary)'
                 }}
                 autoFocus
               />
@@ -188,120 +162,54 @@ const UserSelect: React.FC<UserSelectProps> = ({
           </div>
 
           {loading && (
-            <div className="flex items-center justify-center py-3">
-              <Loader className="icon-sm animate-spin" style={{ color: 'var(--accent-green)' }} />
-              <span className="ml-xs text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <div className="p-4 text-center">
+              <Loader className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--accent-green)' }} />
+              <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
                 Loading users...
-              </span>
+              </p>
             </div>
           )}
 
-          {error && !loading && (
-            <div className="compact-card text-center">
-              <p className="text-sm mb-xs" style={{ color: 'var(--accent-rust)' }}>{error}</p>
-              <button
-                onClick={fetchUsers}
-                className="text-sm compact-button"
-                style={{
-                  backgroundColor: 'var(--accent-green)',
-                  color: 'var(--sidebar-text)',
-                  padding: 'var(--size-xs) var(--size-sm)'
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {!loading && !error && (
-            <div className="max-h-60 overflow-y-auto kabisilya-scrollbar">
+          {!loading && (
+            <div className="max-h-60 overflow-y-auto">
               {filteredUsers.length === 0 ? (
-                <div className="compact-card text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  No users found
+                <div className="p-4 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {searchTerm ? 'No users found' : 'No users available'}
                 </div>
               ) : (
                 filteredUsers.map((user) => (
                   <button
                     key={user.id}
                     type="button"
-                    onClick={() => handleUserSelect(user)}
-                    className={`w-full compact-card text-left transition-all duration-200 hover:scale-[1.02] ${
-                      user.id === value
-                        ? 'border-l-2 border-green-600'
-                        : ''
+                    onClick={() => handleSelect(user.id)}
+                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
+                      user.id === value ? 'bg-gray-50' : ''
                     }`}
                     style={{
-                      backgroundColor: user.id === value ? 'var(--card-hover-bg)' : 'transparent',
-                      borderBottom: '1px solid var(--border-light)'
+                      borderBottom: '1px solid var(--border-light)',
+                      color: 'var(--text-primary)'
                     }}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <User className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-                          <div className="font-medium text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                            {user.name || user.username}
-                          </div>
-                          <div className={`px-xs py-xs rounded-full text-xs font-medium flex items-center gap-1 ${getRoleColor(user.role)}`}>
-                            {getRoleIcon(user.role)}
-                            {getRoleText(user.role)}
-                          </div>
-                          {!user.isActive && (
-                            <div className="px-xs py-xs rounded-full text-xs font-medium status-badge-inactive">
-                              Inactive
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-xs">
-                          <div className="flex items-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-                            <Mail className="icon-xs mr-1" />
-                            {user.email}
-                          </div>
-                          
-                          {user.contact && (
-                            <div className="flex items-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-                              <Phone className="icon-xs mr-1" />
-                              {user.contact}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="mt-xs text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                          Username: {user.username}
-                        </div>
-                      </div>
-                      
-                      <div className="text-right ml-xs">
-                        {user.lastLogin && (
-                          <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                            Last login: {new Date(user.lastLogin).toLocaleDateString()}
-                          </div>
-                        )}
-                        <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                          Joined: {new Date(user.createdAt).toLocaleDateString()}
-                        </div>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      user.id === value ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                    }`}>
+                      {user.id === value && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <User className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+                    <div className="flex-1 text-left">
+                      <div className="font-medium text-sm">{user.name || user.username}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        {user.role} • {user.email}
                       </div>
                     </div>
-
-                    {user.address && (
-                      <div className="mt-xs text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                        {user.address.length > 80 ? `${user.address.substring(0, 80)}...` : user.address}
-                      </div>
-                    )}
                   </button>
                 ))
               )}
             </div>
           )}
         </div>
-      )}
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
       )}
     </div>
   );

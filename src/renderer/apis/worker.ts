@@ -1,4 +1,6 @@
 // workerAPI.ts - Similar structure to activation.ts
+import { kabAuthStore } from "../lib/kabAuthStore";
+
 export interface WorkerData {
   id: number;
   name: string;
@@ -329,6 +331,28 @@ export interface WorkerPayload {
 }
 
 class WorkerAPI {
+  // Helper method to get current user ID from kabAuthStore
+  private getCurrentUserId(): number | null {
+    try {
+      const user = kabAuthStore.getUser();
+      if (user && user.id) {
+        // Ensure we return a number
+        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        return isNaN(userId) ? null : userId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current user ID:", error);
+      return null;
+    }
+  }
+
+  // Helper method to enrich params with currentUserId
+  private enrichParams(params: any = {}): any {
+    const userId = this.getCurrentUserId();
+    return { ...params, userId: userId !== null ? userId : 0 };
+  }
+
   // 📋 READ-ONLY METHODS
 
   async getAllWorkers(params?: {
@@ -344,7 +368,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getAllWorkers",
-        params: params || {},
+        params: this.enrichParams(params || {}),
       });
 
       if (response.status) {
@@ -364,7 +388,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerById",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -384,7 +408,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerByName",
-        params: { name },
+        params: this.enrichParams({ name }),
       });
 
       if (response.status) {
@@ -404,7 +428,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerByKabisilya",
-        params: { kabisilyaId, status },
+        params: this.enrichParams({ kabisilyaId, status }),
       });
 
       if (response.status) {
@@ -424,7 +448,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerByStatus",
-        params: { status, page, limit },
+        params: this.enrichParams({ status, page, limit }),
       });
 
       if (response.status) {
@@ -444,7 +468,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerWithDebts",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -464,7 +488,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerWithPayments",
-        params: { id, periodStart, periodEnd },
+        params: this.enrichParams({ id, periodStart, periodEnd }),
       });
 
       if (response.status) {
@@ -484,7 +508,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerWithAssignments",
-        params: { id, startDate, endDate },
+        params: this.enrichParams({ id, startDate, endDate }),
       });
 
       if (response.status) {
@@ -504,7 +528,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerSummary",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -530,7 +554,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getActiveWorkers",
-        params: params || {},
+        params: this.enrichParams(params || {}),
       });
 
       if (response.status) {
@@ -550,7 +574,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerStats",
-        params: {},
+        params: this.enrichParams({}),
       });
 
       if (response.status) {
@@ -570,7 +594,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "searchWorkers",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -590,7 +614,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getKabisilyaInfo",
-        params: { workerId },
+        params: this.enrichParams({ workerId }),
       });
 
       if (response.status) {
@@ -610,7 +634,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerDebtSummary",
-        params: { workerId, includeHistory },
+        params: this.enrichParams({ workerId, includeHistory }),
       });
 
       if (response.status) {
@@ -630,7 +654,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerPaymentSummary",
-        params: { workerId, periodStart, periodEnd, groupBy },
+        params: this.enrichParams({ workerId, periodStart, periodEnd, groupBy }),
       });
 
       if (response.status) {
@@ -650,7 +674,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerAssignmentSummary",
-        params: { workerId, startDate, endDate, groupBy },
+        params: this.enrichParams({ workerId, startDate, endDate, groupBy }),
       });
 
       if (response.status) {
@@ -670,7 +694,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "calculateWorkerBalance",
-        params: { workerId, recalculate },
+        params: this.enrichParams({ workerId, recalculate }),
       });
 
       if (response.status) {
@@ -690,7 +714,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerAttendance",
-        params: { workerId, month, year },
+        params: this.enrichParams({ workerId, month, year }),
       });
 
       if (response.status) {
@@ -710,7 +734,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "getWorkerPerformance",
-        params: { workerId, period, compareToPrevious },
+        params: this.enrichParams({ workerId, period, compareToPrevious }),
       });
 
       if (response.status) {
@@ -732,7 +756,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "createWorker",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -752,7 +776,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "updateWorker",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -772,7 +796,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "deleteWorker",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -792,7 +816,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "updateWorkerStatus",
-        params: { id, status, notes },
+        params: this.enrichParams({ id, status, notes }),
       });
 
       if (response.status) {
@@ -812,7 +836,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "updateWorkerContact",
-        params: { id, contact, email, address },
+        params: this.enrichParams({ id, contact, email, address }),
       });
 
       if (response.status) {
@@ -832,7 +856,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "updateWorkerFinancials",
-        params: { id, totalDebt, totalPaid, currentBalance },
+        params: this.enrichParams({ id, totalDebt, totalPaid, currentBalance }),
       });
 
       if (response.status) {
@@ -852,7 +876,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "assignToKabisilya",
-        params: { workerId, kabisilyaId },
+        params: this.enrichParams({ workerId, kabisilyaId }),
       });
 
       if (response.status) {
@@ -872,7 +896,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "removeFromKabisilya",
-        params: { workerId },
+        params: this.enrichParams({ workerId }),
       });
 
       if (response.status) {
@@ -894,7 +918,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "bulkCreateWorkers",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -914,7 +938,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "bulkUpdateWorkers",
-        params: data,
+        params: this.enrichParams(data),
       });
 
       if (response.status) {
@@ -934,7 +958,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "importWorkersFromCSV",
-        params: { filePath, hasHeader, delimiter },
+        params: this.enrichParams({ filePath, hasHeader, delimiter }),
       });
 
       if (response.status) {
@@ -954,7 +978,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "exportWorkersToCSV",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -974,7 +998,7 @@ class WorkerAPI {
 
       const response = await window.backendAPI.worker({
         method: "generateWorkerReport",
-        params: { workerId, reportType, startDate, endDate, format },
+        params: this.enrichParams({ workerId, reportType, startDate, endDate, format }),
       });
 
       if (response.status) {

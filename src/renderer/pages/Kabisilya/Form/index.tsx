@@ -281,13 +281,13 @@ const KabisilyaFormPage: React.FC<KabisilyaFormPageProps> = () => {
                                                 value={formData.name}
                                                 onChange={(e) => handleChange('name', e.target.value)}
                                                 className={`w-full p-3 rounded-lg text-sm transition-all pr-10 ${errors.name ? 'border-red-500' :
-                                                        nameAvailable === true && formData.name.length >= 2 ? 'border-green-500' : ''
+                                                    nameAvailable === true && formData.name.length >= 2 ? 'border-green-500' : ''
                                                     }`}
                                                 style={{
                                                     backgroundColor: 'var(--input-bg)',
                                                     border: `1px solid ${errors.name ? '#ef4444' :
-                                                            nameAvailable === true && formData.name.length >= 2 ? '#10b981' :
-                                                                'var(--input-border)'
+                                                        nameAvailable === true && formData.name.length >= 2 ? '#10b981' :
+                                                            'var(--input-border)'
                                                         }`,
                                                     color: 'var(--text-primary)'
                                                 }}

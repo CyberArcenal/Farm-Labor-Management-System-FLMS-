@@ -5,11 +5,11 @@ const Bukid = require("../../../entities/Bukid");
 const UserActivity = require("../../../entities/UserActivity");
 const { AppDataSource } = require("../../db/dataSource");
 
-
 module.exports = async function updateBukid(params = {}, queryRunner = null) {
   let shouldRelease = false;
-  
+
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -21,65 +21,51 @@ module.exports = async function updateBukid(params = {}, queryRunner = null) {
   try {
     // @ts-ignore
     const { id, name, location, kabisilyaId, _userId } = params;
-    
+
     if (!id) {
       return {
         status: false,
-        message: 'Bukid ID is required',
-        data: null
+        message: "Bukid ID is required",
+        data: null,
       };
     }
 
-    // Find existing bukid
+    // ✅ Use repository
     // @ts-ignore
-    const bukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id }
-    });
+    const bukidRepo = queryRunner.manager.getRepository(Bukid);
 
+    const bukid = await bukidRepo.findOne({ where: { id } });
     if (!bukid) {
       return {
         status: false,
-        message: 'Bukid not found',
-        data: null
+        message: "Bukid not found",
+        data: null,
       };
     }
 
     // Update fields
-    const updates = {};
-    if (name) {
-      // @ts-ignore
-      updates.name = name;
-    }
-    if (location !== undefined) {
-      // @ts-ignore
-      updates.location = location;
-    }
+    if (name) bukid.name = name;
+    if (location !== undefined) bukid.location = location;
     if (kabisilyaId !== undefined) {
-      // @ts-ignore
-      updates.kabisilya = kabisilyaId ? { id: kabisilyaId } : null;
+      bukid.kabisilya = kabisilyaId ? { id: kabisilyaId } : null;
     }
-    updates.updatedAt = new Date();
+    bukid.updatedAt = new Date();
 
-    // @ts-ignore
-    await queryRunner.manager.update(Bukid, id, updates);
-    
-    // Get updated bukid
-    // @ts-ignore
-    const updatedBukid = await queryRunner.manager.findOne(Bukid, {
-      where: { id },
-      relations: ['kabisilya']
-    });
+    // ✅ Save updated bukid
+    const updatedBukid = await bukidRepo.save(bukid);
 
     // Log activity
     // @ts-ignore
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'update_bukid',
+      action: "update_bukid",
+      entity: "Bukid",
+      entity_id: updatedBukid.id,
       description: `Updated bukid ID: ${id}`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
-      created_at: new Date()
+      created_at: new Date(),
     });
     await activityRepo.save(activity);
 
@@ -90,20 +76,27 @@ module.exports = async function updateBukid(params = {}, queryRunner = null) {
 
     return {
       status: true,
-      message: 'Bukid updated successfully',
-      data: { bukid: updatedBukid }
+      message: "Bukid updated successfully",
+      data: {
+        id: updatedBukid.id,
+        name: updatedBukid.name,
+        location: updatedBukid.location,
+        kabisilyaId: kabisilyaId || null,
+        createdAt: updatedBukid.createdAt,
+        updatedAt: updatedBukid.updatedAt,
+      },
     };
   } catch (error) {
     if (shouldRelease) {
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in updateBukid:', error);
+    console.error("Error in updateBukid:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to update bukid: ${error.message}`,
-      data: null
+      data: null,
     };
   } finally {
     if (shouldRelease) {

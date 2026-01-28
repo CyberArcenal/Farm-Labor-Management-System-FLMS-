@@ -1,7 +1,12 @@
 // src/api/kabisilyaAPI.ts
 // Similar structure to activationAPI.ts
 
+import type { ReactNode } from "react";
+import { kabAuthStore } from "../lib/kabAuthStore";
+
 export interface KabisilyaData {
+  phone?: ReactNode;
+  email?: any;
   id: number;
   name: string;
   createdAt: string;
@@ -107,6 +112,28 @@ export interface KabisilyaPayload {
 }
 
 class KabisilyaAPI {
+  // Helper method to get current user ID from localStorage
+  private getCurrentUserId(): number | null {
+    try {
+      const user = kabAuthStore.getUser();
+      if (user && user.id) {
+        // Ensure we return a number
+        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        return isNaN(userId) ? null : userId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current user ID:", error);
+      return null;
+    }
+  }
+
+  // Helper method to enrich params with currentUserId
+  private enrichParams(params: any = {}): any {
+    const userId = this.getCurrentUserId();
+    return { ...params, currentUserId: userId !== null ? userId : 0 };
+  }
+
   // 🔎 Read-only methods
   
   /**
@@ -120,7 +147,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "getAllKabisilyas",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -148,7 +175,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "getKabisilyaById",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -181,7 +208,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "getKabisilyaWorkers",
-        params: { kabisilya_id: kabisilyaId },
+        params: this.enrichParams({ kabisilya_id: kabisilyaId }),
       });
 
       if (response.status) {
@@ -220,7 +247,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "getKabisilyaBukids",
-        params: { kabisilya_id: kabisilyaId },
+        params: this.enrichParams({ kabisilya_id: kabisilyaId }),
       });
 
       if (response.status) {
@@ -254,7 +281,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "searchKabisilyas",
-        params: { query },
+        params: this.enrichParams({ query }),
       });
 
       if (response.status) {
@@ -284,7 +311,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "createKabisilya",
-        params: { name },
+        params: this.enrichParams({ name }),
       });
 
       if (response.status) {
@@ -312,7 +339,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "updateKabisilya",
-        params: { id, name },
+        params: this.enrichParams({ id, name }),
       });
 
       if (response.status) {
@@ -346,7 +373,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "deleteKabisilya",
-        params: { id, force },
+        params: this.enrichParams({ id, force }),
       });
 
       if (response.status) {
@@ -386,7 +413,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "assignWorkerToKabisilya",
-        params: { workerId, kabisilyaId },
+        params: this.enrichParams({ workerId, kabisilyaId }),
       });
 
       if (response.status) {
@@ -423,7 +450,7 @@ class KabisilyaAPI {
 
       const response = await window.backendAPI.kabisilya({
         method: "assignBukidToKabisilya",
-        params: { bukidId, kabisilyaId },
+        params: this.enrichParams({ bukidId, kabisilyaId }),
       });
 
       if (response.status) {

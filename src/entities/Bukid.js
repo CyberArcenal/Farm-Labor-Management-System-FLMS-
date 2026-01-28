@@ -7,6 +7,7 @@ const Bukid = new EntitySchema({
   columns: {
     id: { type: Number, primary: true, generated: true },
     name: { type: String },
+    status: { type: String, default: 'active' },
     location: { type: String, nullable: true },
     createdAt: { type: Date, createDate: true },
     updatedAt: { type: Date, updateDate: true }

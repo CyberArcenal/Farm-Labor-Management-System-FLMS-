@@ -1,5 +1,17 @@
-// bukidAPI.ts
+import { kabAuthStore } from "../lib/kabAuthStore";
+
+// bukid.ts
 export interface BukidData {
+  pitaks?:
+    | {
+        id: number;
+        location: string;
+        totalLuwang: number;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+      }[]
+    | undefined;
   id?: number;
   name: string;
   location?: string | null;
@@ -97,21 +109,48 @@ export interface BukidFilters {
   page?: number;
   limit?: number;
   sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder?: "ASC" | "DESC";
 }
 
 class BukidAPI {
+  // Helper method to get current user ID
+  private getCurrentUserId(): number | null {
+    try {
+      const user = kabAuthStore.getUser();
+      if (user && user.id) {
+        // Ensure we return a number
+        const userId =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
+        return isNaN(userId) ? null : userId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current user ID:", error);
+      return null;
+    }
+  }
+
+  // Helper method to enrich params with userId
+  private enrichParams(params: any = {}): any {
+    const userId = this.getCurrentUserId();
+    return { ...params, userId: userId !== null ? userId : 0 };
+  }
+
   // 📋 READ-ONLY METHODS
 
-  async getAll(filters: BukidFilters = {}): Promise<BukidResponse<BukidPaginationResponse>> {
+  async getAll(
+    filters: BukidFilters = {},
+  ): Promise<BukidResponse<BukidPaginationResponse>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
       }
 
+      const enrichedParams = this.enrichParams({ filters });
+
       const response = await window.backendAPI.bukid({
         method: "getAllBukid",
-        params: { filters },
+        params: enrichedParams,
       });
 
       if (response.status) {
@@ -123,7 +162,12 @@ class BukidAPI {
     }
   }
 
-  async getById(id: number): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async getById(id: number): Promise<
+    BukidResponse<{
+      stats: any;
+      bukid: BukidData;
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -131,7 +175,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getBukidById",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -143,7 +187,10 @@ class BukidAPI {
     }
   }
 
-  async getByKabisilya(kabisilyaId: number, filters: BukidFilters = {}): Promise<BukidResponse<BukidPaginationResponse>> {
+  async getByKabisilya(
+    kabisilyaId: number,
+    filters: BukidFilters = {},
+  ): Promise<BukidResponse<BukidPaginationResponse>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -151,7 +198,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getBukidByKabisilya",
-        params: { kabisilyaId, filters },
+        params: this.enrichParams({ kabisilyaId, filters }),
       });
 
       if (response.status) {
@@ -163,7 +210,9 @@ class BukidAPI {
     }
   }
 
-  async getByName(name: string): Promise<BukidResponse<{ bukids: BukidData[] }>> {
+  async getByName(
+    name: string,
+  ): Promise<BukidResponse<{ bukids: BukidData[] }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -171,7 +220,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getBukidByName",
-        params: { name },
+        params: this.enrichParams({ name }),
       });
 
       if (response.status) {
@@ -183,7 +232,9 @@ class BukidAPI {
     }
   }
 
-  async getByLocation(location: string): Promise<BukidResponse<{ bukids: BukidData[] }>> {
+  async getByLocation(
+    location: string,
+  ): Promise<BukidResponse<{ bukids: BukidData[] }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -191,7 +242,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getBukidByLocation",
-        params: { location },
+        params: this.enrichParams({ location }),
       });
 
       if (response.status) {
@@ -203,7 +254,9 @@ class BukidAPI {
     }
   }
 
-  async getWithPitaks(id: number): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async getWithPitaks(
+    id: number,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -211,7 +264,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getBukidWithPitaks",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -223,7 +276,9 @@ class BukidAPI {
     }
   }
 
-  async getSummary(id: number): Promise<BukidResponse<{ summary: BukidSummaryData }>> {
+  async getSummary(
+    id: number,
+  ): Promise<BukidResponse<{ summary: BukidSummaryData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -231,7 +286,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getBukidSummary",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -243,7 +298,9 @@ class BukidAPI {
     }
   }
 
-  async getActive(filters: BukidFilters = {}): Promise<BukidResponse<BukidPaginationResponse>> {
+  async getActive(
+    filters: BukidFilters = {},
+  ): Promise<BukidResponse<BukidPaginationResponse>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -251,7 +308,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getActiveBukid",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -263,11 +320,13 @@ class BukidAPI {
     }
   }
 
-  async getStats(): Promise<BukidResponse<{ 
-    summary: BukidStatsData;
-    pitakDistribution: any[];
-    recentBukid: BukidData[];
-  }>> {
+  async getStats(): Promise<
+    BukidResponse<{
+      summary: BukidStatsData;
+      pitakDistribution: any[];
+      recentBukid: BukidData[];
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -275,7 +334,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getBukidStats",
-        params: {},
+        params: this.enrichParams({}),
       });
 
       if (response.status) {
@@ -287,7 +346,10 @@ class BukidAPI {
     }
   }
 
-  async search(query: string, filters: BukidFilters = {}): Promise<BukidResponse<SearchResultData>> {
+  async search(
+    query: string,
+    filters: BukidFilters = {},
+  ): Promise<BukidResponse<SearchResultData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -295,7 +357,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "searchBukid",
-        params: { query, filters },
+        params: this.enrichParams({ query, filters }),
       });
 
       if (response.status) {
@@ -309,7 +371,9 @@ class BukidAPI {
 
   // ✏️ WRITE OPERATIONS
 
-  async create(bukidData: Omit<BukidData, 'id'>): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async create(
+    bukidData: Omit<BukidData, "id">,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -317,7 +381,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "createBukid",
-        params: bukidData,
+        params: this.enrichParams(bukidData),
       });
 
       if (response.status) {
@@ -329,7 +393,10 @@ class BukidAPI {
     }
   }
 
-  async update(id: number, bukidData: Partial<BukidData>): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async update(
+    id: number,
+    bukidData: Partial<BukidData>,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -337,7 +404,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "updateBukid",
-        params: { id, ...bukidData },
+        params: this.enrichParams({ id, ...bukidData }),
       });
 
       if (response.status) {
@@ -357,7 +424,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "deleteBukid",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -369,7 +436,10 @@ class BukidAPI {
     }
   }
 
-  async updateStatus(id: number, status: string): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async updateStatus(
+    id: number,
+    status: string,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -377,7 +447,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "updateBukidStatus",
-        params: { id, status },
+        params: this.enrichParams({ id, status }),
       });
 
       if (response.status) {
@@ -389,7 +459,10 @@ class BukidAPI {
     }
   }
 
-  async addNote(id: number, note: string): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async addNote(
+    id: number,
+    note: string,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -397,7 +470,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "addBukidNote",
-        params: { id, note },
+        params: this.enrichParams({ id, note }),
       });
 
       if (response.status) {
@@ -411,7 +484,10 @@ class BukidAPI {
 
   // 🔗 RELATIONSHIP OPERATIONS
 
-  async assignToKabisilya(bukidId: number, kabisilyaId: number): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async assignToKabisilya(
+    bukidId: number,
+    kabisilyaId: number,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -419,19 +495,23 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "assignToKabisilya",
-        params: { bukidId, kabisilyaId },
+        params: this.enrichParams({ bukidId, kabisilyaId }),
       });
 
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to assign bukid to kabisilya");
+      throw new Error(
+        response.message || "Failed to assign bukid to kabisilya",
+      );
     } catch (error: any) {
       throw new Error(error.message || "Failed to assign bukid to kabisilya");
     }
   }
 
-  async removeFromKabisilya(id: number): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async removeFromKabisilya(
+    id: number,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -439,19 +519,23 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "removeFromKabisilya",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to remove bukid from kabisilya");
+      throw new Error(
+        response.message || "Failed to remove bukid from kabisilya",
+      );
     } catch (error: any) {
       throw new Error(error.message || "Failed to remove bukid from kabisilya");
     }
   }
 
-  async getKabisilyaInfo(id: number): Promise<BukidResponse<KabisilyaInfoData>> {
+  async getKabisilyaInfo(
+    id: number,
+  ): Promise<BukidResponse<KabisilyaInfoData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -459,7 +543,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getKabisilyaInfo",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -473,7 +557,9 @@ class BukidAPI {
 
   // 📊 STATISTICS OPERATIONS
 
-  async getPitakCounts(bukidId?: number): Promise<BukidResponse<{ pitakCounts: PitakCountData[] }>> {
+  async getPitakCounts(
+    bukidId?: number,
+  ): Promise<BukidResponse<{ pitakCounts: PitakCountData[] }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -481,7 +567,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getPitakCounts",
-        params: { bukidId },
+        params: this.enrichParams({ bukidId }),
       });
 
       if (response.status) {
@@ -493,7 +579,9 @@ class BukidAPI {
     }
   }
 
-  async getWorkerCounts(bukidId?: number): Promise<BukidResponse<{ workerCounts: WorkerCountData[] }>> {
+  async getWorkerCounts(
+    bukidId?: number,
+  ): Promise<BukidResponse<{ workerCounts: WorkerCountData[] }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -501,7 +589,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "getWorkerCounts",
-        params: { bukidId },
+        params: this.enrichParams({ bukidId }),
       });
 
       if (response.status) {
@@ -515,7 +603,9 @@ class BukidAPI {
 
   // 🔄 BATCH OPERATIONS
 
-  async bulkCreate(bukids: Omit<BukidData, 'id'>[]): Promise<BukidResponse<{ results: BulkOperationResult }>> {
+  async bulkCreate(
+    bukids: Omit<BukidData, "id">[],
+  ): Promise<BukidResponse<{ results: BulkOperationResult }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -523,7 +613,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "bulkCreateBukid",
-        params: { bukids },
+        params: this.enrichParams({ bukids }),
       });
 
       if (response.status) {
@@ -535,7 +625,9 @@ class BukidAPI {
     }
   }
 
-  async bulkUpdate(updates: Array<{ id: number } & Partial<BukidData>>): Promise<BukidResponse<{ results: BulkOperationResult }>> {
+  async bulkUpdate(
+    updates: Array<{ id: number } & Partial<BukidData>>,
+  ): Promise<BukidResponse<{ results: BulkOperationResult }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -543,7 +635,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "bulkUpdateBukid",
-        params: { updates },
+        params: this.enrichParams({ updates }),
       });
 
       if (response.status) {
@@ -555,7 +647,9 @@ class BukidAPI {
     }
   }
 
-  async importFromCSV(filePath: string): Promise<BukidResponse<{ results: any }>> {
+  async importFromCSV(
+    filePath: string,
+  ): Promise<BukidResponse<{ results: any }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -563,7 +657,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "importBukidFromCSV",
-        params: { filePath },
+        params: this.enrichParams({ filePath }),
       });
 
       if (response.status) {
@@ -575,7 +669,9 @@ class BukidAPI {
     }
   }
 
-  async exportToCSV(filters: BukidFilters = {}): Promise<BukidResponse<CSVExportResult>> {
+  async exportToCSV(
+    filters: BukidFilters = {},
+  ): Promise<BukidResponse<CSVExportResult>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -583,7 +679,7 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "exportBukidToCSV",
-        params: { filters },
+        params: this.enrichParams({ filters }),
       });
 
       if (response.status) {
@@ -597,7 +693,10 @@ class BukidAPI {
 
   // 🔍 SEARCH METHODS
 
-  async searchByKeyword(keyword: string, limit: number = 20): Promise<BukidResponse<SearchResultData>> {
+  async searchByKeyword(
+    keyword: string,
+    limit: number = 20,
+  ): Promise<BukidResponse<SearchResultData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.bukid) {
         throw new Error("Electron API not available");
@@ -605,10 +704,10 @@ class BukidAPI {
 
       const response = await window.backendAPI.bukid({
         method: "searchBukid",
-        params: { 
+        params: this.enrichParams({
           query: keyword,
-          filters: { limit }
-        },
+          filters: { limit },
+        }),
       });
 
       if (response.status) {
@@ -664,10 +763,10 @@ class BukidAPI {
 
   async getRecentBukid(limit: number = 10): Promise<BukidData[]> {
     try {
-      const response = await this.getAll({ 
-        limit, 
-        sortBy: 'createdAt', 
-        sortOrder: 'DESC' 
+      const response = await this.getAll({
+        limit,
+        sortBy: "createdAt",
+        sortOrder: "DESC",
       });
       return response.data.bukids;
     } catch (error) {
@@ -676,63 +775,74 @@ class BukidAPI {
     }
   }
 
-  async validateBukidData(data: Partial<BukidData>): Promise<{ isValid: boolean; errors: string[] }> {
+  async validateBukidData(
+    data: Partial<BukidData>,
+  ): Promise<{ isValid: boolean; errors: string[] }> {
     const errors: string[] = [];
 
-    if (!data.name || data.name.trim() === '') {
-      errors.push('Bukid name is required');
+    if (!data.name || data.name.trim() === "") {
+      errors.push("Bukid name is required");
     }
 
     if (data.name && data.name.length > 100) {
-      errors.push('Bukid name must be less than 100 characters');
+      errors.push("Bukid name must be less than 100 characters");
     }
 
     if (data.location && data.location.length > 255) {
-      errors.push('Location must be less than 255 characters');
+      errors.push("Location must be less than 255 characters");
     }
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
-  async createWithValidation(bukidData: Omit<BukidData, 'id'>): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async createWithValidation(
+    bukidData: Omit<BukidData, "id">,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     const validation = await this.validateBukidData(bukidData);
-    
+
     if (!validation.isValid) {
       return {
         status: false,
-        message: validation.errors.join(', '),
-        data: { bukid: {} as BukidData }
+        message: validation.errors.join(", "),
+        data: { bukid: {} as BukidData },
       };
     }
 
     return await this.create(bukidData);
   }
 
-  async updateWithValidation(id: number, bukidData: Partial<BukidData>): Promise<BukidResponse<{ bukid: BukidData }>> {
+  async updateWithValidation(
+    id: number,
+    bukidData: Partial<BukidData>,
+  ): Promise<BukidResponse<{ bukid: BukidData }>> {
     const validation = await this.validateBukidData(bukidData);
-    
+
     if (!validation.isValid) {
       return {
         status: false,
-        message: validation.errors.join(', '),
-        data: { bukid: {} as BukidData }
+        message: validation.errors.join(", "),
+        data: { bukid: {} as BukidData },
       };
     }
 
     return await this.update(id, bukidData);
   }
 
-  async getPaginatedList(page: number = 1, limit: number = 20, filters: Partial<BukidFilters> = {}): Promise<BukidPaginationResponse> {
+  async getPaginatedList(
+    page: number = 1,
+    limit: number = 20,
+    filters: Partial<BukidFilters> = {},
+  ): Promise<BukidPaginationResponse> {
     try {
       const response = await this.getAll({
         page,
         limit,
-        ...filters
+        ...filters,
       });
-      
+
       return response.data;
     } catch (error) {
       console.error("Error getting paginated list:", error);
@@ -742,8 +852,8 @@ class BukidAPI {
           page,
           limit,
           total: 0,
-          totalPages: 0
-        }
+          totalPages: 0,
+        },
       };
     }
   }
@@ -751,9 +861,9 @@ class BukidAPI {
   async getBukidNames(): Promise<{ id: number; name: string }[]> {
     try {
       const response = await this.getAll({ limit: 1000 });
-      return response.data.bukids.map(b => ({
+      return response.data.bukids.map((b) => ({
         id: b.id!,
-        name: b.name
+        name: b.name,
       }));
     } catch (error) {
       console.error("Error getting bukid names:", error);
@@ -761,13 +871,15 @@ class BukidAPI {
     }
   }
 
-  async getBukidOptions(): Promise<{ value: number; label: string; location?: string }[]> {
+  async getBukidOptions(): Promise<
+    { value: number; label: string; location?: string }[]
+  > {
     try {
       const response = await this.getAll({ limit: 1000 });
-      return response.data.bukids.map(b => ({
+      return response.data.bukids.map((b) => ({
         value: b.id!,
         label: b.name,
-        location: b.location || undefined
+        location: b.location || undefined,
       }));
     } catch (error) {
       console.error("Error getting bukid options:", error);
@@ -777,7 +889,7 @@ class BukidAPI {
 
   async getBukidByIdWithFallback(id?: number): Promise<BukidData | null> {
     if (!id) return null;
-    
+
     try {
       const response = await this.getById(id);
       return response.data.bukid;
@@ -787,17 +899,20 @@ class BukidAPI {
     }
   }
 
-  async batchUpdateStatus(ids: number[], status: string): Promise<BulkOperationResult> {
+  async batchUpdateStatus(
+    ids: number[],
+    status: string,
+  ): Promise<BulkOperationResult> {
     try {
-      const updates = ids.map(id => ({ id, status }));
+      const updates = ids.map((id) => ({ id, status }));
       const response = await this.bulkUpdate(updates);
       return response.data.results;
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error batch updating status:", error);
       return {
         successful: [],
-        failed: ids.map(id => ({ id, error: error.message })),
-        total: ids.length
+        failed: ids.map((id) => ({ id, error: error.message })),
+        total: ids.length,
       };
     }
   }
@@ -813,17 +928,17 @@ class BukidAPI {
     const cached = this.bukidCache.get(id);
     const timestamp = this.cacheTimestamp.get(id);
 
-    if (cached && timestamp && (now - timestamp) < this.CACHE_TTL) {
+    if (cached && timestamp && now - timestamp < this.CACHE_TTL) {
       return cached;
     }
 
     try {
       const response = await this.getById(id);
       const bukid = response.data.bukid;
-      
+
       this.bukidCache.set(id, bukid);
       this.cacheTimestamp.set(id, now);
-      
+
       return bukid;
     } catch (error) {
       console.error("Error getting bukid with cache:", error);
@@ -855,35 +970,35 @@ class BukidAPI {
       // Get all bukid for analytics
       const allResponse = await this.getAll({ limit: 1000 });
       const statsResponse = await this.getStats();
-      
+
       const bukids = allResponse.data.bukids;
-      
+
       // Group by kabisilya
       const byKabisilya: Record<number, number> = {};
-      bukids.forEach(b => {
+      bukids.forEach((b) => {
         const kabId = b.kabisilyaId;
         if (kabId) {
           byKabisilya[kabId] = (byKabisilya[kabId] || 0) + 1;
         }
       });
-      
+
       // Group by location
       const byLocation: Record<string, number> = {};
-      bukids.forEach(b => {
-        const loc = b.location || 'Unknown';
+      bukids.forEach((b) => {
+        const loc = b.location || "Unknown";
         byLocation[loc] = (byLocation[loc] || 0) + 1;
       });
-      
+
       // Calculate recent growth (last 30 days)
       const recentGrowth = this.calculateRecentGrowth(bukids);
-      
+
       return {
         total: statsResponse.data.summary.total,
         active: statsResponse.data.summary.active,
         inactive: statsResponse.data.summary.inactive,
         byKabisilya,
         byLocation,
-        recentGrowth
+        recentGrowth,
       };
     } catch (error) {
       console.error("Error getting bukid analytics:", error);
@@ -893,28 +1008,30 @@ class BukidAPI {
         inactive: 0,
         byKabisilya: {},
         byLocation: {},
-        recentGrowth: []
+        recentGrowth: [],
       };
     }
   }
 
-  private calculateRecentGrowth(bukids: BukidData[]): { date: string; count: number }[] {
+  private calculateRecentGrowth(
+    bukids: BukidData[],
+  ): { date: string; count: number }[] {
     const growth: { date: string; count: number }[] = [];
     const last30Days = Array.from({ length: 30 }, (_, i) => {
       const date = new Date();
       date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
+      return date.toISOString().split("T")[0];
     }).reverse();
-    
-    last30Days.forEach(date => {
-      const count = bukids.filter(b => {
-        const createdDate = b.createdAt?.split('T')[0];
+
+    last30Days.forEach((date) => {
+      const count = bukids.filter((b) => {
+        const createdDate = b.createdAt?.split("T")[0];
         return createdDate && createdDate <= date;
       }).length;
-      
+
       growth.push({ date, count });
     });
-    
+
     return growth;
   }
 
@@ -971,17 +1088,17 @@ class BukidAPI {
 
   async useBukidList(filters: BukidFilters = {}): Promise<{
     data: BukidData[];
-    pagination: BukidPaginationResponse['pagination'];
+    pagination: BukidPaginationResponse["pagination"];
     loading: boolean;
     error: string | null;
     refetch: () => Promise<void>;
   }> {
     let data: BukidData[] = [];
-    let pagination: BukidPaginationResponse['pagination'] = {
+    let pagination: BukidPaginationResponse["pagination"] = {
       page: 1,
       limit: 20,
       total: 0,
-      totalPages: 0
+      totalPages: 0,
     };
     let loading = true;
     let error: string | null = null;

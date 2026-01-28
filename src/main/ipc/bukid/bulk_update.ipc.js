@@ -7,8 +7,9 @@ const { AppDataSource } = require("../../db/dataSource");
 
 module.exports = async function bulkUpdateBukid(params = {}, queryRunner = null) {
   let shouldRelease = false;
-  
+
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -20,88 +21,69 @@ module.exports = async function bulkUpdateBukid(params = {}, queryRunner = null)
   try {
     // @ts-ignore
     const { updates = [], _userId } = params;
-    
+
     if (!Array.isArray(updates) || updates.length === 0) {
       return {
         status: false,
-        message: 'No updates provided',
-        data: null
+        message: "No updates provided",
+        data: null,
       };
     }
 
     const results = {
       successful: [],
       failed: [],
-      total: updates.length
+      total: updates.length,
     };
+
+    // @ts-ignore
+    const bukidRepo = queryRunner.manager.getRepository(Bukid);
 
     // Process each update
     for (const [index, updateData] of updates.entries()) {
       try {
         const { id, ...updateFields } = updateData;
-        
+
         if (!id) {
           // @ts-ignore
           results.failed.push({
             index,
-            id: 'unknown',
-            error: 'ID is required'
+            id: "unknown",
+            error: "ID is required",
           });
           continue;
         }
 
         // Check if bukid exists
-        // @ts-ignore
-        const bukid = await queryRunner.manager.findOne(Bukid, {
-          where: { id }
-        });
-
+        const bukid = await bukidRepo.findOne({ where: { id } });
         if (!bukid) {
           // @ts-ignore
           results.failed.push({
             index,
             id,
-            error: 'Bukid not found'
+            error: "Bukid not found",
           });
           continue;
         }
 
-        // Prepare update data
-        const updatePayload = {
-          ...updateFields,
-          updatedAt: new Date()
-        };
+        // Apply updates
+        Object.assign(bukid, updateFields);
+        bukid.updatedAt = new Date();
 
-        // Remove undefined fields
-        Object.keys(updatePayload).forEach(key => {
-          if (updatePayload[key] === undefined) {
-            delete updatePayload[key];
-          }
-        });
-
-        // Update bukid
-        // @ts-ignore
-        await queryRunner.manager.update(Bukid, id, updatePayload);
-        
-        // Get updated bukid
-        // @ts-ignore
-        const updatedBukid = await queryRunner.manager.findOne(Bukid, {
-          where: { id }
-        });
+        const updatedBukid = await bukidRepo.save(bukid);
 
         // @ts-ignore
         results.successful.push({
           id,
-          bukid: updatedBukid
+          bukid: updatedBukid,
         });
-        
       } catch (error) {
         // @ts-ignore
         results.failed.push({
           index,
-          id: updateData.id || 'unknown',
+          id: updateData.id || "unknown",
           // @ts-ignore
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -111,11 +93,12 @@ module.exports = async function bulkUpdateBukid(params = {}, queryRunner = null)
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'bulk_update_bukid',
+      action: "bulk_update_bukid",
+      entity: "Bukid",
       description: `Bulk updated ${results.successful.length} bukids`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
-      created_at: new Date()
+      created_at: new Date(),
     });
     await activityRepo.save(activity);
 
@@ -129,22 +112,23 @@ module.exports = async function bulkUpdateBukid(params = {}, queryRunner = null)
 
     return {
       status: results.successful.length > 0,
-      message: results.successful.length > 0 
-        ? `Updated ${results.successful.length} of ${results.total} bukids successfully` 
-        : 'No bukids were updated',
-      data: { results }
+      message:
+        results.successful.length > 0
+          ? `Updated ${results.successful.length} of ${results.total} bukids successfully`
+          : "No bukids were updated",
+      data: { results },
     };
   } catch (error) {
     if (shouldRelease) {
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in bulkUpdateBukid:', error);
+    console.error("Error in bulkUpdateBukid:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to bulk update bukid: ${error.message}`,
-      data: null
+      data: null,
     };
   } finally {
     if (shouldRelease) {

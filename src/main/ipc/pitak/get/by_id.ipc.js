@@ -6,10 +6,16 @@ const Assignment = require("../../../../entities/Assignment");
 const Payment = require("../../../../entities/Payment");
 const { AppDataSource } = require("../../../db/dataSource");
 
+/**
+ * Get pitak by id with stats, recent assignments and payments
+ * @param {number} id
+ * @param {number} userId
+ */
+// @ts-ignore
 module.exports = async (/** @type {any} */ id, /** @type {any} */ userId) => {
   try {
     const pitakRepo = AppDataSource.getRepository(Pitak);
-    
+
     const pitak = await pitakRepo.findOne({
       where: { id },
       relations: ['bukid', 'bukid.kabisilya', 'assignments', 'assignments.worker', 'payments']
@@ -19,49 +25,111 @@ module.exports = async (/** @type {any} */ id, /** @type {any} */ userId) => {
       return { status: false, message: "Pitak not found", data: null };
     }
 
-    // Get recent assignments
+    // Repositories
     const assignmentRepo = AppDataSource.getRepository(Assignment);
+    const paymentRepo = AppDataSource.getRepository(Payment);
+
+    // Recent assignments (use relation-based where to avoid referencing non-existent FK columns)
     const recentAssignments = await assignmentRepo.find({
-      where: { pitakId: id },
+      // @ts-ignore
+      where: { pitak: { id } },
       relations: ['worker'],
       order: { assignmentDate: 'DESC' },
       take: 10
     });
 
-    // Get recent payments
-    const paymentRepo = AppDataSource.getRepository(Payment);
+    // Recent payments (relation-based where)
     const recentPayments = await paymentRepo.find({
-      where: { pitakId: id },
+      // @ts-ignore
+      where: { pitak: { id } },
       relations: ['worker'],
       order: { paymentDate: 'DESC' },
       take: 10
     });
 
-    // Calculate assignment stats
-    const assignmentStats = await assignmentRepo
+    // Helper: safe parse float (handles null/undefined/"0.00")
+    // @ts-ignore
+    const safeParseFloat = (v) => {
+      if (v === null || v === undefined) return 0;
+      const n = parseFloat(v);
+      return Number.isNaN(n) ? 0 : n;
+    };
+
+    // Assignment stats - join pitak instead of referencing assignment.pitakId
+    const assignmentStatsRaw = await assignmentRepo
       .createQueryBuilder('assignment')
+      .innerJoin('assignment.pitak', 'pitak')
       .select([
         'COUNT(*) as totalAssignments',
         'SUM(assignment.luwangCount) as totalLuWangAssigned',
         'AVG(assignment.luwangCount) as averageLuWangPerAssignment',
-        'SUM(CASE WHEN assignment.status = "completed" THEN 1 ELSE 0 END) as completedAssignments',
-        'SUM(CASE WHEN assignment.status = "active" THEN 1 ELSE 0 END) as activeAssignments'
+        "SUM(CASE WHEN assignment.status = 'completed' THEN 1 ELSE 0 END) as completedAssignments",
+        "SUM(CASE WHEN assignment.status = 'active' THEN 1 ELSE 0 END) as activeAssignments"
       ])
-      .where('assignment.pitakId = :pitakId', { pitakId: id })
+      .where('pitak.id = :pitakId', { pitakId: id })
       .getRawOne();
 
-    // Calculate payment stats
-    const paymentStats = await paymentRepo
+    // Payment stats - join pitak
+    const paymentStatsRaw = await paymentRepo
       .createQueryBuilder('payment')
+      .innerJoin('payment.pitak', 'pitak')
       .select([
         'COUNT(*) as totalPayments',
         'SUM(payment.grossPay) as totalGrossPay',
         'SUM(payment.netPay) as totalNetPay',
         'AVG(payment.grossPay) as averageGrossPay',
-        'SUM(CASE WHEN payment.status = "completed" THEN 1 ELSE 0 END) as completedPayments'
+        "SUM(CASE WHEN payment.status = 'completed' THEN 1 ELSE 0 END) as completedPayments"
       ])
-      .where('payment.pitakId = :pitakId', { pitakId: id })
+      .where('pitak.id = :pitakId', { pitakId: id })
       .getRawOne();
+
+    // Normalize stats safely
+    const assignmentStats = {
+      totalAssignments: parseInt(assignmentStatsRaw?.totalAssignments || 0, 10) || 0,
+      totalLuWangAssigned: safeParseFloat(assignmentStatsRaw?.totalLuWangAssigned),
+      averageLuWangPerAssignment: safeParseFloat(assignmentStatsRaw?.averageLuWangPerAssignment),
+      completedAssignments: parseInt(assignmentStatsRaw?.completedAssignments || 0, 10) || 0,
+      activeAssignments: parseInt(assignmentStatsRaw?.activeAssignments || 0, 10) || 0
+    };
+
+    const paymentStats = {
+      totalPayments: parseInt(paymentStatsRaw?.totalPayments || 0, 10) || 0,
+      totalGrossPay: safeParseFloat(paymentStatsRaw?.totalGrossPay),
+      totalNetPay: safeParseFloat(paymentStatsRaw?.totalNetPay),
+      averageGrossPay: safeParseFloat(paymentStatsRaw?.averageGrossPay),
+      completedPayments: parseInt(paymentStatsRaw?.completedPayments || 0, 10) || 0
+    };
+
+    // Format recent assignments/payments for frontend
+    // @ts-ignore
+    const formatDateToYMD = (d) => {
+      if (!d) return null;
+      const dt = new Date(d);
+      if (Number.isNaN(dt.getTime())) return null;
+      return dt.toISOString().split('T')[0];
+    };
+
+    const formattedRecentAssignments = recentAssignments.map((a) => ({
+      id: a.id,
+      assignmentDate: formatDateToYMD(a.assignmentDate),
+      luwangCount: safeParseFloat(a.luwangCount),
+      status: a.status,
+      // @ts-ignore
+      worker: a.worker ? { id: a.worker.id, name: a.worker.name } : null
+    }));
+
+    const formattedRecentPayments = recentPayments.map((p) => ({
+      id: p.id,
+      paymentDate: formatDateToYMD(p.paymentDate),
+      grossPay: safeParseFloat(p.grossPay),
+      netPay: safeParseFloat(p.netPay),
+      status: p.status,
+      // @ts-ignore
+      worker: p.worker ? { id: p.worker.id, name: p.worker.name } : null
+    }));
+
+    // Normalize pitak.totalLuwang (DB decimal -> string)
+    const totalLuwang = safeParseFloat(pitak.totalLuwang);
 
     return {
       status: true,
@@ -69,53 +137,41 @@ module.exports = async (/** @type {any} */ id, /** @type {any} */ userId) => {
       data: {
         id: pitak.id,
         location: pitak.location,
-        totalLuwang: parseFloat(pitak.totalLuwang),
+        totalLuwang,
         status: pitak.status,
+        // @ts-ignore
         bukid: pitak.bukid ? {
+          // @ts-ignore
           id: pitak.bukid.id,
+          // @ts-ignore
           name: pitak.bukid.name,
+          // @ts-ignore
           location: pitak.bukid.location,
+          // @ts-ignore
           kabisilya: pitak.bukid.kabisilya
         } : null,
         stats: {
           assignments: {
-            total: parseInt(assignmentStats.totalAssignments) || 0,
-            totalLuWangAssigned: parseFloat(assignmentStats.totalLuWangAssigned) || 0,
-            averageLuWangPerAssignment: parseFloat(assignmentStats.averageLuWangPerAssignment) || 0,
-            completed: parseInt(assignmentStats.completedAssignments) || 0,
-            active: parseInt(assignmentStats.activeAssignments) || 0
+            total: assignmentStats.totalAssignments,
+            totalLuWangAssigned: assignmentStats.totalLuWangAssigned,
+            averageLuWangPerAssignment: assignmentStats.averageLuWangPerAssignment,
+            completed: assignmentStats.completedAssignments,
+            active: assignmentStats.activeAssignments
           },
           payments: {
-            total: parseInt(paymentStats.totalPayments) || 0,
-            totalGrossPay: parseFloat(paymentStats.totalGrossPay) || 0,
-            totalNetPay: parseFloat(paymentStats.totalNetPay) || 0,
-            averageGrossPay: parseFloat(paymentStats.averageGrossPay) || 0,
-            completed: parseInt(paymentStats.completedPayments) || 0
+            total: paymentStats.totalPayments,
+            totalGrossPay: paymentStats.totalGrossPay,
+            totalNetPay: paymentStats.totalNetPay,
+            averageGrossPay: paymentStats.averageGrossPay,
+            completed: paymentStats.completedPayments
           }
         },
-        recentAssignments: recentAssignments.map((/** @type {{ id: any; assignmentDate: any; luwangCount: string; status: any; worker: { id: any; name: any; }; }} */ a) => ({
-          id: a.id,
-          assignmentDate: a.assignmentDate,
-          luwangCount: parseFloat(a.luwangCount),
-          status: a.status,
-          worker: a.worker ? {
-            id: a.worker.id,
-            name: a.worker.name
-          } : null
-        })),
-        recentPayments: recentPayments.map((/** @type {{ id: any; paymentDate: any; grossPay: string; netPay: string; status: any; worker: { id: any; name: any; }; }} */ p) => ({
-          id: p.id,
-          paymentDate: p.paymentDate,
-          grossPay: parseFloat(p.grossPay),
-          netPay: parseFloat(p.netPay),
-          status: p.status,
-          worker: p.worker ? {
-            id: p.worker.id,
-            name: p.worker.name
-          } : null
-        })),
-        createdAt: pitak.createdAt,
-        updatedAt: pitak.updatedAt
+        recentAssignments: formattedRecentAssignments,
+        recentPayments: formattedRecentPayments,
+        // @ts-ignore
+        createdAt: pitak.createdAt ? new Date(pitak.createdAt).toISOString() : undefined,
+        // @ts-ignore
+        updatedAt: pitak.updatedAt ? new Date(pitak.updatedAt).toISOString() : undefined
       }
     };
 
@@ -124,7 +180,7 @@ module.exports = async (/** @type {any} */ id, /** @type {any} */ userId) => {
     return {
       status: false,
       // @ts-ignore
-      message: `Failed to retrieve pitak: ${error.message}`,
+      message: `Failed to retrieve pitak: ${error?.message || error}`,
       data: null
     };
   }

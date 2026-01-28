@@ -1,14 +1,13 @@
 // components/BukidSelect.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, ChevronDown, Loader, MapPin, Users, TreePalm} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, ChevronDown, Loader, TreePalm } from 'lucide-react';
 import type { BukidData } from '../../../apis/bukid';
 import bukidAPI from '../../../apis/bukid';
 
 interface BukidSelectProps {
   value: number | null;
-  onChange: (bukidId: number, bukidName: string, bukidData?: BukidData) => void;
+  onChange: (bukidId: number | null) => void;
   disabled?: boolean;
-  showDetails?: boolean;
   placeholder?: string;
 }
 
@@ -16,22 +15,35 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
   value,
   onChange,
   disabled = false,
-  showDetails = true,
-  placeholder = 'Select a farm (bukid)'
+  placeholder = 'Select a farm'
 }) => {
   const [bukids, setBukids] = useState<BukidData[]>([]);
   const [filteredBukids, setFilteredBukids] = useState<BukidData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch bukids on component mount
   useEffect(() => {
+    const fetchBukids = async () => {
+      try {
+        setLoading(true);
+        const response = await bukidAPI.getAll({ limit: 1000 });
+        
+        if (response.status && response.data?.bukids) {
+          setBukids(response.data.bukids);
+          setFilteredBukids(response.data.bukids);
+        }
+      } catch (err) {
+        console.error('Error fetching farms:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchBukids();
   }, []);
 
-  // Filter bukids based on search term
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setFilteredBukids(bukids);
@@ -44,225 +56,159 @@ const BukidSelect: React.FC<BukidSelectProps> = ({
     }
   }, [searchTerm, bukids]);
 
-  const fetchBukids = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await bukidAPI.getAll({ limit: 1000 });
-      if (response.status && response.data?.bukids) {
-        setBukids(response.data.bukids);
-        setFilteredBukids(response.data.bukids);
-      } else {
-        throw new Error(response.message || 'Failed to fetch farms');
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch farms');
-      console.error('Error fetching farms:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleBukidSelect = (bukid: BukidData) => {
-    onChange(bukid.id!, bukid.name, bukid);
+  const handleSelect = (bukidId: number) => {
+    onChange(bukidId);
     setIsOpen(false);
     setSearchTerm('');
+  };
+
+  const handleClear = () => {
+    onChange(null);
   };
 
   const selectedBukid = bukids.find(b => b.id === value);
 
   return (
-    <div className="relative">
-      {/* Selected Bukid Display */}
+    <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`compact-input w-full rounded-md text-left flex justify-between items-center transition-all duration-200 ${disabled
-            ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed'
-            : 'text-gray-900 dark:text-[#9ED9EC] hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-          }`}
+        className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        }`}
         style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: isOpen ? 'var(--accent-green)' : 'var(--border-color)',
-          borderWidth: '1px',
-          minHeight: '42px'
+          backgroundColor: 'var(--input-bg)',
+          border: '1px solid var(--input-border)',
+          color: 'var(--text-primary)',
+          minHeight: '44px'
         }}
       >
-        <div className="flex items-center truncate">
+        <div className="flex items-center gap-2 truncate">
           {selectedBukid ? (
-            <div className="flex items-center space-x-2">
-              <TreePalm className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-              <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                {selectedBukid.name}
-                {showDetails && selectedBukid.location && (
-                  <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                    • {selectedBukid.location}
-                  </span>
-                )}
-              </span>
-            </div>
+            <>
+              <TreePalm className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+              <span className="truncate">{selectedBukid.name}</span>
+            </>
           ) : (
-            <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
-              {placeholder}
-            </span>
+            <span style={{ color: 'var(--text-secondary)' }}>{placeholder}</span>
           )}
         </div>
-        <ChevronDown
-          className={`icon-sm transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          style={{ color: 'var(--text-secondary)' }}
-        />
+        <div className="flex items-center gap-2">
+          {selectedBukid && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+              style={{ color: 'var(--accent-rust)' }}
+            >
+              ×
+            </button>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            style={{ color: 'var(--text-secondary)' }}
+          />
+        </div>
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className="absolute z-50 w-full mt-xs rounded-md shadow-lg max-h-80 overflow-hidden transition-all duration-200"
+          className="absolute z-50 w-full mt-1 rounded-lg shadow-lg"
           style={{
-            backgroundColor: 'var(--card-secondary-bg)',
-            borderColor: 'var(--border-color)',
-            borderWidth: '1px',
-            animation: 'slideDown 0.2s ease-out'
+            backgroundColor: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+            maxHeight: '300px',
+            overflow: 'hidden'
           }}
         >
-          {/* Search Input */}
-          <div className="compact-card border-b" style={{ borderColor: 'var(--border-color)' }}>
+          <div className="p-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 icon-sm" style={{ color: 'var(--text-secondary)' }} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                     style={{ color: 'var(--text-secondary)' }} />
               <input
                 type="text"
-                placeholder="Search farms by name or location..."
+                placeholder="Search farms..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="compact-input w-full pl-8 rounded-md focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
                 style={{
-                  backgroundColor: 'var(--card-bg)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--sidebar-text)'
+                  backgroundColor: 'var(--input-bg)',
+                  border: '1px solid var(--input-border)',
+                  color: 'var(--text-primary)'
                 }}
                 autoFocus
               />
             </div>
           </div>
 
-          {/* Loading State */}
           {loading && (
-            <div className="flex items-center justify-center py-3">
-              <Loader className="icon-sm animate-spin" style={{ color: 'var(--accent-green)' }} />
-              <span className="ml-xs text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <div className="p-4 text-center">
+              <Loader className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--accent-green)' }} />
+              <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
                 Loading farms...
-              </span>
+              </p>
             </div>
           )}
 
-          {/* Error State */}
-          {error && !loading && (
-            <div className="compact-card text-center">
-              <p className="text-sm mb-xs" style={{ color: 'var(--accent-rust)' }}>{error}</p>
-              <button
-                onClick={fetchBukids}
-                className="text-sm compact-button"
-                style={{
-                  backgroundColor: 'var(--accent-green)',
-                  color: 'var(--sidebar-text)',
-                  padding: 'var(--size-xs) var(--size-sm)'
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {/* Bukids List */}
-          {!loading && !error && (
-            <div className="max-h-60 overflow-y-auto kabisilya-scrollbar">
+          {!loading && (
+            <div className="max-h-60 overflow-y-auto">
               {filteredBukids.length === 0 ? (
-                <div className="compact-card text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  No farms found
+                <div className="p-4 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {searchTerm ? 'No farms found' : 'No farms available'}
                 </div>
               ) : (
                 filteredBukids.map((bukid) => (
                   <button
                     key={bukid.id}
                     type="button"
-                    onClick={() => handleBukidSelect(bukid)}
-                    className={`w-full compact-card text-left transition-all duration-200 hover:scale-[1.02] ${bukid.id === value
-                        ? 'border-l-2 border-green-600'
-                        : ''
-                      }`}
+                    onClick={() => handleSelect(bukid.id!)}
+                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
+                      bukid.id === value ? 'bg-gray-50' : ''
+                    }`}
                     style={{
-                      backgroundColor: bukid.id === value ? 'var(--card-hover-bg)' : 'transparent',
-                      borderBottom: '1px solid var(--border-light)'
+                      borderBottom: '1px solid var(--border-light)',
+                      color: 'var(--text-primary)'
                     }}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <TreePalm className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-                          <div className="font-medium text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                            {bukid.name}
-                          </div>
-                        </div>
-                        
-                        {bukid.location && (
-                          <div className="flex items-center text-xs mt-xs" style={{ color: 'var(--text-secondary)' }}>
-                            <MapPin className="icon-xs mr-1" />
-                            {bukid.location}
-                          </div>
-                        )}
-
-                        {bukid.status && (
-                          <div className="mt-xs">
-                            <span
-                              className={`inline-flex items-center px-xs py-xs rounded-full text-xs font-medium ${bukid.status === 'active'
-                                  ? 'status-badge-planted'
-                                  : bukid.status === 'inactive'
-                                  ? 'status-badge-fallow'
-                                  : 'status-badge-growing'
-                                }`}
-                            >
-                              {bukid.status === 'active' ? 'Active' : 
-                               bukid.status === 'inactive' ? 'Inactive' : 
-                               bukid.status.charAt(0).toUpperCase() + bukid.status.slice(1)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {bukid.kabisilyaId && (
-                        <div className="text-right ml-xs">
-                          <div className="flex items-center justify-end text-xs" style={{ color: 'var(--text-secondary)' }}>
-                            <Users className="icon-xs mr-1" />
-                            Kabisilya #{bukid.kabisilyaId}
-                          </div>
-                        </div>
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      bukid.id === value ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                    }`}>
+                      {bukid.id === value && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
                       )}
                     </div>
-
-                    {/* Notes preview */}
-                    {bukid.notes && (
-                      <div className="mt-xs text-xs text-gray-500 truncate" style={{ color: 'var(--text-tertiary)' }}>
-                        {bukid.notes.length > 60 ? `${bukid.notes.substring(0, 60)}...` : bukid.notes}
+                    <TreePalm className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+                    <div className="flex-1 text-left">
+                      <div className="font-medium text-sm">{bukid.name}</div>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        {bukid.location || 'No location'} • {bukid.status || 'No status'}
                       </div>
-                    )}
+                    </div>
                   </button>
                 ))
               )}
             </div>
           )}
         </div>
-      )}
-
-      {/* Click outside to close */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
       )}
     </div>
   );

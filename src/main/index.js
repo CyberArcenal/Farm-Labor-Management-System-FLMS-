@@ -674,6 +674,7 @@ function registerIpcHandlers() {
   require("./ipc/worker/index.ipc");
   require("./ipc/system_config.ipc");
   require("./ipc/windows_control.ipc");
+  require("./ipc/attendance/index.ipc");
 }
 
 // Application event handlers

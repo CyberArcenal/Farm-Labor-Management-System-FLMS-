@@ -1,3 +1,5 @@
+import { kabAuthStore } from "../lib/kabAuthStore";
+
 // userAPI.ts - SIMILAR STRUCTURE TO activation.ts
 export interface UserData {
   id: number;
@@ -6,7 +8,7 @@ export interface UserData {
   name?: string | null;
   contact?: string | null;
   address?: string | null;
-  role: 'admin' | 'manager' | 'user';
+  role: "admin" | "manager" | "user";
   isActive: boolean;
   lastLogin?: string | null;
   createdAt: string;
@@ -142,21 +144,46 @@ export interface CSVExportResponse extends UserResponse<CSVExportData> {}
 export interface LoginResponse extends UserResponse<LoginResponseData> {}
 export interface ValidationResponse extends UserResponse<boolean> {}
 export interface SimpleResponse extends UserResponse<null> {}
-export interface FileOperationResponse extends UserResponse<{ filePath: string }> {}
+export interface FileOperationResponse extends UserResponse<{
+  filePath: string;
+}> {}
 export interface ProfilePictureResponse extends UserResponse<ProfilePictureUploadResponse> {}
 
 class UserAPI {
+  // Helper method to get current user ID from localStorage
+  private getCurrentUserId(): number | null {
+    try {
+      const user = kabAuthStore.getUser();
+      if (user && user.id) {
+        // Ensure we return a number
+        const userId =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
+        return isNaN(userId) ? null : userId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current user ID:", error);
+      return null;
+    }
+  }
+
+  // Helper method to enrich params with currentUserId
+  private enrichParams(params: any = {}): any {
+    const userId = this.getCurrentUserId();
+    return { ...params, currentUserId: userId !== null ? userId : 0 };
+  }
+
   // 🔎 Read-only methods
-  
+
   /**
    * Get all users with pagination
    */
   async getAllUsers(
     page: number = 1,
     limit: number = 50,
-    sortBy: string = 'createdAt',
-    sortOrder: 'ASC' | 'DESC' = 'DESC',
-    includeInactive: boolean = false
+    sortBy: string = "createdAt",
+    sortOrder: "ASC" | "DESC" = "DESC",
+    includeInactive: boolean = false,
   ): Promise<UserListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -165,7 +192,13 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getAllUsers",
-        params: { page, limit, sortBy, sortOrder, includeInactive },
+        params: this.enrichParams({
+          page,
+          limit,
+          sortBy,
+          sortOrder,
+          includeInactive,
+        }),
       });
 
       if (response.status) {
@@ -188,7 +221,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getUserById",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -211,7 +244,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getUserByUsername",
-        params: { username },
+        params: this.enrichParams({ username }),
       });
 
       if (response.status) {
@@ -234,7 +267,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getUserByEmail",
-        params: { email },
+        params: this.enrichParams({ email }),
       });
 
       if (response.status) {
@@ -252,7 +285,7 @@ class UserAPI {
   async getUsersByRole(
     role: string,
     page: number = 1,
-    limit: number = 50
+    limit: number = 50,
   ): Promise<UserListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -261,7 +294,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getUsersByRole",
-        params: { role, page, limit },
+        params: this.enrichParams({ role, page, limit }),
       });
 
       if (response.status) {
@@ -279,8 +312,8 @@ class UserAPI {
   async getActiveUsers(
     page: number = 1,
     limit: number = 50,
-    sortBy: string = 'createdAt',
-    sortOrder: 'ASC' | 'DESC' = 'DESC'
+    sortBy: string = "createdAt",
+    sortOrder: "ASC" | "DESC" = "DESC",
   ): Promise<UserListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -289,7 +322,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getActiveUsers",
-        params: { page, limit, sortBy, sortOrder },
+        params: this.enrichParams({ page, limit, sortBy, sortOrder }),
       });
 
       if (response.status) {
@@ -312,7 +345,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getUserStats",
-        params: {},
+        params: this.enrichParams({}),
       });
 
       if (response.status) {
@@ -332,7 +365,7 @@ class UserAPI {
     page: number = 1,
     limit: number = 50,
     role?: string,
-    isActive?: boolean
+    isActive?: boolean,
   ): Promise<UserListResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -341,7 +374,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "searchUsers",
-        params: { query, page, limit, role, isActive },
+        params: this.enrichParams({ query, page, limit, role, isActive }),
       });
 
       if (response.status) {
@@ -362,8 +395,8 @@ class UserAPI {
     username: string,
     email: string,
     password: string,
-    role: 'admin' | 'manager' | 'user' = 'user',
-    isActive: boolean = true
+    role: "admin" | "manager" | "user" = "user",
+    isActive: boolean = true,
   ): Promise<UserSingleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -372,7 +405,13 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "createUser",
-        params: { username, email, password, role, isActive },
+        params: this.enrichParams({
+          username,
+          email,
+          password,
+          role,
+          isActive,
+        }),
       });
 
       if (response.status) {
@@ -392,9 +431,9 @@ class UserAPI {
     updates: {
       username?: string;
       email?: string;
-      role?: 'admin' | 'manager' | 'user';
+      role?: "admin" | "manager" | "user";
       isActive?: boolean;
-    }
+    },
   ): Promise<UserSingleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -403,7 +442,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "updateUser",
-        params: { id, ...updates },
+        params: this.enrichParams({ id, ...updates }),
       });
 
       if (response.status) {
@@ -426,7 +465,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "deleteUser",
-        params: { id },
+        params: this.enrichParams({ id }),
       });
 
       if (response.status) {
@@ -441,7 +480,10 @@ class UserAPI {
   /**
    * Update user status
    */
-  async updateUserStatus(id: number, isActive: boolean): Promise<UserSingleResponse> {
+  async updateUserStatus(
+    id: number,
+    isActive: boolean,
+  ): Promise<UserSingleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
         throw new Error("Electron API not available");
@@ -449,7 +491,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "updateUserStatus",
-        params: { id, isActive },
+        params: this.enrichParams({ id, isActive }),
       });
 
       if (response.status) {
@@ -468,7 +510,7 @@ class UserAPI {
     id: number,
     newPassword: string,
     confirmPassword: string,
-    currentPassword?: string
+    currentPassword?: string,
   ): Promise<SimpleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -477,7 +519,12 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "changePassword",
-        params: { id, newPassword, confirmPassword, currentPassword },
+        params: this.enrichParams({
+          id,
+          newPassword,
+          confirmPassword,
+          currentPassword,
+        }),
       });
 
       if (response.status) {
@@ -492,7 +539,10 @@ class UserAPI {
   /**
    * Update user role
    */
-  async updateUserRole(id: number, role: 'admin' | 'manager' | 'user'): Promise<UserSingleResponse> {
+  async updateUserRole(
+    id: number,
+    role: "admin" | "manager" | "user",
+  ): Promise<UserSingleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
         throw new Error("Electron API not available");
@@ -500,7 +550,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "updateUserRole",
-        params: { id, role },
+        params: this.enrichParams({ id, role }),
       });
 
       if (response.status) {
@@ -522,7 +572,7 @@ class UserAPI {
     password: string,
     email?: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<LoginResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -531,7 +581,13 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "loginUser",
-        params: { username, password, email, ipAddress, userAgent },
+        params: this.enrichParams({
+          username,
+          password,
+          email,
+          ipAddress,
+          userAgent,
+        }),
       });
 
       if (response.status) {
@@ -550,7 +606,7 @@ class UserAPI {
     userId: number,
     token?: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<SimpleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -559,7 +615,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "logoutUser",
-        params: { userId, token, ipAddress, userAgent },
+        params: this.enrichParams({ userId, token, ipAddress, userAgent }),
       });
 
       if (response.status) {
@@ -574,7 +630,10 @@ class UserAPI {
   /**
    * Refresh token
    */
-  async refreshToken(refreshToken?: string, userId?: number): Promise<UserResponse<{ token: string; expiresIn: number }>> {
+  async refreshToken(
+    refreshToken?: string,
+    userId?: number,
+  ): Promise<UserResponse<{ token: string; expiresIn: number }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
         throw new Error("Electron API not available");
@@ -582,7 +641,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "refreshToken",
-        params: { refreshToken, userId },
+        params: this.enrichParams({ refreshToken, userId }),
       });
 
       if (response.status) {
@@ -603,7 +662,7 @@ class UserAPI {
     newPassword: string,
     confirmPassword: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<SimpleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -612,7 +671,14 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "resetPassword",
-        params: { token, email, newPassword, confirmPassword, ipAddress, userAgent },
+        params: this.enrichParams({
+          token,
+          email,
+          newPassword,
+          confirmPassword,
+          ipAddress,
+          userAgent,
+        }),
       });
 
       if (response.status) {
@@ -630,7 +696,7 @@ class UserAPI {
   async forgotPassword(
     email: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<SimpleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -639,15 +705,19 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "forgotPassword",
-        params: { email, ipAddress, userAgent },
+        params: this.enrichParams({ email, ipAddress, userAgent }),
       });
 
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to process password reset request");
+      throw new Error(
+        response.message || "Failed to process password reset request",
+      );
     } catch (error: any) {
-      throw new Error(error.message || "Failed to process password reset request");
+      throw new Error(
+        error.message || "Failed to process password reset request",
+      );
     }
   }
 
@@ -663,8 +733,8 @@ class UserAPI {
     action?: string,
     startDate?: string,
     endDate?: string,
-    sortBy: string = 'created_at',
-    sortOrder: 'ASC' | 'DESC' = 'DESC'
+    sortBy: string = "created_at",
+    sortOrder: "ASC" | "DESC" = "DESC",
   ): Promise<UserActivityResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -673,7 +743,16 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "getUserActivity",
-        params: { userId, page, limit, action, startDate, endDate, sortBy, sortOrder },
+        params: this.enrichParams({
+          userId,
+          page,
+          limit,
+          action,
+          startDate,
+          endDate,
+          sortBy,
+          sortOrder,
+        }),
       });
 
       if (response.status) {
@@ -690,7 +769,7 @@ class UserAPI {
    */
   async clearUserActivity(
     userId: number,
-    olderThanDays?: number
+    olderThanDays?: number,
   ): Promise<SimpleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -699,7 +778,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "clearUserActivity",
-        params: { userId, olderThanDays },
+        params: this.enrichParams({ userId, olderThanDays }),
       });
 
       if (response.status) {
@@ -720,11 +799,11 @@ class UserAPI {
     users: Array<{
       username: string;
       email: string;
-      role?: 'admin' | 'manager' | 'user';
+      role?: "admin" | "manager" | "user";
       isActive?: boolean;
       password?: string;
     }>,
-    defaultPassword?: string
+    defaultPassword?: string,
   ): Promise<UserBulkResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -733,7 +812,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "bulkCreateUsers",
-        params: { users, defaultPassword },
+        params: this.enrichParams({ users, defaultPassword }),
       });
 
       if (response.status) {
@@ -753,9 +832,9 @@ class UserAPI {
       id: number;
       username?: string;
       email?: string;
-      role?: 'admin' | 'manager' | 'user';
+      role?: "admin" | "manager" | "user";
       isActive?: boolean;
-    }>
+    }>,
   ): Promise<UserBulkResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -764,7 +843,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "bulkUpdateUsers",
-        params: { updates },
+        params: this.enrichParams({ updates }),
       });
 
       if (response.status) {
@@ -782,7 +861,7 @@ class UserAPI {
   async importUsersFromCSV(
     csvData?: string,
     csvFile?: string,
-    hasHeaders: boolean = true
+    hasHeaders: boolean = true,
   ): Promise<UserBulkResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -791,7 +870,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "importUsersFromCSV",
-        params: { csvData, csvFile, hasHeaders },
+        params: this.enrichParams({ csvData, csvFile, hasHeaders }),
       });
 
       if (response.status) {
@@ -811,7 +890,15 @@ class UserAPI {
     roles: string[] = [],
     startDate?: string,
     endDate?: string,
-    fields: string[] = ['id', 'username', 'email', 'role', 'isActive', 'createdAt', 'lastLogin']
+    fields: string[] = [
+      "id",
+      "username",
+      "email",
+      "role",
+      "isActive",
+      "createdAt",
+      "lastLogin",
+    ],
   ): Promise<CSVExportResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -820,7 +907,13 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "exportUsersToCSV",
-        params: { includeInactive, roles, startDate, endDate, fields },
+        params: this.enrichParams({
+          includeInactive,
+          roles,
+          startDate,
+          endDate,
+          fields,
+        }),
       });
 
       if (response.status) {
@@ -844,7 +937,7 @@ class UserAPI {
       email?: string;
       contact?: string;
       address?: string;
-    }
+    },
   ): Promise<UserSingleResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -853,7 +946,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "updateProfile",
-        params: { userId, ...updates },
+        params: this.enrichParams({ userId, ...updates }),
       });
 
       if (response.status) {
@@ -872,7 +965,7 @@ class UserAPI {
     userId: number,
     imageData?: string,
     imagePath?: string,
-    mimeType?: string
+    mimeType?: string,
   ): Promise<ProfilePictureResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.user) {
@@ -881,7 +974,7 @@ class UserAPI {
 
       const response = await window.backendAPI.user({
         method: "uploadProfilePicture",
-        params: { userId, imageData, imagePath, mimeType },
+        params: this.enrichParams({ userId, imageData, imagePath, mimeType }),
       });
 
       if (response.status) {
@@ -898,18 +991,26 @@ class UserAPI {
   /**
    * Validate user data before creating/updating
    */
-  async validateUserData(userData: Partial<UserData>): Promise<ValidationResult> {
+  async validateUserData(
+    userData: Partial<UserData>,
+  ): Promise<ValidationResult> {
     try {
       // Basic validation
       if (userData.username && userData.username.length < 3) {
-        return { valid: false, message: "Username must be at least 3 characters" };
+        return {
+          valid: false,
+          message: "Username must be at least 3 characters",
+        };
       }
 
       if (userData.email && !this.validateEmail(userData.email)) {
         return { valid: false, message: "Invalid email format" };
       }
 
-      if (userData.role && !['admin', 'manager', 'user'].includes(userData.role)) {
+      if (
+        userData.role &&
+        !["admin", "manager", "user"].includes(userData.role)
+      ) {
         return { valid: false, message: "Invalid role" };
       }
 
@@ -925,7 +1026,7 @@ class UserAPI {
    */
   getCurrentUser(): UserData | null {
     try {
-      const userStr = localStorage.getItem('currentUser');
+      const userStr = localStorage.getItem("currentUser");
       if (userStr) {
         return JSON.parse(userStr);
       }
@@ -941,7 +1042,7 @@ class UserAPI {
    */
   setCurrentUser(user: UserData): void {
     try {
-      localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem("currentUser", JSON.stringify(user));
     } catch (error) {
       console.error("Error setting current user:", error);
     }
@@ -952,8 +1053,8 @@ class UserAPI {
    */
   clearCurrentUser(): void {
     try {
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('token');
+      localStorage.removeItem("currentUser");
+      localStorage.removeItem("token");
     } catch (error) {
       console.error("Error clearing current user:", error);
     }
@@ -963,14 +1064,14 @@ class UserAPI {
    * Get authentication token
    */
   getToken(): string | null {
-    return localStorage.getItem('token');
+    return localStorage.getItem("token");
   }
 
   /**
    * Set authentication token
    */
   setToken(token: string): void {
-    localStorage.setItem('token', token);
+    localStorage.setItem("token", token);
   }
 
   /**
@@ -983,7 +1084,7 @@ class UserAPI {
   /**
    * Check if user has specific role
    */
-  hasRole(role: 'admin' | 'manager' | 'user'): boolean {
+  hasRole(role: "admin" | "manager" | "user"): boolean {
     const user = this.getCurrentUser();
     return user?.role === role;
   }
@@ -992,7 +1093,7 @@ class UserAPI {
    * Check if user is admin
    */
   isAdmin(): boolean {
-    return this.hasRole('admin');
+    return this.hasRole("admin");
   }
 
   /**
@@ -1000,7 +1101,7 @@ class UserAPI {
    */
   isManagerOrAdmin(): boolean {
     const user = this.getCurrentUser();
-    return user?.role === 'admin' || user?.role === 'manager';
+    return user?.role === "admin" || user?.role === "manager";
   }
 
   /**
@@ -1019,9 +1120,9 @@ class UserAPI {
   getUserInitials(user: UserData): string {
     if (user.name) {
       return user.name
-        .split(' ')
-        .map(part => part.charAt(0))
-        .join('')
+        .split(" ")
+        .map((part) => part.charAt(0))
+        .join("")
         .toUpperCase()
         .substring(0, 2);
     }
@@ -1032,10 +1133,10 @@ class UserAPI {
    * Get user status badge class
    */
   getUserStatusClass(user: UserData): string {
-    if (!user.isActive) return 'badge-danger';
-    if (user.role === 'admin') return 'badge-primary';
-    if (user.role === 'manager') return 'badge-warning';
-    return 'badge-success';
+    if (!user.isActive) return "badge-danger";
+    if (user.role === "admin") return "badge-primary";
+    if (user.role === "manager") return "badge-warning";
+    return "badge-success";
   }
 
   // Helper methods

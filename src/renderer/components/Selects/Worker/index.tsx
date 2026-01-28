@@ -1,365 +1,252 @@
 // components/WorkerSelect.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, ChevronDown, Loader, User, Phone, Mail, MapPin, Building } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, ChevronDown, Loader, User } from 'lucide-react';
 import type { WorkerData } from '../../../apis/worker';
 import workerAPI from '../../../apis/worker';
 
 interface WorkerSelectProps {
     value: number | null;
-    onChange: (workerId: number, workerName: string, workerData?: WorkerData) => void;
+    onChange: (workerId: number | null) => void;
     disabled?: boolean;
-    showDetails?: boolean;
     placeholder?: string;
-    statusFilter?: 'active' | 'inactive' | 'on-leave' | 'terminated' | 'all';
-    kabisilyaFilter?: number;
-    includeInactive?: boolean;
+    inModal?: boolean; // New prop for modal context
 }
 
 const WorkerSelect: React.FC<WorkerSelectProps> = ({
     value,
     onChange,
     disabled = false,
-    showDetails = true,
     placeholder = 'Select a worker',
-    statusFilter = 'all',
-    kabisilyaFilter,
-    includeInactive = false
+    inModal = false
 }) => {
     const [workers, setWorkers] = useState<WorkerData[]>([]);
     const [filteredWorkers, setFilteredWorkers] = useState<WorkerData[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Fetch workers based on filters
-    const fetchWorkers = async () => {
-        try {
-            setLoading(true);
-            setError(null);
+    useEffect(() => {
+        const fetchWorkers = async () => {
+            try {
+                setLoading(true);
+                const response = await workerAPI.getAllWorkers({ limit: 1000 });
 
-            let response;
-
-            if (kabisilyaFilter) {
-                // Fetch workers by kabisilya
-                response = await workerAPI.getWorkerByKabisilya(
-                    kabisilyaFilter,
-                    statusFilter !== 'all' ? statusFilter : undefined
-                );
-            } else if (statusFilter !== 'all') {
-                // Fetch workers by status
-                response = await workerAPI.getWorkerByStatus(statusFilter, 1, 1000);
-            } else {
-                // Fetch all workers
-                response = await workerAPI.getAllWorkers({ limit: 1000 });
-            }
-
-            if (response.status && response.data?.workers) {
-                let filtered = response.data.workers;
-
-                // Filter out inactive workers if not included
-                if (!includeInactive) {
-                    filtered = filtered.filter(worker =>
+                if (response.status && response.data?.workers) {
+                    const filtered = response.data.workers.filter(worker =>
                         worker.status === 'active' || worker.status === 'on-leave'
                     );
+                    setWorkers(filtered);
+                    setFilteredWorkers(filtered);
                 }
-
-                setWorkers(filtered);
-                setFilteredWorkers(filtered);
-            } else {
-                throw new Error(response.message || 'Failed to fetch workers');
+            } catch (err) {
+                console.error('Error fetching workers:', err);
+            } finally {
+                setLoading(false);
             }
-        } catch (err: any) {
-            setError(err.message || 'Failed to fetch workers');
-            console.error('Error fetching workers:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
 
-    // Fetch workers on component mount and when filters change
-    useEffect(() => {
         fetchWorkers();
-    }, [statusFilter, kabisilyaFilter, includeInactive]);
+    }, []);
 
-    // Filter workers based on search term
     useEffect(() => {
         if (searchTerm.trim() === '') {
             setFilteredWorkers(workers);
         } else {
             const filtered = workers.filter(worker =>
                 worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (worker.contact && worker.contact.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (worker.email && worker.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                (worker.address && worker.address.toLowerCase().includes(searchTerm.toLowerCase()))
+                (worker.contact && worker.contact.toLowerCase().includes(searchTerm.toLowerCase()))
             );
             setFilteredWorkers(filtered);
         }
     }, [searchTerm, workers]);
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
     };
 
-    const handleWorkerSelect = (worker: WorkerData) => {
-        onChange(worker.id, worker.name, worker);
+    const handleSelect = (workerId: number) => {
+        onChange(workerId);
         setIsOpen(false);
         setSearchTerm('');
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'active': return 'status-badge-active';
-            case 'inactive': return 'status-badge-inactive';
-            case 'on-leave': return 'status-badge-on-leave';
-            case 'terminated': return 'status-badge-terminated';
-            default: return 'status-badge-inactive';
-        }
-    };
-
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'active': return 'Active';
-            case 'inactive': return 'Inactive';
-            case 'on-leave': return 'On Leave';
-            case 'terminated': return 'Terminated';
-            default: return status;
-        }
-    };
-
-    const formatBalance = (balance: number) => {
-        return new Intl.NumberFormat('en-PH', {
-            style: 'currency',
-            currency: 'PHP'
-        }).format(balance);
+    const handleClear = () => {
+        onChange(null);
     };
 
     const selectedWorker = workers.find(w => w.id === value);
 
+    // Adjust z-index for modal context
+    const dropdownZIndex = inModal ? 'z-[10000]' : 'z-50';
+
     return (
-        <div className="relative">
-            {/* Selected Worker Display */}
+        <div className="relative" ref={dropdownRef}>
             <button
                 type="button"
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 disabled={disabled}
-                className={`compact-input w-full rounded-md text-left flex justify-between items-center transition-all duration-200 ${disabled
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed'
-                        : 'text-gray-900 dark:text-[#9ED9EC] hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-green-300'
                     }`}
                 style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: isOpen ? 'var(--accent-green)' : 'var(--border-color)',
-                    borderWidth: '1px',
-                    minHeight: '42px'
+                    backgroundColor: 'white',
+                    border: '1px solid #e5e7eb',
+                    color: '#1f2937',
+                    minHeight: '44px'
                 }}
             >
-                <div className="flex items-center truncate">
+                <div className="flex items-center gap-2 truncate">
                     {selectedWorker ? (
-                        <div className="flex items-center space-x-2">
-                            <User className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-                            <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                                {selectedWorker.name}
-                                {showDetails && selectedWorker.kabisilya && (
-                                    <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                                        • {selectedWorker.kabisilya.name}
-                                    </span>
-                                )}
-                            </span>
-                        </div>
+                        <>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center">
+                                    <User className="w-3 h-3" style={{ color: '#10b981' }} />
+                                </div>
+                                <span className="truncate font-medium">{selectedWorker.name}</span>
+                            </div>
+                        </>
                     ) : (
-                        <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                            {placeholder}
-                        </span>
+                        <span className="text-gray-500">{placeholder}</span>
                     )}
                 </div>
-                <ChevronDown
-                    className={`icon-sm transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                    style={{ color: 'var(--text-secondary)' }}
-                />
+                <div className="flex items-center gap-2">
+                    {selectedWorker && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleClear();
+                            }}
+                            className="w-6 h-6 flex items-center justify-center hover:bg-gray-100 rounded-full transition-colors"
+                            style={{ color: '#dc2626' }}
+                            title="Clear selection"
+                        >
+                            ×
+                        </button>
+                    )}
+                    <ChevronDown
+                        className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        style={{ color: '#6b7280' }}
+                    />
+                </div>
             </button>
 
-            {/* Dropdown Menu */}
             {isOpen && (
                 <div
-                    className="absolute z-50 w-full mt-xs rounded-md shadow-lg max-h-80 overflow-hidden transition-all duration-200"
+                    className={`absolute ${dropdownZIndex} w-full mt-1 rounded-lg shadow-xl`}
                     style={{
-                        backgroundColor: 'var(--card-secondary-bg)',
-                        borderColor: 'var(--border-color)',
-                        borderWidth: '1px',
-                        animation: 'slideDown 0.2s ease-out'
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        maxHeight: '320px',
+                        overflow: 'hidden',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05)'
                     }}
                 >
-                    {/* Search Input */}
-                    <div className="compact-card border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <div className="p-3 border-b" style={{ borderColor: '#f3f4f6' }}>
                         <div className="relative">
-                            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 icon-sm" style={{ color: 'var(--text-secondary)' }} />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                                style={{ color: '#9ca3af' }} />
                             <input
                                 type="text"
-                                placeholder="Search workers by name, contact, email..."
+                                placeholder="Search workers by name or contact..."
                                 value={searchTerm}
                                 onChange={handleSearchChange}
-                                className="compact-input w-full pl-8 rounded-md focus:ring-1 focus:ring-blue-500"
+                                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm border focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
                                 style={{
-                                    backgroundColor: 'var(--card-bg)',
-                                    borderColor: 'var(--border-color)',
-                                    color: 'var(--sidebar-text)'
+                                    backgroundColor: 'white',
+                                    border: '1px solid #e5e7eb',
+                                    color: '#1f2937'
                                 }}
                                 autoFocus
                             />
                         </div>
                     </div>
 
-                    {/* Loading State */}
                     {loading && (
-                        <div className="flex items-center justify-center py-3">
-                            <Loader className="icon-sm animate-spin" style={{ color: 'var(--accent-green)' }} />
-                            <span className="ml-xs text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="p-4 text-center">
+                            <Loader className="w-5 h-5 animate-spin mx-auto" style={{ color: '#10b981' }} />
+                            <p className="text-xs mt-2" style={{ color: '#6b7280' }}>
                                 Loading workers...
-                            </span>
+                            </p>
                         </div>
                     )}
 
-                    {/* Error State */}
-                    {error && !loading && (
-                        <div className="compact-card text-center">
-                            <p className="text-sm mb-xs" style={{ color: 'var(--accent-rust)' }}>{error}</p>
-                            <button
-                                onClick={fetchWorkers}
-                                className="text-sm compact-button"
-                                style={{
-                                    backgroundColor: 'var(--accent-green)',
-                                    color: 'var(--sidebar-text)',
-                                    padding: 'var(--size-xs) var(--size-sm)'
-                                }}
-                            >
-                                Try again
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Workers List */}
-                    {!loading && !error && (
-                        <div className="max-h-60 overflow-y-auto kabisilya-scrollbar">
+                    {!loading && (
+                        <div className="max-h-64 overflow-y-auto thin-scrollbar">
                             {filteredWorkers.length === 0 ? (
-                                <div className="compact-card text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    {workers.length === 0 ? 'No workers found' : 'No workers match your search'}
+                                <div className="p-6 text-center">
+                                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <User className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                    <p className="text-sm font-medium mb-1" style={{ color: '#374151' }}>
+                                        {searchTerm ? 'No workers found' : 'No workers available'}
+                                    </p>
+                                    <p className="text-xs" style={{ color: '#6b7280' }}>
+                                        {searchTerm ? 'Try a different search term' : 'Add workers in the Workers section'}
+                                    </p>
                                 </div>
                             ) : (
-                                filteredWorkers.map((worker) => (
-                                    <button
-                                        key={worker.id}
-                                        type="button"
-                                        onClick={() => handleWorkerSelect(worker)}
-                                        className={`w-full compact-card text-left transition-all duration-200 hover:scale-[1.02] ${worker.id === value
-                                                ? 'border-l-2 border-green-600'
-                                                : ''
-                                            }`}
-                                        style={{
-                                            backgroundColor: worker.id === value ? 'var(--card-hover-bg)' : 'transparent',
-                                            borderBottom: '1px solid var(--border-light)'
-                                        }}
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <User className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-                                                    <div className="font-medium text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                                                        {worker.name}
+                                <div className="divide-y divide-gray-100">
+                                    {filteredWorkers.map((worker) => (
+                                        <button
+                                            key={worker.id}
+                                            type="button"
+                                            onClick={() => handleSelect(worker.id)}
+                                            className={`w-full p-3 text-left transition-colors flex items-center gap-3 hover:bg-green-50 ${worker.id === value ? 'bg-green-50' : ''
+                                                }`}
+                                            style={{
+                                                color: '#1f2937'
+                                            }}
+                                        >
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${worker.id === value
+                                                    ? 'bg-green-500 border-green-500'
+                                                    : 'border-gray-300'
+                                                }`}>
+                                                {worker.id === value && (
+                                                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                                                    <User className="w-4 h-4" style={{ color: '#059669' }} />
+                                                </div>
+                                                <div className="flex-1 text-left">
+                                                    <div className="font-medium text-sm">{worker.name}</div>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="text-xs px-2 py-0.5 rounded-full"
+                                                            style={{
+                                                                backgroundColor: worker.status === 'active' ? '#d1fae5' : '#fef3c7',
+                                                                color: worker.status === 'active' ? '#065f46' : '#92400e'
+                                                            }}
+                                                        >
+                                                            {worker.status}
+                                                        </span>
+                                                        {worker.contact && (
+                                                            <span className="text-xs text-gray-500">
+                                                                {worker.contact}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
-
-                                                {/* Contact Information */}
-                                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-xs">
-                                                    {worker.contact && (
-                                                        <div className="flex items-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                            <Phone className="icon-xs mr-1" />
-                                                            {worker.contact}
-                                                        </div>
-                                                    )}
-
-                                                    {worker.email && (
-                                                        <div className="flex items-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                            <Mail className="icon-xs mr-1" />
-                                                            {worker.email}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Status and Kabisilya */}
-                                                <div className="flex items-center gap-2 mt-xs">
-                                                    <span className={`px-xs py-xs rounded-full text-xs font-medium ${getStatusColor(worker.status)}`}>
-                                                        {getStatusText(worker.status)}
-                                                    </span>
-
-                                                    {worker.kabisilya && (
-                                                        <div className="flex items-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                            <Building className="icon-xs mr-1" />
-                                                            {worker.kabisilya.name}
-                                                        </div>
-                                                    )}
-                                                </div>
                                             </div>
-
-                                            {/* Balance Information */}
-                                            <div className="text-right ml-xs">
-                                                <div className="text-xs font-semibold" style={{
-                                                    color: worker.currentBalance > 0
-                                                        ? 'var(--accent-rust)'
-                                                        : worker.currentBalance < 0
-                                                            ? 'var(--accent-green)'
-                                                            : 'var(--text-secondary)'
-                                                }}>
-                                                    {formatBalance(worker.currentBalance)}
-                                                </div>
-                                                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                                    Balance
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Address preview */}
-                                        {worker.address && showDetails && (
-                                            <div className="mt-xs flex items-start text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                                <MapPin className="icon-xs mr-1 mt-0.5 flex-shrink-0" />
-                                                <span className="truncate">
-                                                    {worker.address.length > 80 ? `${worker.address.substring(0, 80)}...` : worker.address}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Hire date and employment duration */}
-                                        {worker.hireDate && showDetails && (
-                                            <div className="mt-xs text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                                Hired: {new Date(worker.hireDate).toLocaleDateString()}
-                                                {(() => {
-                                                    const hireDate = new Date(worker.hireDate);
-                                                    const today = new Date();
-                                                    const years = today.getFullYear() - hireDate.getFullYear();
-                                                    const months = today.getMonth() - hireDate.getMonth();
-                                                    const totalMonths = years * 12 + months;
-
-                                                    if (totalMonths >= 12) {
-                                                        return ` • ${Math.floor(totalMonths / 12)}y ${totalMonths % 12}m`;
-                                                    }
-                                                    return ` • ${totalMonths}m`;
-                                                })()}
-                                            </div>
-                                        )}
-                                    </button>
-                                ))
+                                        </button>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     )}
                 </div>
-            )}
-
-            {/* Click outside to close */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setIsOpen(false)}
-                />
             )}
         </div>
     );

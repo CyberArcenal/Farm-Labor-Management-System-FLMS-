@@ -1,69 +1,48 @@
 // components/AssignmentSelect.tsx
-import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, Loader, Calendar, User, MapPin, CheckCircle, XCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, ChevronDown, Loader, Calendar } from 'lucide-react';
 import type { Assignment } from '../../../apis/assignment';
 import assignmentAPI from '../../../apis/assignment';
 
 interface AssignmentSelectProps {
   value: number | null;
-  onChange: (assignmentId: number, assignmentData?: Assignment) => void;
+  onChange: (assignmentId: number | null) => void;
   disabled?: boolean;
-  showDetails?: boolean;
   placeholder?: string;
-  statusFilter?: 'active' | 'completed' | 'cancelled' | 'all';
-  workerFilter?: number;
-  pitakFilter?: number;
-  dateFilter?: string;
 }
 
 const AssignmentSelect: React.FC<AssignmentSelectProps> = ({
   value,
   onChange,
   disabled = false,
-  showDetails = true,
-  placeholder = 'Select an assignment',
-  statusFilter = 'all',
-  workerFilter,
-  pitakFilter,
-  dateFilter
+  placeholder = 'Select an assignment'
 }) => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [filteredAssignments, setFilteredAssignments] = useState<Assignment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchAssignments = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      let filters: any = {};
-      if (statusFilter !== 'all') filters.status = statusFilter;
-      if (workerFilter) filters.workerId = workerFilter;
-      if (pitakFilter) filters.pitakId = pitakFilter;
-      if (dateFilter) filters.dateFrom = dateFilter;
-
-      const response = await assignmentAPI.getAllAssignments(filters);
-      
-      if (response.status && response.data) {
-        setAssignments(response.data);
-        setFilteredAssignments(response.data);
-      } else {
-        throw new Error(response.message || 'Failed to fetch assignments');
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch assignments');
-      console.error('Error fetching assignments:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        setLoading(true);
+        const response = await assignmentAPI.getAllAssignments({});
+        
+        if (response.status && response.data) {
+          setAssignments(response.data);
+          setFilteredAssignments(response.data);
+        }
+      } catch (err) {
+        console.error('Error fetching assignments:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAssignments();
-  }, [statusFilter, workerFilter, pitakFilter, dateFilter]);
+  }, []);
 
   useEffect(() => {
     if (searchTerm.trim() === '') {
@@ -72,113 +51,112 @@ const AssignmentSelect: React.FC<AssignmentSelectProps> = ({
       const filtered = assignments.filter(assignment =>
         assignment.worker?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         assignment.pitak?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        assignment.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         assignment.assignmentDate.includes(searchTerm)
       );
       setFilteredAssignments(filtered);
     }
   }, [searchTerm, assignments]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  const handleAssignmentSelect = (assignment: Assignment) => {
-    onChange(assignment.id, assignment);
+  const handleSelect = (assignmentId: number) => {
+    onChange(assignmentId);
     setIsOpen(false);
     setSearchTerm('');
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'status-badge-active';
-      case 'completed': return 'status-badge-completed';
-      case 'cancelled': return 'status-badge-cancelled';
-      default: return 'status-badge-inactive';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active': return <Clock className="icon-xs" />;
-      case 'completed': return <CheckCircle className="icon-xs" />;
-      case 'cancelled': return <XCircle className="icon-xs" />;
-      default: return null;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+  const handleClear = () => {
+    onChange(null);
   };
 
   const selectedAssignment = assignments.find(a => a.id === value);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`compact-input w-full rounded-md text-left flex justify-between items-center transition-all duration-200 ${
-          disabled
-            ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed'
-            : 'text-gray-900 dark:text-[#9ED9EC] hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+        className={`w-full p-3 rounded-lg text-left flex justify-between items-center text-sm ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         }`}
         style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: isOpen ? 'var(--accent-green)' : 'var(--border-color)',
-          borderWidth: '1px',
-          minHeight: '42px'
+          backgroundColor: 'var(--input-bg)',
+          border: '1px solid var(--input-border)',
+          color: 'var(--text-primary)',
+          minHeight: '44px'
         }}
       >
-        <div className="flex items-center truncate">
+        <div className="flex items-center gap-2 truncate">
           {selectedAssignment ? (
-            <div className="flex items-center space-x-2">
-              <Calendar className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-              <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
+            <>
+              <Calendar className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+              <span className="truncate">
                 {new Date(selectedAssignment.assignmentDate).toLocaleDateString()} • {selectedAssignment.worker?.name}
-                {showDetails && (
-                  <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>
-                    • {selectedAssignment.luwangCount} luwang
-                  </span>
-                )}
               </span>
-            </div>
+            </>
           ) : (
-            <span className="truncate text-sm" style={{ color: 'var(--sidebar-text)' }}>
-              {placeholder}
-            </span>
+            <span style={{ color: 'var(--text-secondary)' }}>{placeholder}</span>
           )}
         </div>
-        <ChevronDown
-          className={`icon-sm transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          style={{ color: 'var(--text-secondary)' }}
-        />
+        <div className="flex items-center gap-2">
+          {selectedAssignment && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              className="p-1 hover:bg-gray-100 rounded"
+              style={{ color: 'var(--accent-rust)' }}
+            >
+              ×
+            </button>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            style={{ color: 'var(--text-secondary)' }}
+          />
+        </div>
       </button>
 
       {isOpen && (
         <div
-          className="absolute z-50 w-full mt-xs rounded-md shadow-lg max-h-80 overflow-hidden transition-all duration-200"
+          className="absolute z-50 w-full mt-1 rounded-lg shadow-lg"
           style={{
-            backgroundColor: 'var(--card-secondary-bg)',
-            borderColor: 'var(--border-color)',
-            borderWidth: '1px',
-            animation: 'slideDown 0.2s ease-out'
+            backgroundColor: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+            maxHeight: '300px',
+            overflow: 'hidden'
           }}
         >
-          <div className="compact-card border-b" style={{ borderColor: 'var(--border-color)' }}>
+          <div className="p-3 border-b" style={{ borderColor: 'var(--border-color)' }}>
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 icon-sm" style={{ color: 'var(--text-secondary)' }} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4" 
+                     style={{ color: 'var(--text-secondary)' }} />
               <input
                 type="text"
-                placeholder="Search assignments by worker, pitak, or date..."
+                placeholder="Search assignments..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="compact-input w-full pl-8 rounded-md focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-9 pr-3 py-2 rounded-lg text-sm"
                 style={{
-                  backgroundColor: 'var(--card-bg)',
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--sidebar-text)'
+                  backgroundColor: 'var(--input-bg)',
+                  border: '1px solid var(--input-border)',
+                  color: 'var(--text-primary)'
                 }}
                 autoFocus
               />
@@ -186,109 +164,56 @@ const AssignmentSelect: React.FC<AssignmentSelectProps> = ({
           </div>
 
           {loading && (
-            <div className="flex items-center justify-center py-3">
-              <Loader className="icon-sm animate-spin" style={{ color: 'var(--accent-green)' }} />
-              <span className="ml-xs text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <div className="p-4 text-center">
+              <Loader className="w-5 h-5 animate-spin mx-auto" style={{ color: 'var(--accent-green)' }} />
+              <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
                 Loading assignments...
-              </span>
+              </p>
             </div>
           )}
 
-          {error && !loading && (
-            <div className="compact-card text-center">
-              <p className="text-sm mb-xs" style={{ color: 'var(--accent-rust)' }}>{error}</p>
-              <button
-                onClick={fetchAssignments}
-                className="text-sm compact-button"
-                style={{
-                  backgroundColor: 'var(--accent-green)',
-                  color: 'var(--sidebar-text)',
-                  padding: 'var(--size-xs) var(--size-sm)'
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {!loading && !error && (
-            <div className="max-h-60 overflow-y-auto kabisilya-scrollbar">
+          {!loading && (
+            <div className="max-h-60 overflow-y-auto">
               {filteredAssignments.length === 0 ? (
-                <div className="compact-card text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  No assignments found
+                <div className="p-4 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {searchTerm ? 'No assignments found' : 'No assignments available'}
                 </div>
               ) : (
                 filteredAssignments.map((assignment) => (
                   <button
                     key={assignment.id}
                     type="button"
-                    onClick={() => handleAssignmentSelect(assignment)}
-                    className={`w-full compact-card text-left transition-all duration-200 hover:scale-[1.02] ${
-                      assignment.id === value
-                        ? 'border-l-2 border-green-600'
-                        : ''
+                    onClick={() => handleSelect(assignment.id)}
+                    className={`w-full p-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-3 ${
+                      assignment.id === value ? 'bg-gray-50' : ''
                     }`}
                     style={{
-                      backgroundColor: assignment.id === value ? 'var(--card-hover-bg)' : 'transparent',
-                      borderBottom: '1px solid var(--border-light)'
+                      borderBottom: '1px solid var(--border-light)',
+                      color: 'var(--text-primary)'
                     }}
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="icon-sm" style={{ color: 'var(--accent-green)' }} />
-                          <div className="font-medium text-sm" style={{ color: 'var(--sidebar-text)' }}>
-                            {new Date(assignment.assignmentDate).toLocaleDateString()}
-                          </div>
-                          <div className={`px-xs py-xs rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(assignment.status)}`}>
-                            {getStatusIcon(assignment.status)}
-                            {getStatusText(assignment.status)}
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-xs">
-                          {assignment.worker && (
-                            <div className="flex items-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-                              <User className="icon-xs mr-1" />
-                              {assignment.worker.name}
-                            </div>
-                          )}
-                          
-                          {assignment.pitak && (
-                            <div className="flex items-center text-xs" style={{ color: 'var(--text-secondary)' }}>
-                              <MapPin className="icon-xs mr-1" />
-                              {assignment.pitak.name}
-                              {assignment.pitak.code && ` (${assignment.pitak.code})`}
-                            </div>
-                          )}
-                        </div>
-                        
-                        {assignment.luwangCount > 0 && (
-                          <div className="mt-xs text-xs font-semibold" style={{ color: 'var(--accent-green)' }}>
-                            {assignment.luwangCount} luwang
-                          </div>
-                        )}
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                      assignment.id === value ? 'bg-blue-500 border-blue-500' : 'border-gray-300'
+                    }`}>
+                      {assignment.id === value && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <Calendar className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
+                    <div className="flex-1 text-left">
+                      <div className="font-medium text-sm">
+                        {new Date(assignment.assignmentDate).toLocaleDateString()} • {assignment.worker?.name}
+                      </div>
+                      <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        {assignment.pitak?.name} • {assignment.status}
                       </div>
                     </div>
-
-                    {assignment.notes && (
-                      <div className="mt-xs text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                        {assignment.notes.length > 80 ? `${assignment.notes.substring(0, 80)}...` : assignment.notes}
-                      </div>
-                    )}
                   </button>
                 ))
               )}
             </div>
           )}
         </div>
-      )}
-
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setIsOpen(false)}
-        />
       )}
     </div>
   );

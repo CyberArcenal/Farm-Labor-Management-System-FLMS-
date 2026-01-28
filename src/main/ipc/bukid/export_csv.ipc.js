@@ -28,6 +28,7 @@ module.exports = async function exportBukidToCSV(params = {}) {
     const bukids = await queryBuilder.getMany();
 
     // Prepare data for CSV
+    // @ts-ignore
     const csvData = bukids.map((/** @type {{ id: any; name: any; location: any; status: any; kabisilya: { id: any; name: any; }; pitaks: string | any[]; createdAt: any; updatedAt: any; }} */ bukid) => ({
       id: bukid.id,
       name: bukid.name,

@@ -131,7 +131,7 @@ class AssignmentHandler {
         case "getAssignmentsByPitak":
           return await this.getAssignmentsByPitak(
             // @ts-ignore
-            enrichedParams.pitak_id,
+            enrichedParams.pitakId,
             // @ts-ignore
             enrichedParams.filters,
             userId,

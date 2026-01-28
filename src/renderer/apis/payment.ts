@@ -1,4 +1,6 @@
 // paymentAPI.ts - Payment Management API
+import { kabAuthStore } from "../lib/kabAuthStore";
+import { Buffer } from "buffer";
 export interface PaymentData {
   id: number;
   grossPay: number;
@@ -286,6 +288,28 @@ export interface PaymentPayload {
 }
 
 class PaymentAPI {
+  // Helper method to get current user ID
+  private getCurrentUserId(): number | null {
+    try {
+      const user = kabAuthStore.getUser();
+      if (user && user.id) {
+        // Ensure we return a number
+        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        return isNaN(userId) ? null : userId;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting current user ID:", error);
+      return null;
+    }
+  }
+
+  // Helper method to enrich params with userId
+  private enrichParams(params: any = {}): any {
+    const userId = this.getCurrentUserId();
+    return { ...params, userId: userId !== null ? userId : 0 };
+  }
+
   // 🔎 Read-only methods
   
   async getAllPayments(params?: {
@@ -302,7 +326,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getAllPayments",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -322,7 +346,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentById",
-        params: { paymentId },
+        params: this.enrichParams({ paymentId }),
       });
 
       if (response.status) {
@@ -348,7 +372,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentsByWorker",
-        params: { workerId, ...params },
+        params: this.enrichParams({ workerId, ...params }),
       });
 
       if (response.status) {
@@ -374,7 +398,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentsByPitak",
-        params: { pitakId, ...params },
+        params: this.enrichParams({ pitakId, ...params }),
       });
 
       if (response.status) {
@@ -399,7 +423,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentsByStatus",
-        params: { status, ...params },
+        params: this.enrichParams({ status, ...params }),
       });
 
       if (response.status) {
@@ -425,7 +449,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentsByDateRange",
-        params: { startDate, endDate, ...params },
+        params: this.enrichParams({ startDate, endDate, ...params }),
       });
 
       if (response.status) {
@@ -449,7 +473,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentWithDetails",
-        params: { paymentId },
+        params: this.enrichParams({ paymentId }),
       });
 
       if (response.status) {
@@ -474,7 +498,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentSummary",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -497,7 +521,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPendingPayments",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -520,7 +544,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentStats",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -548,7 +572,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "searchPayments",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -573,7 +597,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "calculateNetPay",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -626,7 +650,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentHistory",
-        params: { paymentId, ...params },
+        params: this.enrichParams({ paymentId, ...params }),
       });
 
       if (response.status) {
@@ -664,7 +688,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getPaymentPeriods",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -687,7 +711,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "getWorkerPaymentSummary",
-        params: { workerId, ...params },
+        params: this.enrichParams({ workerId, ...params }),
       });
 
       if (response.status) {
@@ -716,7 +740,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "generatePaymentBreakdown",
-        params: { paymentId },
+        params: this.enrichParams({ paymentId }),
       });
 
       if (response.status) {
@@ -743,7 +767,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "generatePaymentReport",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -768,7 +792,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "exportPaymentsToCSV",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -788,7 +812,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "exportPaymentSlip",
-        params: { paymentId },
+        params: this.enrichParams({ paymentId }),
       });
 
       if (response.status) {
@@ -819,7 +843,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "createPayment",
-        params,
+        params: this.enrichParams(params),
       });
 
       if (response.status) {
@@ -846,7 +870,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "updatePayment",
-        params: { paymentId, ...params },
+        params: this.enrichParams({ paymentId, ...params }),
       });
 
       if (response.status) {
@@ -872,7 +896,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "deletePayment",
-        params: { paymentId },
+        params: this.enrichParams({ paymentId }),
       });
 
       if (response.status) {
@@ -895,7 +919,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "updatePaymentStatus",
-        params: { paymentId, ...params },
+        params: this.enrichParams({ paymentId, ...params }),
       });
 
       if (response.status) {
@@ -915,7 +939,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "addPaymentNote",
-        params: { paymentId, note },
+        params: this.enrichParams({ paymentId, note }),
       });
 
       if (response.status) {
@@ -939,7 +963,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "processPayment",
-        params: { paymentId, ...params },
+        params: this.enrichParams({ paymentId, ...params }),
       });
 
       if (response.status) {
@@ -959,7 +983,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "cancelPayment",
-        params: { paymentId, reason },
+        params: this.enrichParams({ paymentId, reason }),
       });
 
       if (response.status) {
@@ -989,7 +1013,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "applyDebtDeduction",
-        params: { paymentId, ...params },
+        params: this.enrichParams({ paymentId, ...params }),
       });
 
       if (response.status) {
@@ -1020,7 +1044,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "updateDeductions",
-        params: { paymentId, ...params },
+        params: this.enrichParams({ paymentId, ...params }),
       });
 
       if (response.status) {
@@ -1044,7 +1068,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "assignPaymentToWorker",
-        params: { paymentId, workerId },
+        params: this.enrichParams({ paymentId, workerId }),
       });
 
       if (response.status) {
@@ -1068,7 +1092,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "assignPaymentToPitak",
-        params: { paymentId, pitakId },
+        params: this.enrichParams({ paymentId, pitakId }),
       });
 
       if (response.status) {
@@ -1096,7 +1120,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "linkDebtPayment",
-        params: { paymentId, debtHistoryId },
+        params: this.enrichParams({ paymentId, debtHistoryId }),
       });
 
       if (response.status) {
@@ -1125,7 +1149,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "bulkCreatePayments",
-        params: { payments },
+        params: this.enrichParams({ payments }),
       });
 
       if (response.status) {
@@ -1152,7 +1176,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "bulkUpdatePayments",
-        params: { updates },
+        params: this.enrichParams({ updates }),
       });
 
       if (response.status) {
@@ -1175,7 +1199,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "bulkProcessPayments",
-        params: { paymentIds, ...params },
+        params: this.enrichParams({ paymentIds, ...params }),
       });
 
       if (response.status) {
@@ -1195,7 +1219,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "importPaymentsFromCSV",
-        params: { filePath },
+        params: this.enrichParams({ filePath }),
       });
 
       if (response.status) {
@@ -1272,7 +1296,7 @@ class PaymentAPI {
 
       const response = await window.backendAPI.payment({
         method: "validatePaymentData",
-        params: { payment },
+        params: this.enrichParams({ payment }),
       });
 
       if (response.status) {

@@ -7,11 +7,10 @@ import Layout from '../layouts/Layout';
 import KabisilyaDashboardPage from '../pages/dashboard';
 import KabisilyaFirstRunSetup from '../pages/Setup';
 import Login from '../pages/Auth/Login';
-import BukidTablePage from '../pages/Bukid/Table';
-import PitakTablePage from '../pages/Pitak/Table/PitakTable';
-import AssignmentTablePage from '../pages/Assignment/Table';
-import KabisilyaTablePage from '../pages/Kabisilya/Table';
-import WorkerTablePage from '../pages/Worker/Table/WorkerTable';
+// import BukidTablePage from '../pages/Bukid/Table';
+// import AssignmentTablePage from '../pages/Assignment/Table';
+// import KabisilyaTablePage from '../pages/Kabisilya/Table';
+// import WorkerTablePage from '../pages/Worker/Table/WorkerTable';
 import WorkerAttendancePage from '../pages/WorkerAttendance';
 import PaymentTablePage from '../pages/Payment/Table/PaymentTable';
 import DebtTablePage from '../pages/Debt/Table/DebtTable';
@@ -22,6 +21,15 @@ import PitakProductivityPage from '../pages/Analytics/PitakProductivity';
 import FinancialReportsPage from '../pages/Analytics/FinancialReports';
 import WorkerPerformancePage from '../pages/Analytics/WorkerPerformance';
 import BukidFormPage from '../pages/Bukid/Form';
+import KabisilyaFormPage from '../pages/Kabisilya/Form';
+import PitakFormPage from '../pages/Pitak/Form';
+import WorkerFormPage from '../pages/Worker/Form/WorkerForm';
+import DebtFormPage from '../pages/Debt/Form/DebtForm';
+import PitakTablePage from '../pages/Pitak/Table';
+import BukidTablePage from '../pages/Bukid/Table/BukidTablePage';
+import AssignmentTablePage from '../pages/Assignment/Table/AssignmentTablePage';
+import KabisilyaTablePage from '../pages/Kabisilya/Table/KabisilyaTablePage';
+import WorkerTablePage from '../pages/Worker/Table/WorkerTablePage';
 
 // 🔹 Placeholder components para hindi mag red mark
 const Placeholder = ({ title }: { title: string }) => (
@@ -101,22 +109,30 @@ function App() {
             <Route path="/farms/bukid" element={<BukidTablePage />} />
             <Route path="/bukid/create" element={<BukidFormPage />} />
             <Route path="/bukid/edit/:id" element={<BukidFormPage />} />
+
             <Route path="/farms/pitak" element={<PitakTablePage />} />
+            <Route path="/farms/pitak/form" element={<PitakFormPage />} />
+            <Route path="/farms/pitak/form/:id" element={<PitakFormPage />} />
+
             <Route path="/farms/assignments" element={<AssignmentTablePage />} />
+            <Route path="/farms/assignments/form" element={<Placeholder title="Assignment Form" />} />
+            <Route path="/farms/assignments/form/:id" element={<Placeholder title="Assignment Form" />} />
             {/* Kabisilya & Workers */}
             <Route path="/workers/kabisilya" element={<KabisilyaTablePage />} />
+            <Route path="/workers/kabisilya/form" element={<KabisilyaFormPage />} />
+            <Route path="/workers/kabisilya/form/:id" element={<KabisilyaFormPage />} />
+
             <Route path="/workers/list" element={<WorkerTablePage />} />
             <Route path="/workers" element={<WorkerTablePage />} />
-            {/* <Route path="/worker/create" element={<WorkerCreatePage />} />
-            <Route path="/worker/edit/:id" element={<WorkerEditPage />} />
-            <Route path="/worker/view/:id" element={<WorkerViewPage />} />
-            <Route path="/worker/financial/:id" element={<WorkerFinancialPage />} /> */}
+            <Route path="/workers/form" element={<WorkerFormPage/>} />
+            <Route path="/workers/form/:id" element={<WorkerFormPage/>} />
             <Route path="/workers/attendance" element={<WorkerAttendancePage />} />
 
             {/* Payroll & Finance */}
             <Route path="/finance/payments" element={<PaymentTablePage />} />
             <Route path="/finance/debts" element={<DebtTablePage />} />
-            {/* <Route path="finance/history" element={<Placeholder title="Payment History" />} /> */}
+            <Route path="/finance/debts/form" element={<DebtFormPage />} />
+            <Route path="/finance/debts/form/:id" element={<DebtFormPage />} />
 
             {/* Reports & Analytics */}
             <Route path="/analytics/bukid" element={<BukidReportsPage />} />
@@ -126,6 +142,8 @@ function App() {
 
             {/* System */}
             <Route path="/system/users" element={<UserTablePage />} />
+            <Route path="/system/users/form" element={<Placeholder title="User Form" />} />
+            <Route path="/system/users/form/:id" element={<Placeholder title="User Form" />} />
             <Route path="/system/audit" element={<AuditTrailTablePage />} />
             <Route path="/system/notifications" element={<Placeholder title="Notifications" />} />
             <Route path="/system/backup" element={<Placeholder title="Backup & Restore" />} />

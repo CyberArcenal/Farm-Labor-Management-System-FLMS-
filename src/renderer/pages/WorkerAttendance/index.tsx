@@ -17,8 +17,13 @@ import {
     Percent, RefreshCw,
     ArrowLeft
 } from 'lucide-react';
-import type { WorkerAttendanceData, WorkerData } from '../../apis/worker';
 import workerAPI from '../../apis/worker';
+import attendanceAPI,{ 
+    type WorkerAttendanceSummary,
+    type AttendanceFilterParams,
+    type DateRange,
+    type AttendanceRecord
+} from '../../apis/attendance';
 import { showError, showSuccess } from '../../utils/notification';
 import { formatCurrency, formatDate, formatNumber } from '../../utils/formatters';
 
@@ -30,8 +35,9 @@ const WorkerAttendancePage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     // Data states
-    const [attendanceData, setAttendanceData] = useState<WorkerAttendanceData | null>(null);
-    const [workerInfo, setWorkerInfo] = useState<WorkerData | null>(null);
+    const [attendanceData, setAttendanceData] = useState<WorkerAttendanceSummary | null>(null);
+    const [workerInfo, setWorkerInfo] = useState<any | null>(null);
+    const [detailedAssignments, setDetailedAssignments] = useState<AttendanceRecord[]>([]);
 
     // Date controls
     const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth() + 1);
@@ -54,7 +60,7 @@ const WorkerAttendancePage: React.FC = () => {
         }
     }, [id]);
 
-    // Fetch attendance data
+    // Fetch attendance data using the new attendance API
     const fetchAttendance = useCallback(async () => {
         if (!id) return;
 
@@ -62,14 +68,34 @@ const WorkerAttendancePage: React.FC = () => {
             setLoading(true);
             setError(null);
 
-            const response = await workerAPI.getWorkerAttendance(
-                parseInt(id),
-                currentMonth,
-                currentYear
-            );
+            const workerId = parseInt(id);
+            
+            // Get worker summary for the current month
+            const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+            const endOfMonth = new Date(currentYear, currentMonth, 0);
+            
+            const dateRange: DateRange = {
+                startDate: startOfMonth.toISOString().split('T')[0],
+                endDate: endOfMonth.toISOString().split('T')[0]
+            };
+
+            const response = await attendanceAPI.getWorkerSummary(workerId, dateRange);
 
             if (response.status) {
                 setAttendanceData(response.data);
+                
+                // Also fetch detailed assignments for the month
+                const filters: AttendanceFilterParams = {
+                    startDate: dateRange.startDate,
+                    endDate: dateRange.endDate,
+                    sortBy: 'assignment_date',
+                    sortOrder: 'ASC'
+                };
+                
+                const assignmentsResponse = await attendanceAPI.getByWorker(workerId, filters);
+                if (assignmentsResponse.status) {
+                    setDetailedAssignments(assignmentsResponse.data.assignments);
+                }
             } else {
                 throw new Error(response.message || 'Failed to fetch attendance data');
             }
@@ -83,6 +109,123 @@ const WorkerAttendancePage: React.FC = () => {
         }
     }, [id, currentMonth, currentYear]);
 
+    // Generate calendar days from attendance data
+    const generateCalendarDays = () => {
+        if (!attendanceData || !detailedAssignments) return [];
+
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay();
+
+        const days = [];
+
+        // Empty days for start of month
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            days.push(null);
+        }
+
+        // Actual days of month
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
+            
+            // Find assignments for this date
+            const dayAssignments = detailedAssignments.filter(assignment => 
+                assignment.assignment_date.startsWith(dateStr)
+            );
+            
+            const hasWork = dayAssignments.length > 0;
+            const totalLuwang = dayAssignments.reduce((sum, assignment) => sum + assignment.luwang_count, 0);
+            const date = new Date(currentYear, currentMonth - 1, i);
+            const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+            days.push({
+                day: i,
+                date: dateStr,
+                data: {
+                    date: dateStr,
+                    day: i,
+                    dayOfWeek: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+                    isWeekend,
+                    assignments: dayAssignments,
+                    hasWork,
+                    totalLuwang
+                }
+            });
+        }
+
+        return days;
+    };
+
+    // Generate weekly breakdown
+    const generateWeeklyBreakdown = () => {
+        if (!detailedAssignments) return [];
+
+        const weeks: Array<{
+            week: number;
+            days: any[];
+            summary: {
+                daysInWeek: number;
+                daysWorked: number;
+                totalLuwang: number;
+                averageLuwang: number;
+            };
+        }> = [];
+
+        const calendarDays = generateCalendarDays().filter(day => day !== null);
+        let currentWeek = 1;
+        let weekDays: any[] = [];
+
+        calendarDays.forEach((day, index) => {
+            if (day) {
+                weekDays.push(day.data);
+                
+                // Start new week on Sunday or end of month
+                const isSunday = day.data.dayOfWeek === 'Sun';
+                const isLastDay = index === calendarDays.length - 1;
+                
+                if (isSunday || isLastDay) {
+                    const daysWorked = weekDays.filter(d => d.hasWork).length;
+                    const totalLuwang = weekDays.reduce((sum, d) => sum + d.totalLuwang, 0);
+                    
+                    weeks.push({
+                        week: currentWeek,
+                        days: [...weekDays],
+                        summary: {
+                            daysInWeek: weekDays.length,
+                            daysWorked,
+                            totalLuwang,
+                            averageLuwang: daysWorked > 0 ? totalLuwang / daysWorked : 0
+                        }
+                    });
+                    
+                    currentWeek++;
+                    weekDays = [];
+                }
+            }
+        });
+
+        return weeks;
+    };
+
+    // Calculate summary statistics
+    const calculateSummary = () => {
+        const calendarDays = generateCalendarDays().filter(day => day !== null) as any[];
+        
+        const workingDays = calendarDays.filter(day => !day.data.isWeekend).length;
+        const daysWorked = calendarDays.filter(day => day.data.hasWork).length;
+        const weekendDaysWorked = calendarDays.filter(day => day.data.isWeekend && day.data.hasWork).length;
+        const totalLuwang = calendarDays.reduce((sum, day) => sum + day.data.totalLuwang, 0);
+        
+        return {
+            totalDays: calendarDays.length,
+            workingDays,
+            daysWorked,
+            daysOff: workingDays - daysWorked,
+            weekendDaysWorked,
+            totalLuwang,
+            averageLuwangPerDay: daysWorked > 0 ? totalLuwang / daysWorked : 0,
+            attendanceRate: workingDays > 0 ? daysWorked / workingDays : 0
+        };
+    };
 
     // Initial load
     useEffect(() => {
@@ -109,7 +252,14 @@ const WorkerAttendancePage: React.FC = () => {
         return () => {
             // Cancel any pending operations if needed
         };
-    }, []); // Empty dependency array to run only once on mount
+    }, []);
+
+    // Refresh when month/year changes
+    useEffect(() => {
+        if (id) {
+            fetchAttendance();
+        }
+    }, [currentMonth, currentYear, fetchAttendance]);
 
     // Refresh function
     const handleRefresh = async () => {
@@ -141,34 +291,6 @@ const WorkerAttendancePage: React.FC = () => {
         const now = new Date();
         setCurrentMonth(now.getMonth() + 1);
         setCurrentYear(now.getFullYear());
-    };
-
-    // Generate calendar days
-    const generateCalendarDays = () => {
-        if (!attendanceData) return [];
-
-        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-        const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1).getDay();
-
-        const days = [];
-
-        // Empty days for start of month
-        for (let i = 0; i < firstDayOfMonth; i++) {
-            days.push(null);
-        }
-
-        // Actual days of month
-        for (let i = 1; i <= daysInMonth; i++) {
-            const dateStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-${i.toString().padStart(2, '0')}`;
-            const dayData = attendanceData.attendance.find(a => a.date === dateStr);
-            days.push({
-                day: i,
-                date: dateStr,
-                data: dayData
-            });
-        }
-
-        return days;
     };
 
     // Get day status style
@@ -214,8 +336,34 @@ const WorkerAttendancePage: React.FC = () => {
     // Export attendance
     const handleExportAttendance = async () => {
         try {
-            // Implement export logic here
-            showSuccess('Export functionality coming soon!');
+            if (!id) return;
+            
+            const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+            const endOfMonth = new Date(currentYear, currentMonth, 0);
+            
+            const response = await attendanceAPI.exportToCSV({
+                startDate: startOfMonth.toISOString().split('T')[0],
+                endDate: endOfMonth.toISOString().split('T')[0],
+                format: 'csv',
+                includeHeaders: true
+            });
+
+            if (response.status) {
+                // Create and download CSV file
+                const blob = new Blob([response.data.csvData], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = response.data.filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showSuccess(`Exported ${response.data.recordCount} records successfully`);
+            } else {
+                throw new Error(response.message);
+            }
         } catch (err: any) {
             showError(err.message || 'Failed to export attendance');
         }
@@ -224,6 +372,27 @@ const WorkerAttendancePage: React.FC = () => {
     // Print attendance
     const handlePrintAttendance = () => {
         window.print();
+    };
+
+    // Generate PDF report
+    const handleGeneratePDF = async () => {
+        try {
+            if (!id) return;
+            
+            const response = await attendanceAPI.generatePDFReport({
+                type: 'monthly',
+                date: `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`,
+                workerId: parseInt(id)
+            });
+
+            if (response.status) {
+                showSuccess('PDF report generation has been queued');
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (err: any) {
+            showError(err.message || 'Failed to generate PDF report');
+        }
     };
 
     // Loading state
@@ -270,10 +439,15 @@ const WorkerAttendancePage: React.FC = () => {
     }
 
     const calendarDays = generateCalendarDays();
+    const weeks = generateWeeklyBreakdown();
+    const summary = calculateSummary();
     const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
+
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1);
+    const endOfMonth = new Date(currentYear, currentMonth, 0);
 
     return (
         <div className="space-y-6 p-6">
@@ -312,7 +486,20 @@ const WorkerAttendancePage: React.FC = () => {
                         }}
                     >
                         <Download className="w-4 h-4 mr-2" />
-                        Export
+                        Export CSV
+                    </button>
+
+                    <button
+                        onClick={handleGeneratePDF}
+                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center"
+                        style={{
+                            background: 'var(--card-secondary-bg)',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-color)'
+                        }}
+                    >
+                        <Download className="w-4 h-4 mr-2" />
+                        Generate PDF
                     </button>
 
                     <button
@@ -378,13 +565,13 @@ const WorkerAttendancePage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {workerInfo.kabisilya && (
+                                {attendanceData.worker.kabisilya && (
                                     <div className="flex items-center gap-2">
                                         <Users className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
                                         <div>
                                             <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Kabisilya</div>
                                             <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                {workerInfo.kabisilya.name}
+                                                {attendanceData.worker.kabisilya}
                                             </div>
                                         </div>
                                     </div>
@@ -450,7 +637,7 @@ const WorkerAttendancePage: React.FC = () => {
                                 {monthNames[currentMonth - 1]} {currentYear}
                             </h2>
                             <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                Period: {formatDate(attendanceData.period.startDate, 'MMM dd')} - {formatDate(attendanceData.period.endDate, 'MMM dd, yyyy')}
+                                Period: {formatDate(startOfMonth.toISOString().split('T')[0], 'MMM dd')} - {formatDate(endOfMonth.toISOString().split('T')[0], 'MMM dd, yyyy')}
                             </p>
                         </div>
 
@@ -515,14 +702,14 @@ const WorkerAttendancePage: React.FC = () => {
                     </div>
                     <div className="flex items-baseline gap-1">
                         <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                            {attendanceData.summary.daysWorked}
+                            {summary.daysWorked}
                         </span>
                         <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            / {attendanceData.summary.workingDays} days
+                            / {summary.workingDays} days
                         </span>
                     </div>
                     <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                        {attendanceData.summary.weekendDaysWorked} weekend days
+                        {summary.weekendDaysWorked} weekend days
                     </div>
                 </div>
 
@@ -539,10 +726,10 @@ const WorkerAttendancePage: React.FC = () => {
                         </span>
                     </div>
                     <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                        {formatNumber(attendanceData.summary.totalLuwang)}
+                        {formatNumber(summary.totalLuwang)}
                     </div>
                     <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        Avg: {formatNumber(attendanceData.summary.averageLuwangPerDay)} per day
+                        Avg: {formatNumber(summary.averageLuwangPerDay)} per day
                     </div>
                 </div>
 
@@ -559,10 +746,10 @@ const WorkerAttendancePage: React.FC = () => {
                         </span>
                     </div>
                     <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                        {(attendanceData.summary.attendanceRate * 100).toFixed(1)}%
+                        {(summary.attendanceRate * 100).toFixed(1)}%
                     </div>
                     <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        {attendanceData.summary.daysOff} days off
+                        {summary.daysOff} days off
                     </div>
                 </div>
 
@@ -575,19 +762,14 @@ const WorkerAttendancePage: React.FC = () => {
                     <div className="flex items-center gap-2 mb-2">
                         <BarChart3 className="w-5 h-5" style={{ color: 'var(--accent-purple)' }} />
                         <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            Weekly Average
+                            Average LuWang/Assignment
                         </span>
                     </div>
                     <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                        {attendanceData.weeks.length > 0
-                            ? formatNumber(
-                                attendanceData.weeks.reduce((sum, week) => sum + week.summary.totalLuwang, 0) /
-                                attendanceData.weeks.length
-                            )
-                            : '0'}
+                        {parseFloat(attendanceData.summary.average_luwang_per_assignment).toFixed(1)}
                     </div>
                     <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        LuWang per week
+                        {attendanceData.summary.total_assignments} total assignments
                     </div>
                 </div>
             </div>
@@ -634,7 +816,7 @@ const WorkerAttendancePage: React.FC = () => {
                                                     )({
                                                         className: 'w-3 h-3',
                                                         style: { color: 'inherit' }
-                                                    })}
+                                                    } as any)}
                                                 </div>
                                             )}
                                         </div>
@@ -733,13 +915,13 @@ const WorkerAttendancePage: React.FC = () => {
                                         Assignments
                                     </th>
                                     <th className="p-3 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                                        Notes
+                                        Pitak
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {attendanceData.attendance
-                                    .filter(day => day.hasWork)
+                                {calendarDays
+                                    .filter(day => day && day.data.hasWork)
                                     .map((day, index) => (
                                         <tr
                                             key={index}
@@ -750,14 +932,14 @@ const WorkerAttendancePage: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <Calendar className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                                                     <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                        {formatDate(day.date, 'MMM dd, yyyy')}
+                                                        {formatDate(day!.data.date, 'MMM dd, yyyy')}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="p-3">
                                                 <div className="flex items-center gap-1">
-                                                    <span style={{ color: 'var(--text-primary)' }}>{day.dayOfWeek}</span>
-                                                    {day.isWeekend && (
+                                                    <span style={{ color: 'var(--text-primary)' }}>{day!.data.dayOfWeek}</span>
+                                                    {day!.data.isWeekend && (
                                                         <span className="px-2 py-1 rounded-full text-xs"
                                                             style={{
                                                                 background: 'var(--accent-purple-light)',
@@ -771,7 +953,7 @@ const WorkerAttendancePage: React.FC = () => {
                                             </td>
                                             <td className="p-3">
                                                 <div className="flex items-center gap-2">
-                                                    {day.hasWork ? (
+                                                    {day!.data.hasWork ? (
                                                         <>
                                                             <CheckCircle className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
                                                             <span style={{ color: 'var(--text-primary)' }}>Worked</span>
@@ -788,21 +970,21 @@ const WorkerAttendancePage: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <Hash className="w-4 h-4" style={{ color: 'var(--accent-gold)' }} />
                                                     <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                        {formatNumber(day.totalLuwang)}
+                                                        {formatNumber(day!.data.totalLuwang)}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="p-3">
                                                 <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                    {day.assignments?.length || 0}
+                                                    {day!.data.assignments?.length || 0}
                                                 </span>
                                             </td>
                                             <td className="p-3">
-                                                {day.assignments && day.assignments.length > 0 ? (
+                                                {day!.data.assignments && day!.data.assignments.length > 0 ? (
                                                     <button
                                                         onClick={() => {
                                                             // Navigate to assignments for this day
-                                                            navigate(`/assignment?date=${day.date}&workerId=${id}`);
+                                                            navigate(`/assignment?date=${day!.data.date}&workerId=${id}`);
                                                         }}
                                                         className="text-xs px-2 py-1 rounded transition-colors"
                                                         style={{
@@ -821,8 +1003,8 @@ const WorkerAttendancePage: React.FC = () => {
                                     ))}
 
                                 {/* Days off */}
-                                {attendanceData.attendance
-                                    .filter(day => !day.hasWork)
+                                {calendarDays
+                                    .filter(day => day && !day.data.hasWork)
                                     .map((day, index) => (
                                         <tr
                                             key={`off-${index}`}
@@ -833,18 +1015,18 @@ const WorkerAttendancePage: React.FC = () => {
                                                 <div className="flex items-center gap-2">
                                                     <Calendar className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
                                                     <span style={{ color: 'var(--text-secondary)' }}>
-                                                        {formatDate(day.date, 'MMM dd, yyyy')}
+                                                        {formatDate(day!.data.date, 'MMM dd, yyyy')}
                                                     </span>
                                                 </div>
                                             </td>
                                             <td className="p-3">
-                                                <span style={{ color: 'var(--text-secondary)' }}>{day.dayOfWeek}</span>
+                                                <span style={{ color: 'var(--text-secondary)' }}>{day!.data.dayOfWeek}</span>
                                             </td>
                                             <td className="p-3">
                                                 <div className="flex items-center gap-2">
                                                     <Home className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
                                                     <span style={{ color: 'var(--text-secondary)' }}>
-                                                        {day.isWeekend ? 'Weekend' : 'Day Off'}
+                                                        {day!.data.isWeekend ? 'Weekend' : 'Day Off'}
                                                     </span>
                                                 </div>
                                             </td>
@@ -868,69 +1050,6 @@ const WorkerAttendancePage: React.FC = () => {
             {/* Summary View */}
             {viewType === 'summary' && (
                 <div className="space-y-6">
-                    {/* Weekly Breakdown */}
-                    <div className="p-5 rounded-xl"
-                        style={{
-                            background: 'var(--card-bg)',
-                            border: '1px solid var(--border-color)'
-                        }}
-                    >
-                        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"
-                            style={{ color: 'var(--text-primary)' }}
-                        >
-                            <BarChart3 className="w-5 h-5" />
-                            Weekly Breakdown
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {attendanceData.weeks.map((week, index) => (
-                                <div
-                                    key={index}
-                                    className="p-4 rounded-lg"
-                                    style={{
-                                        background: 'var(--card-secondary-bg)',
-                                        border: '1px solid var(--border-color)'
-                                    }}
-                                >
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                                            Week {week.week}
-                                        </h4>
-                                        <span className="text-xs px-2 py-1 rounded-full"
-                                            style={{
-                                                background: 'var(--accent-sky-light)',
-                                                color: 'var(--accent-sky)'
-                                            }}
-                                        >
-                                            {week.summary.daysWorked}/{week.summary.daysInWeek} days
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Total LuWang:</span>
-                                            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                {formatNumber(week.summary.totalLuwang)}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Average per Day:</span>
-                                            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                {formatNumber(week.summary.averageLuwang)}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Work Rate:</span>
-                                            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                {((week.summary.daysWorked / week.summary.daysInWeek) * 100).toFixed(1)}%
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* Performance Insights */}
                     <div className="p-5 rounded-xl"
                         style={{
@@ -955,17 +1074,17 @@ const WorkerAttendancePage: React.FC = () => {
                                         <div className="flex justify-between mb-1">
                                             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Overall Attendance Rate</span>
                                             <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                {(attendanceData.summary.attendanceRate * 100).toFixed(1)}%
+                                                {(summary.attendanceRate * 100).toFixed(1)}%
                                             </span>
                                         </div>
                                         <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--card-secondary-bg)' }}>
                                             <div
                                                 className="h-full rounded-full"
                                                 style={{
-                                                    width: `${attendanceData.summary.attendanceRate * 100}%`,
-                                                    background: attendanceData.summary.attendanceRate > 0.8
+                                                    width: `${summary.attendanceRate * 100}%`,
+                                                    background: summary.attendanceRate > 0.8
                                                         ? 'var(--accent-green)'
-                                                        : attendanceData.summary.attendanceRate > 0.6
+                                                        : summary.attendanceRate > 0.6
                                                             ? 'var(--accent-gold)'
                                                             : 'var(--accent-rust)'
                                                 }}
@@ -981,9 +1100,9 @@ const WorkerAttendancePage: React.FC = () => {
                                             }}
                                         >
                                             <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                                                {attendanceData.summary.workingDays}
+                                                {attendanceData.status_breakdown.active}
                                             </div>
-                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Working Days</div>
+                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Active Assignments</div>
                                         </div>
                                         <div className="p-3 rounded-lg text-center"
                                             style={{
@@ -992,9 +1111,9 @@ const WorkerAttendancePage: React.FC = () => {
                                             }}
                                         >
                                             <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                                                {attendanceData.summary.daysOff}
+                                                {attendanceData.status_breakdown.completed}
                                             </div>
-                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Days Off</div>
+                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Completed</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1002,21 +1121,21 @@ const WorkerAttendancePage: React.FC = () => {
 
                             <div>
                                 <h4 className="font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
-                                    Productivity Metrics
+                                    Streaks & Performance
                                 </h4>
                                 <div className="space-y-3">
                                     <div>
                                         <div className="flex justify-between mb-1">
-                                            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Average LuWang per Day</span>
+                                            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Current Streak</span>
                                             <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                                                {formatNumber(attendanceData.summary.averageLuwangPerDay)}
+                                                {attendanceData.performance.current_streak} days
                                             </span>
                                         </div>
                                         <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--card-secondary-bg)' }}>
                                             <div
                                                 className="h-full rounded-full"
                                                 style={{
-                                                    width: `${Math.min(100, (attendanceData.summary.averageLuwangPerDay / 100) * 100)}%`,
+                                                    width: `${Math.min(100, (attendanceData.performance.current_streak / attendanceData.performance.longest_streak) * 100)}%`,
                                                     background: 'var(--accent-gold)'
                                                 }}
                                             ></div>
@@ -1031,18 +1150,70 @@ const WorkerAttendancePage: React.FC = () => {
                                     >
                                         <div className="text-center mb-2">
                                             <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                                                {attendanceData.summary.weekendDaysWorked}
+                                                {attendanceData.performance.longest_streak}
                                             </div>
-                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Weekend Days Worked</div>
+                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Longest Streak</div>
                                         </div>
-                                        <div className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
-                                            {attendanceData.summary.weekendDaysWorked > 0
-                                                ? 'Extra commitment shown!'
-                                                : 'Regular schedule maintained'}
-                                        </div>
+                                        {attendanceData.performance.most_frequent_pitak && (
+                                            <div className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
+                                                Most frequent pitak: {attendanceData.performance.most_frequent_pitak.location}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Assignments */}
+                    <div className="p-5 rounded-xl"
+                        style={{
+                            background: 'var(--card-bg)',
+                            border: '1px solid var(--border-color)'
+                        }}
+                    >
+                        <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+                            Recent Assignments
+                        </h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr style={{ background: 'var(--table-header-bg)' }}>
+                                        <th className="p-3 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Date</th>
+                                        <th className="p-3 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Pitak</th>
+                                        <th className="p-3 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>LuWang</th>
+                                        <th className="p-3 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {attendanceData.recent_assignments.slice(0, 5).map((assignment: { date: string | Date | null | undefined; pitak: any; luwang_count: number | null | undefined; status: string; }, index: React.Key | null | undefined) => (
+                                        <tr key={index} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                            <td className="p-3">
+                                                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                                                    {formatDate(assignment.date, 'MMM dd, yyyy')}
+                                                </span>
+                                            </td>
+                                            <td className="p-3">
+                                                <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                                                    {assignment.pitak || 'N/A'}
+                                                </span>
+                                            </td>
+                                            <td className="p-3">
+                                                <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                                    {formatNumber(assignment.luwang_count)}
+                                                </span>
+                                            </td>
+                                            <td className="p-3">
+                                                <span className={`px-2 py-1 rounded-full text-xs ${assignment.status === 'completed' ? 'status-badge-completed' : 
+                                                    assignment.status === 'active' ? 'status-badge-active' : 
+                                                    'status-badge-cancelled'}`}>
+                                                    {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -1068,7 +1239,8 @@ const WorkerAttendancePage: React.FC = () => {
                         onClick={() => {
                             const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
                             const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-                            navigate(`/worker/attendance/${id}?month=${prevMonth}&year=${prevYear}`);
+                            setCurrentMonth(prevMonth);
+                            setCurrentYear(prevYear);
                         }}
                         className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
                         style={{
@@ -1083,7 +1255,8 @@ const WorkerAttendancePage: React.FC = () => {
                         onClick={() => {
                             const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
                             const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
-                            navigate(`/worker/attendance/${id}?month=${nextMonth}&year=${nextYear}`);
+                            setCurrentMonth(nextMonth);
+                            setCurrentYear(nextYear);
                         }}
                         className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md"
                         style={{
