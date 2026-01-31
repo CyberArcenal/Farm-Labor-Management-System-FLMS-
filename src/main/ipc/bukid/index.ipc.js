@@ -5,6 +5,7 @@ const { withErrorHandling } = require("../../../utils/errorHandler");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/dataSource");
 const UserActivity = require("../../../entities/UserActivity");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 
 class BukidHandler {
   constructor() {
@@ -16,7 +17,6 @@ class BukidHandler {
     // 📋 READ-ONLY HANDLERS
     this.getAllBukid = this.importHandler("./get/all.ipc");
     this.getBukidById = this.importHandler("./get/by_id.ipc");
-    this.getBukidByKabisilya = this.importHandler("./get/by_kabisilya.ipc");
     this.getBukidByName = this.importHandler("./get/by_name.ipc");
     this.getBukidByLocation = this.importHandler("./get/by_location.ipc");
     this.getBukidWithPitaks = this.importHandler("./get/with_pitaks.ipc");
@@ -31,11 +31,6 @@ class BukidHandler {
     this.deleteBukid = this.importHandler("./delete.ipc");
     this.updateBukidStatus = this.importHandler("./update_status.ipc");
     this.addBukidNote = this.importHandler("./add_note.ipc");
-
-    // 🔗 RELATIONSHIP HANDLERS
-    this.assignToKabisilya = this.importHandler("./assign_to_kabisilya.ipc");
-    this.removeFromKabisilya = this.importHandler("./remove_from_kabisilya.ipc");
-    this.getKabisilyaInfo = this.importHandler("./get_kabisilya_info.ipc");
 
     // 📊 STATISTICS HANDLERS
     this.getPitakCounts = this.importHandler("./get_pitak_counts.ipc");
@@ -95,9 +90,7 @@ class BukidHandler {
         
         case "getBukidById":
           return await this.getBukidById(enrichedParams);
-        
-        case "getBukidByKabisilya":
-          return await this.getBukidByKabisilya(enrichedParams);
+      
         
         case "getBukidByName":
           return await this.getBukidByName(enrichedParams);
@@ -135,16 +128,6 @@ class BukidHandler {
         
         case "addBukidNote":
           return await this.handleWithTransaction(this.addBukidNote, enrichedParams);
-
-        // 🔗 RELATIONSHIP OPERATIONS
-        case "assignToKabisilya":
-          return await this.handleWithTransaction(this.assignToKabisilya, enrichedParams);
-        
-        case "removeFromKabisilya":
-          return await this.handleWithTransaction(this.removeFromKabisilya, enrichedParams);
-        
-        case "getKabisilyaInfo":
-          return await this.getKabisilyaInfo(enrichedParams);
 
         // 📊 STATISTICS OPERATIONS
         case "getPitakCounts":
@@ -231,11 +214,16 @@ class BukidHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      throw new Error("No default session configured. Please set one in Settings.");
+    }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
+        session: {id:sessionId},
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
         created_at: new Date()

@@ -6,14 +6,13 @@ const Assignment = require("../../../../entities/Assignment");
 const { AppDataSource } = require("../../../db/dataSource");
 
 // @ts-ignore
+// @ts-ignore
 module.exports = async (filters = {}, /** @type {any} */ userId) => {
   try {
     const pitakRepo = AppDataSource.getRepository(Pitak);
     
     const query = pitakRepo.createQueryBuilder('pitak')
       .leftJoinAndSelect('pitak.bukid', 'bukid')
-      .leftJoin('bukid.kabisilya', 'kabisilya')
-      .addSelect(['kabisilya.id', 'kabisilya.name'])
       .where('pitak.status = :status', { status: 'inactive' });
 
     // Apply additional filters
@@ -69,11 +68,12 @@ module.exports = async (filters = {}, /** @type {any} */ userId) => {
     const [pitaks, total] = await query.getManyAndCount();
 
     // Get historical data for each pitak
-    const pitaksWithHistory = await Promise.all(pitaks.map(async (/** @type {{ id: any; updatedAt: any; location: any; totalLuwang: string; bukid: { id: any; name: any; location: any; kabisilya: any; }; createdAt: any; }} */ pitak) => {
+    const pitaksWithHistory = await Promise.all(pitaks.map(async (pitak) => {
       const assignmentRepo = AppDataSource.getRepository(Assignment);
       
       // Get last assignment
       const lastAssignment = await assignmentRepo.findOne({
+        // @ts-ignore
         where: { pitakId: pitak.id },
         order: { assignmentDate: 'DESC' }
       });
@@ -91,17 +91,22 @@ module.exports = async (filters = {}, /** @type {any} */ userId) => {
 
       // Calculate inactivity duration
       const lastActivityDate = lastAssignment ? lastAssignment.assignmentDate : pitak.updatedAt;
+      // @ts-ignore
       const inactivityDuration = calculateDuration(lastActivityDate, new Date());
 
       return {
         id: pitak.id,
         location: pitak.location,
+        // @ts-ignore
         totalLuwang: parseFloat(pitak.totalLuwang),
+        // @ts-ignore
         bukid: pitak.bukid ? {
+          // @ts-ignore
           id: pitak.bukid.id,
+          // @ts-ignore
           name: pitak.bukid.name,
+          // @ts-ignore
           location: pitak.bukid.location,
-          kabisilya: pitak.bukid.kabisilya
         } : null,
         history: {
           totalAssignments: parseInt(assignmentStats.totalAssignments) || 0,

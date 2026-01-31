@@ -7,10 +7,8 @@ import {
 } from 'lucide-react';
 import { showError, showSuccess } from '../../../utils/notification';
 import type { BukidData } from '../../../apis/bukid';
-import type { KabisilyaData } from '../../../apis/kabisilya';
-import kabisilyaAPI from '../../../apis/kabisilya';
 import bukidAPI from '../../../apis/bukid';
-import KabisilyaSelect from '../../../components/Selects/Kabisilya';
+import { dialogs } from '../../../utils/dialogs';
 
 interface BukidFormDialogProps {
     id?: number;
@@ -22,7 +20,6 @@ interface BukidFormDialogProps {
 interface FormData {
     name: string;
     location: string;
-    kabisilyaId: number | null;
     status: 'active' | 'inactive' | 'pending';
     notes: string;
 }
@@ -38,12 +35,10 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
     const [formData, setFormData] = useState<FormData>({
         name: '',
         location: '',
-        kabisilyaId: null,
         status: 'active',
         notes: ''
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [kabisilyas, setKabisilyas] = useState<KabisilyaData[]>([]);
     const [bukid, setBukid] = useState<BukidData | null>(null);
     const [stats, setStats] = useState<{
         pitakCount: number;
@@ -57,12 +52,6 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
             try {
                 setLoading(true);
 
-                // Fetch kabisilyas for dropdown
-                const kabisilyaResponse = await kabisilyaAPI.getAll();
-                if (kabisilyaResponse.status) {
-                    setKabisilyas(kabisilyaResponse.data);
-                }
-
                 // Fetch bukid data if in edit mode
                 if (mode === 'edit' && id) {
                     const bukidId = id;
@@ -74,7 +63,6 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
                         setFormData({
                             name: bukidData.name || '',
                             location: bukidData.location || '',
-                            kabisilyaId: bukidData.kabisilyaId || null,
                             status: (bukidData.status as 'active' | 'inactive' | 'pending') || 'active',
                             notes: bukidData.notes || ''
                         });
@@ -119,11 +107,6 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
         }
     };
 
-    // Handle kabisilya selection
-    const handleKabisilyaSelect = (kabisilyaId: number | null) => {
-        handleChange('kabisilyaId', kabisilyaId);
-    };
-
     // Validate form
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
@@ -155,6 +138,11 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
             return;
         }
 
+
+        if (!await dialogs.confirm({
+            title: mode === 'add' ? 'Create Bukid' : 'Update Bukid',
+            message: `Are you sure you want to ${mode === 'add' ? 'create this bukid?' : 'update this bukid?'}`
+        })) return;
         try {
             setSubmitting(true);
 
@@ -162,7 +150,6 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
             const bukidData: any = {
                 name: formData.name.trim(),
                 location: formData.location.trim(),
-                kabisilyaId: formData.kabisilyaId,
                 status: formData.status,
                 notes: formData.notes.trim()
             };
@@ -187,7 +174,7 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
                 if (onSuccess && response.data.bukid) {
                     onSuccess(response.data.bukid);
                 }
-                
+
                 onClose();
             } else {
                 throw new Error(response?.message || 'Failed to save bukid');
@@ -199,9 +186,6 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
             setSubmitting(false);
         }
     };
-
-    // Get selected kabisilya name
-    const selectedKabisilya = kabisilyas.find(k => k.id === formData.kabisilyaId);
 
     return (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
@@ -348,62 +332,6 @@ const BukidFormDialog: React.FC<BukidFormDialogProps> = ({
                                                         Enter the complete address for easy identification
                                                     </p>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Kabisilya Assignment */}
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Users className="w-4 h-4 text-gray-500" />
-                                                <h4 className="text-sm font-semibold text-gray-900">Kabisilya Assignment</h4>
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <KabisilyaSelect
-                                                        value={formData.kabisilyaId}
-                                                        onChange={handleKabisilyaSelect}
-                                                        placeholder="Search or select a Kabisilya..."
-                                                        disabled={submitting}
-                                                    />
-                                                    <p className="mt-1 text-xs text-gray-500">
-                                                        Assign this bukid to a kabisilya for management and oversight
-                                                    </p>
-                                                </div>
-
-                                                {selectedKabisilya && (
-                                                    <div className="bg-blue-50 p-3 rounded border border-blue-200">
-                                                        <div className="flex items-start justify-between">
-                                                            <div className="flex-1">
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <User className="w-3.5 h-3.5 text-blue-600" />
-                                                                    <h3 className="text-xs font-semibold text-gray-900">
-                                                                        {selectedKabisilya.name}
-                                                                    </h3>
-                                                                </div>
-                                                                <div className="text-xs text-gray-600 space-y-1">
-                                                                    {selectedKabisilya.phone && (
-                                                                        <div className="flex items-center gap-1">
-                                                                            📱 {selectedKabisilya.phone}
-                                                                        </div>
-                                                                    )}
-                                                                    {selectedKabisilya.email && (
-                                                                        <div className="flex items-center gap-1">
-                                                                            ✉️ {selectedKabisilya.email}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleChange('kabisilyaId', null)}
-                                                                className="p-1 rounded hover:bg-white transition-colors text-gray-500"
-                                                                title="Remove"
-                                                            >
-                                                                <X className="w-3 h-3" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </div>

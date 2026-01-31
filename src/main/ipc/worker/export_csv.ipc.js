@@ -16,8 +16,6 @@ module.exports = async function exportWorkersToCSV(params = {}) {
       // @ts-ignore
       status = null, 
       // @ts-ignore
-      kabisilyaId = null,
-      // @ts-ignore
       startDate = null, 
       // @ts-ignore
       endDate = null,
@@ -30,13 +28,12 @@ module.exports = async function exportWorkersToCSV(params = {}) {
     const workerRepository = AppDataSource.getRepository(Worker);
 
     // Build query
-    const qb = workerRepository
-      .createQueryBuilder('worker')
-      .leftJoinAndSelect('worker.kabisilya', 'kabisilya');
+    const qb = workerRepository.createQueryBuilder('worker');
 
     // Apply filters
     if (workerIds && workerIds.length > 0) {
-      qb.where('worker.id IN (:...workerIds)', { workerIds: workerIds.map((/** @type {string} */ id) => parseInt(id)) });
+      // @ts-ignore
+      qb.where('worker.id IN (:...workerIds)', { workerIds: workerIds.map(id => parseInt(id)) });
     }
 
     if (status) {
@@ -44,14 +41,6 @@ module.exports = async function exportWorkersToCSV(params = {}) {
         qb.andWhere('worker.status = :status', { status });
       } else {
         qb.where('worker.status = :status', { status });
-      }
-    }
-
-    if (kabisilyaId) {
-      if (workerIds.length > 0 || status) {
-        qb.andWhere('worker.kabisilyaId = :kabisilyaId', { kabisilyaId: parseInt(kabisilyaId) });
-      } else {
-        qb.where('worker.kabisilyaId = :kabisilyaId', { kabisilyaId: parseInt(kabisilyaId) });
       }
     }
 
@@ -72,7 +61,7 @@ module.exports = async function exportWorkersToCSV(params = {}) {
       };
     }
 
-    // Define field mappings
+    // Define field mappings (removed kabisilyaName)
     const allFields = [
       { key: 'id', header: 'ID' },
       { key: 'name', header: 'Name' },
@@ -81,7 +70,6 @@ module.exports = async function exportWorkersToCSV(params = {}) {
       { key: 'address', header: 'Address' },
       { key: 'status', header: 'Status' },
       { key: 'hireDate', header: 'Hire Date' },
-      { key: 'kabisilyaName', header: 'Kabisilya' },
       { key: 'totalDebt', header: 'Total Debt' },
       { key: 'totalPaid', header: 'Total Paid' },
       { key: 'currentBalance', header: 'Current Balance' },
@@ -99,7 +87,7 @@ module.exports = async function exportWorkersToCSV(params = {}) {
           'basic': ['id', 'name', 'contact', 'email', 'status'],
           'contact': ['id', 'name', 'contact', 'email', 'address'],
           'financial': ['id', 'name', 'totalDebt', 'totalPaid', 'currentBalance'],
-          'employment': ['id', 'name', 'hireDate', 'kabisilyaName', 'status']
+          'employment': ['id', 'name', 'hireDate', 'status']
         };
         
         // @ts-ignore
@@ -111,7 +99,7 @@ module.exports = async function exportWorkersToCSV(params = {}) {
     }
 
     // Prepare data for CSV
-    const csvData = workers.map((/** @type {{ id: any; name: any; contact: string; email: string; address: string; status: any; hireDate: { toISOString: () => string; }; kabisilya: { name: string; }; totalDebt: any; totalPaid: any; currentBalance: any; createdAt: { toISOString: () => string; }; updatedAt: { toISOString: () => string; }; }} */ worker) => {
+    const csvData = workers.map(worker => {
       const row = {};
       
       selectedFields.forEach(field => {
@@ -143,10 +131,6 @@ module.exports = async function exportWorkersToCSV(params = {}) {
           case 'hireDate':
             // @ts-ignore
             row[field.header] = worker.hireDate ? worker.hireDate.toISOString().split('T')[0] : '';
-            break;
-          case 'kabisilyaName':
-            // @ts-ignore
-            row[field.header] = worker.kabisilya?.name || '';
             break;
           case 'totalDebt':
             // @ts-ignore
@@ -191,7 +175,6 @@ module.exports = async function exportWorkersToCSV(params = {}) {
     const fileName = `workers_export_${timestamp}.csv`;
     const tempDir = path.join(__dirname, '../../../../temp');
     
-    // Create temp directory if it doesn't exist
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
@@ -201,6 +184,7 @@ module.exports = async function exportWorkersToCSV(params = {}) {
 
     // Log activity
     const activityRepo = AppDataSource.getRepository(UserActivity);
+    // @ts-ignore
     const activity = activityRepo.create({
       user_id: _userId,
       action: 'export_workers_csv',
@@ -211,7 +195,6 @@ module.exports = async function exportWorkersToCSV(params = {}) {
         filters: {
           workerIds: workerIds.length > 0 ? workerIds.length : 'all',
           status,
-          kabisilyaId,
           dateRange: startDate && endDate ? `${startDate} to ${endDate}` : 'all'
         }
       }),
@@ -221,18 +204,18 @@ module.exports = async function exportWorkersToCSV(params = {}) {
     });
     await activityRepo.save(activity);
 
-    // Read file as base64 for sending to frontend
+    // Read file as base64
     const fileBuffer = fs.readFileSync(filePath);
     const base64Data = fileBuffer.toString('base64');
 
-    // Clean up temporary file after a short delay
+    // Clean up temporary file
     setTimeout(() => {
       try {
         fs.unlinkSync(filePath);
       } catch (error) {
         console.warn('Failed to delete temporary export file:', error);
       }
-    }, 30000); // Delete after 30 seconds
+    }, 30000);
 
     return {
       status: true,
@@ -252,20 +235,19 @@ module.exports = async function exportWorkersToCSV(params = {}) {
         },
         summary: {
           totalWorkers: workers.length,
-          byStatus: workers.reduce((/** @type {{ [x: string]: any; }} */ acc, /** @type {{ status: string | number; }} */ worker) => {
+          byStatus: workers.reduce((acc, worker) => {
+            // @ts-ignore
             acc[worker.status] = (acc[worker.status] || 0) + 1;
             return acc;
           }, {}),
-          byKabisilya: workers.reduce((/** @type {{ [x: string]: any; }} */ acc, /** @type {{ kabisilya: { name: string; }; }} */ worker) => {
-            const kabisilya = worker.kabisilya?.name || 'Unassigned';
-            acc[kabisilya] = (acc[kabisilya] || 0) + 1;
-            return acc;
-          }, {}),
-          totalDebt: workers.reduce((/** @type {number} */ sum, /** @type {{ totalDebt: any; }} */ worker) => sum + parseFloat(worker.totalDebt || 0), 0),
-          totalPaid: workers.reduce((/** @type {number} */ sum, /** @type {{ totalPaid: any; }} */ worker) => sum + parseFloat(worker.totalPaid || 0), 0),
-          totalBalance: workers.reduce((/** @type {number} */ sum, /** @type {{ currentBalance: any; }} */ worker) => sum + parseFloat(worker.currentBalance || 0), 0)
+          // @ts-ignore
+          totalDebt: workers.reduce((sum, worker) => sum + parseFloat(worker.totalDebt || 0), 0),
+          // @ts-ignore
+          totalPaid: workers.reduce((sum, worker) => sum + parseFloat(worker.totalPaid || 0), 0),
+          // @ts-ignore
+          totalBalance: workers.reduce((sum, worker) => sum + parseFloat(worker.currentBalance || 0), 0)
         },
-        sampleData: csvData.slice(0, 3) // First 3 rows as sample
+        sampleData: csvData.slice(0, 3)
       }
     };
   } catch (error) {

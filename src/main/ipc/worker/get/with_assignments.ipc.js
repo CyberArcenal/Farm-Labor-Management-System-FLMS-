@@ -1,4 +1,4 @@
-// ipc/worker/get/with_assignments.ipc.js (Optimized)
+// ipc/worker/get/with_assignments.ipc.js (Optimized, no kabisilya)
 //@ts-check
 
 const Worker = require("../../../../entities/Worker");
@@ -6,6 +6,7 @@ const { AppDataSource } = require("../../../db/dataSource");
 
 module.exports = async function getWorkerWithAssignments(params = {}) {
   try {
+    // @ts-ignore
     // @ts-ignore
     const { id, startDate, endDate, groupBy = 'none', _userId } = params;
 
@@ -22,8 +23,7 @@ module.exports = async function getWorkerWithAssignments(params = {}) {
     const worker = await workerRepository.findOne({
       where: { id: parseInt(id) },
       relations: [
-        'kabisilya', 
-        'assignments', 
+        'assignments',
         'assignments.pitak',
         'assignments.pitak.bukid'
       ]
@@ -38,6 +38,7 @@ module.exports = async function getWorkerWithAssignments(params = {}) {
     }
 
     // Filter assignments by date if specified
+    // @ts-ignore
     let filteredAssignments = worker.assignments || [];
     if (startDate && endDate) {
       const start = new Date(startDate);
@@ -54,8 +55,9 @@ module.exports = async function getWorkerWithAssignments(params = {}) {
     const completedAssignments = filteredAssignments.filter((/** @type {{ status: string; }} */ a) => a.status === 'completed').length;
     const cancelledAssignments = filteredAssignments.filter((/** @type {{ status: string; }} */ a) => a.status === 'cancelled').length;
     
-    const totalLuwang = filteredAssignments.reduce((/** @type {number} */ sum, /** @type {{ luwangCount: any; }} */ assignment) => 
-      sum + parseFloat(assignment.luwangCount || 0), 0
+    const totalLuwang = filteredAssignments.reduce(
+      (/** @type {number} */ sum, /** @type {{ luwangCount: any; }} */ assignment) => sum + parseFloat(assignment.luwangCount || 0), 
+      0
     );
 
     // Group by different criteria
@@ -71,9 +73,9 @@ module.exports = async function getWorkerWithAssignments(params = {}) {
       const pitakLocation = assignment.pitak?.location || 'Unknown';
       const bukidName = assignment.pitak?.bukid?.name || 'Unknown';
       const status = assignment.status || 'unknown';
-      const dateKey = assignment.assignmentDate ? 
-        assignment.assignmentDate.toISOString().split('T')[0] : 
-        'unknown';
+      const dateKey = assignment.assignmentDate
+        ? assignment.assignmentDate.toISOString().split('T')[0]
+        : 'unknown';
 
       // Group by pitak
       // @ts-ignore
@@ -162,7 +164,7 @@ module.exports = async function getWorkerWithAssignments(params = {}) {
     const sortedByDate = Object.values(groupedData.byDate).sort((a, b) => a.date.localeCompare(b.date));
 
     // Calculate productivity metrics
-    const uniqueDates = new Set(filteredAssignments.map((/** @type {{ assignmentDate: any; createdAt: any; }} */ a) => 
+    const uniqueDates = new Set(filteredAssignments.map((/** @type {{ assignmentDate: any; createdAt: any; }} */ a) =>
       (a.assignmentDate || a.createdAt).toISOString().split('T')[0]
     ));
     const totalDaysWorked = uniqueDates.size;
@@ -195,8 +197,7 @@ module.exports = async function getWorkerWithAssignments(params = {}) {
       data: { 
         worker: {
           id: worker.id,
-          name: worker.name,
-          kabisilya: worker.kabisilya
+          name: worker.name
         },
         assignmentSummary: {
           totalAssignments,

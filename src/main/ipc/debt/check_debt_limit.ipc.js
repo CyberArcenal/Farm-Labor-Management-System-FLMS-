@@ -1,34 +1,36 @@
 // src/ipc/debt/check_debt_limit.ipc.js
 //@ts-check
 
+const { getDebtLimit } = require("../../../utils/system");
 const { AppDataSource } = require("../../db/dataSource");
 
-module.exports = async (/** @type {{ worker_id: any; newDebtAmount: any; }} */ params) => {
+module.exports = async (
+  /** @type {{ worker_id: any; newDebtAmount: any; }} */ params,
+) => {
   try {
     const { worker_id, newDebtAmount } = params;
-    
+
     const workerRepository = AppDataSource.getRepository("Worker");
-    const debtRepository = AppDataSource.getRepository("Debt");
 
     // Get worker with current debts
-    const worker = await workerRepository.findOne({ 
-      where: { id: worker_id }
+    const worker = await workerRepository.findOne({
+      where: { id: worker_id },
     });
 
     if (!worker) {
       return {
         status: false,
         message: "Worker not found",
-        data: null
+        data: null,
       };
     }
 
     // Calculate current debt load
-    const currentDebt = parseFloat(worker.currentBalance);
-    const proposedDebt = currentDebt + parseFloat(newDebtAmount);
+    const currentDebt = parseFloat(worker.currentBalance || 0);
+    const proposedDebt = currentDebt + parseFloat(newDebtAmount || 0);
 
-    // Define debt limit (this could be configurable)
-    const debtLimit = 10000; // Example: 10,000 peso limit
+    // ✅ Fetch debt limit from settings util
+    const debtLimit = await getDebtLimit(); // e.g. returns numeric value from settings table/config
 
     const isWithinLimit = proposedDebt <= debtLimit;
     const remainingLimit = debtLimit - proposedDebt;
@@ -42,8 +44,8 @@ module.exports = async (/** @type {{ worker_id: any; newDebtAmount: any; }} */ p
         proposedDebt,
         debtLimit,
         remainingLimit,
-        canProceed: isWithinLimit
-      }
+        canProceed: isWithinLimit,
+      },
     };
   } catch (error) {
     console.error("Error checking debt limit:", error);
@@ -51,7 +53,7 @@ module.exports = async (/** @type {{ worker_id: any; newDebtAmount: any; }} */ p
       status: false,
       // @ts-ignore
       message: error.message,
-      data: null
+      data: null,
     };
   }
 };

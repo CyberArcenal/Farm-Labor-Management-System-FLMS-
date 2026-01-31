@@ -8,6 +8,7 @@ const { AppDataSource } = require("../../../db/dataSource");
 module.exports = async (
   /** @type {string} */ status,
   filters = {},
+  // @ts-ignore
   /** @type {any} */ userId,
 ) => {
   try {
@@ -25,8 +26,6 @@ module.exports = async (
     const query = pitakRepo
       .createQueryBuilder("pitak")
       .leftJoinAndSelect("pitak.bukid", "bukid")
-      .leftJoin("bukid.kabisilya", "kabisilya")
-      .addSelect(["kabisilya.id", "kabisilya.name"])
       .where("pitak.status = :status", { status });
 
     // Apply additional filters
@@ -40,6 +39,7 @@ module.exports = async (
     if (filters.location) {
       // @ts-ignore
       query.andWhere("pitak.location LIKE :location", {
+        // @ts-ignore
         location: `%${filters.location}%`,
       });
     }
@@ -48,6 +48,7 @@ module.exports = async (
     if (filters.minLuWang) {
       // @ts-ignore
       query.andWhere("pitak.totalLuwang >= :minLuWang", {
+        // @ts-ignore
         minLuWang: filters.minLuWang,
       });
     }
@@ -56,6 +57,7 @@ module.exports = async (
     if (filters.maxLuWang) {
       // @ts-ignore
       query.andWhere("pitak.totalLuwang <= :maxLuWang", {
+        // @ts-ignore
         maxLuWang: filters.maxLuWang,
       });
     }
@@ -113,6 +115,7 @@ module.exports = async (
     if (filters.bukidId) {
       // @ts-ignore
       statsQuery.andWhere("pitak.bukidId = :bukidId", {
+        // @ts-ignore
         bukidId: filters.bukidId,
       });
     }
@@ -123,18 +126,21 @@ module.exports = async (
       status: true,
       message: `${status.charAt(0).toUpperCase() + status.slice(1)} pitaks retrieved successfully`,
       data: pitaks.map(
-        (
-          /** @type {{ id: any; location: any; totalLuwang: string; bukid: { id: any; name: any; location: any; kabisilya: any; }; createdAt: any; updatedAt: any; }} */ p,
+        (p,
         ) => ({
           id: p.id,
           location: p.location,
+          // @ts-ignore
           totalLuwang: parseFloat(p.totalLuwang),
+          // @ts-ignore
           bukid: p.bukid
             ? {
+                // @ts-ignore
                 id: p.bukid.id,
+                // @ts-ignore
                 name: p.bukid.name,
+                // @ts-ignore
                 location: p.bukid.location,
-                kabisilya: p.bukid.kabisilya,
               }
             : null,
           createdAt: p.createdAt,

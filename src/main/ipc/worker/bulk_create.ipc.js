@@ -10,6 +10,7 @@ module.exports = async function bulkCreateWorkers(params = {}, queryRunner = nul
   let shouldRelease = false;
   
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -109,7 +110,6 @@ module.exports = async function bulkCreateWorkers(params = {}, queryRunner = nul
         address: workerData.address || null,
         status: workerData.status || 'active',
         hireDate: workerData.hireDate ? new Date(workerData.hireDate) : currentDate,
-        kabisilya: workerData.kabisilyaId ? { id: workerData.kabisilyaId } : null,
         createdAt: currentDate,
         updatedAt: currentDate
       });

@@ -21,7 +21,6 @@ interface AssignmentFormDialogProps {
 interface FormData {
     workerId: number | null;
     pitakId: number | null;
-    luwangCount: number | null;
     assignmentDate: string;
     status: 'active' | 'completed' | 'cancelled';
     notes: string;
@@ -38,7 +37,6 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
     const [formData, setFormData] = useState<FormData>({
         workerId: null,
         pitakId: null,
-        luwangCount: null,
         assignmentDate: new Date().toISOString().split('T')[0], // Today's date
         status: 'active',
         notes: ''
@@ -73,7 +71,6 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                         setFormData({
                             workerId: assignmentData.worker?.id || null,
                             pitakId: assignmentData.pitak?.id || null,
-                            luwangCount: assignmentData.luwangCount || null,
                             assignmentDate: assignmentData.assignmentDate || new Date().toISOString().split('T')[0],
                             status: assignmentData.status || 'active',
                             notes: assignmentData.notes || ''
@@ -181,10 +178,6 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
             }
         }
 
-        if (formData.luwangCount !== null && formData.luwangCount < 0) {
-            newErrors.luwangCount = 'LuWang count cannot be negative';
-        }
-
         if (formData.notes.length > 1000) {
             newErrors.notes = 'Notes must be less than 1000 characters';
         }
@@ -212,7 +205,6 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                 response = await assignmentAPI.createAssignmentWithValidation({
                     workerIds: formData.workerId ? [formData.workerId] : [],
                     pitakId: formData.pitakId!,
-                    luwangCount: formData.luwangCount || undefined,
                     assignmentDate: formData.assignmentDate,
                     notes: formData.notes.trim() || undefined
                 });
@@ -238,7 +230,6 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                 // Only include these if they have changed
                 if (formData.workerId) updateData.workerId = formData.workerId;
                 if (formData.pitakId) updateData.pitakId = formData.pitakId;
-                if (formData.luwangCount !== null) updateData.luwangCount = formData.luwangCount;
 
                 response = await assignmentAPI.updateAssignmentWithValidation(updateData);
 
@@ -437,35 +428,6 @@ const AssignmentFormDialog: React.FC<AssignmentFormDialogProps> = ({
                                                             {errors.assignmentDate}
                                                         </p>
                                                     )}
-                                                </div>
-
-                                                <div>
-                                                    <label className="block text-xs font-medium mb-1.5 text-gray-700" htmlFor="luwangCount">
-                                                        LuWang Count
-                                                    </label>
-                                                    <div className="relative">
-                                                        <input
-                                                            id="luwangCount"
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
-                                                            value={formData.luwangCount || ''}
-                                                            onChange={(e) => handleChange('luwangCount', e.target.value ? parseFloat(e.target.value) : null)}
-                                                            className={`w-full px-3 py-2 rounded text-sm border ${errors.luwangCount ? 'border-red-500' : 'border-gray-300'
-                                                                } focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none pl-9`}
-                                                            placeholder="Enter LuWang count (e.g., 2.5)"
-                                                        />
-                                                        <Ruler className="absolute left-3 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                                                    </div>
-                                                    {errors.luwangCount && (
-                                                        <p className="mt-1 text-xs flex items-center gap-1 text-red-600">
-                                                            <AlertCircle className="w-3 h-3" />
-                                                            {errors.luwangCount}
-                                                        </p>
-                                                    )}
-                                                    <p className="mt-1 text-xs text-gray-500">
-                                                        Enter the amount of LuWang (work units) for this assignment
-                                                    </p>
                                                 </div>
                                             </div>
                                         </div>

@@ -1,12 +1,25 @@
 // src/ipc/debt/create.ipc.js
 //@ts-check
 
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
+
+
 module.exports = async (/** @type {{ worker_id: any; amount: any; reason: any; dueDate: any; interestRate: any; paymentTerm: any; }} */ params, /** @type {{ manager: { getRepository: (arg0: string) => any; }; }} */ queryRunner) => {
   try {
     const { worker_id, amount, reason, dueDate, interestRate, paymentTerm } = params;
-    
+
     const debtRepository = queryRunner.manager.getRepository("Debt");
     const workerRepository = queryRunner.manager.getRepository("Worker");
+
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      return {
+        status: false,
+        message: "No default session configured. Please set one in Settings.",
+        data: null,
+      };
+    }
 
     // Check if worker exists
     const worker = await workerRepository.findOne({ where: { id: worker_id } });
@@ -14,13 +27,14 @@ module.exports = async (/** @type {{ worker_id: any; amount: any; reason: any; d
       return {
         status: false,
         message: "Worker not found",
-        data: null
+        data: null,
       };
     }
 
-    // Create debt
+    // ✅ Create debt tied to session
     const debt = debtRepository.create({
       worker: { id: worker_id },
+      session: { id: sessionId }, // 🔑 tie to default session
       originalAmount: amount,
       amount: amount,
       balance: amount,
@@ -29,7 +43,7 @@ module.exports = async (/** @type {{ worker_id: any; amount: any; reason: any; d
       interestRate: interestRate || 0,
       paymentTerm,
       status: "pending",
-      dateIncurred: new Date()
+      dateIncurred: new Date(),
     });
 
     const savedDebt = await debtRepository.save(debt);
@@ -42,7 +56,7 @@ module.exports = async (/** @type {{ worker_id: any; amount: any; reason: any; d
     return {
       status: true,
       message: "Debt created successfully",
-      data: savedDebt
+      data: { ...savedDebt, sessionId },
     };
   } catch (error) {
     console.error("Error creating debt:", error);
@@ -50,7 +64,7 @@ module.exports = async (/** @type {{ worker_id: any; amount: any; reason: any; d
       status: false,
       // @ts-ignore
       message: error.message,
-      data: null
+      data: null,
     };
   }
 };

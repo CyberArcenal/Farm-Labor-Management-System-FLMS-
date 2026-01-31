@@ -21,7 +21,6 @@ module.exports = async function getWorkerByStatus(params = {}) {
 
     const [workers, total] = await workerRepository.findAndCount({
       where: { status },
-      relations: ['kabisilya'],
       skip: (page - 1) * limit,
       take: limit,
       order: { name: 'ASC' }

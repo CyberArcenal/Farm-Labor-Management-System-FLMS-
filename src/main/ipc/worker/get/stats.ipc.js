@@ -21,7 +21,6 @@ module.exports = async function getWorkerStats(params = {}) {
         inactiveWorkers,
         onLeaveWorkers,
         terminatedWorkers,
-        workersByKabisilya,
         workersByStatus,
         averageBalance,
         totalDebt,
@@ -41,15 +40,6 @@ module.exports = async function getWorkerStats(params = {}) {
         
         // Terminated workers
         queryRunner.query('SELECT COUNT(*) as count FROM workers WHERE status = ?', ['terminated']),
-        
-        // Workers by kabisilya
-        queryRunner.query(`
-          SELECT k.name as kabisilyaName, COUNT(w.id) as workerCount
-          FROM workers w
-          LEFT JOIN kabisilyas k ON w.kabisilyaId = k.id
-          GROUP BY w.kabisilyaId
-          ORDER BY workerCount DESC
-        `),
         
         // Workers by status
         queryRunner.query(`
@@ -86,10 +76,6 @@ module.exports = async function getWorkerStats(params = {}) {
           terminated: parseInt(terminatedWorkers[0].count)
         },
         distribution: {
-          byKabisilya: workersByKabisilya.map((/** @type {{ kabisilyaName: any; workerCount: string; }} */ row) => ({
-            name: row.kabisilyaName || 'Unassigned',
-            count: parseInt(row.workerCount)
-          })),
           byStatus: workersByStatus.map((/** @type {{ status: any; count: string; }} */ row) => ({
             status: row.status,
             count: parseInt(row.count)

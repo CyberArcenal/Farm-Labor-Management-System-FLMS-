@@ -3,6 +3,7 @@
 
 const Worker = require("../../../entities/Worker");
 // @ts-ignore
+// @ts-ignore
 const UserActivity = require("../../../entities/UserActivity");
 const { AppDataSource } = require("../../db/dataSource");
 const Debt = require("../../../entities/Debt");
@@ -10,6 +11,7 @@ const Payment = require("../../../entities/Payment");
 
 module.exports = async function calculateWorkerBalance(params = {}) {
   try {
+    // @ts-ignore
     // @ts-ignore
     const { workerId, recalculate = false, _userId } = params;
 
@@ -44,6 +46,7 @@ module.exports = async function calculateWorkerBalance(params = {}) {
       const debtRepository = queryRunner.manager.getRepository(Debt);
       const activeDebts = await debtRepository.find({
         where: { 
+          // @ts-ignore
           worker: { id: parseInt(workerId) },
           status: ['pending', 'partially_paid']
         }
@@ -52,6 +55,7 @@ module.exports = async function calculateWorkerBalance(params = {}) {
       // Get all payments
       const paymentRepository = queryRunner.manager.getRepository(Payment);
       const payments = await paymentRepository.find({
+        // @ts-ignore
         where: { worker: { id: parseInt(workerId) } }
       });
 
@@ -71,6 +75,7 @@ module.exports = async function calculateWorkerBalance(params = {}) {
             sum + parseFloat(debt.totalInterest || 0), 0
           ),
           count: activeDebts.length,
+          // @ts-ignore
           overdueDebts: activeDebts.filter((/** @type {{ dueDate: string | number | Date; }} */ debt) => {
             if (!debt.dueDate) return false;
             return new Date(debt.dueDate) < new Date();

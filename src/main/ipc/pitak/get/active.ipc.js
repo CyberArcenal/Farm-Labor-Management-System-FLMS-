@@ -1,4 +1,4 @@
-// src/ipc/pitak/get/active.ipc
+// src/ipc/pitak/get/active.ipc.js
 //@ts-check
 
 const Pitak = require("../../../../entities/Pitak");
@@ -6,63 +6,41 @@ const Assignment = require("../../../../entities/Assignment");
 const { AppDataSource } = require("../../../db/dataSource");
 
 // @ts-ignore
-module.exports = async (filters = {}, /** @type {any} */ userId) => {
+module.exports = async (filters = {}, userId) => {
   try {
     const pitakRepo = AppDataSource.getRepository(Pitak);
-    
-    const query = pitakRepo.createQueryBuilder('pitak')
-      .leftJoinAndSelect('pitak.bukid', 'bukid')
-      .leftJoin('bukid.kabisilya', 'kabisilya')
-      .addSelect(['kabisilya.id', 'kabisilya.name'])
-      .where('pitak.status = :status', { status: 'active' });
 
-    // Apply additional filters
+    const query = pitakRepo.createQueryBuilder("pitak")
+      .leftJoinAndSelect("pitak.bukid", "bukid")
+      .where("pitak.status = :status", { status: "active" });
+
+    // Filters
     // @ts-ignore
     if (filters.bukidId) {
       // @ts-ignore
-      query.andWhere('pitak.bukidId = :bukidId', { bukidId: filters.bukidId });
+      query.andWhere("pitak.bukidId = :bukidId", { bukidId: filters.bukidId });
     }
-    
     // @ts-ignore
     if (filters.location) {
       // @ts-ignore
-      query.andWhere('pitak.location LIKE :location', { location: `%${filters.location}%` });
+      query.andWhere("pitak.location LIKE :location", { location: `%${filters.location}%` });
     }
-    
     // @ts-ignore
-    if (filters.minLuWang) {
+    if (filters.minLuwang) {
       // @ts-ignore
-      query.andWhere('pitak.totalLuwang >= :minLuWang', { minLuWang: filters.minLuWang });
+      query.andWhere("pitak.totalLuwang >= :minLuwang", { minLuwang: filters.minLuwang });
     }
-    
     // @ts-ignore
-    if (filters.maxLuWang) {
+    if (filters.maxLuwang) {
       // @ts-ignore
-      query.andWhere('pitak.totalLuwang <= :maxLuWang', { maxLuWang: filters.maxLuWang });
-    }
-
-    // Filter by availability
-    // @ts-ignore
-    if (filters.availableOnly) {
-      // Subquery to find pitaks with remaining capacity
-      const subQuery = pitakRepo.createQueryBuilder('p')
-        .leftJoin(Assignment, 'a', 'a.pitakId = p.id AND a.status IN (:...statuses)', {
-          statuses: ['active', 'completed']
-        })
-        .select('p.id', 'id')
-        .addSelect('COALESCE(SUM(a.luwangCount), 0)', 'assignedLuWang')
-        .groupBy('p.id')
-        .having('p.totalLuwang > COALESCE(SUM(a.luwangCount), 0)');
-
-      query.andWhere(`pitak.id IN (${subQuery.getQuery()})`);
-      query.setParameters(subQuery.getParameters());
+      query.andWhere("pitak.totalLuwang <= :maxLuwang", { maxLuwang: filters.maxLuwang });
     }
 
     // Sorting
     // @ts-ignore
-    const sortField = filters.sortBy || 'totalLuwang';
+    const sortField = filters.sortBy || "totalLuwang";
     // @ts-ignore
-    const sortOrder = filters.sortOrder === 'asc' ? 'ASC' : 'DESC';
+    const sortOrder = filters.sortOrder === "asc" ? "ASC" : "DESC";
     query.orderBy(`pitak.${sortField}`, sortOrder);
 
     // Pagination
@@ -71,75 +49,77 @@ module.exports = async (filters = {}, /** @type {any} */ userId) => {
     // @ts-ignore
     const limit = parseInt(filters.limit) || 50;
     const skip = (page - 1) * limit;
-    
     query.skip(skip).take(limit);
 
     const [pitaks, total] = await query.getManyAndCount();
 
-    // Get assignment statistics for each pitak
-    const pitaksWithAvailability = await Promise.all(pitaks.map(async (/** @type {{ id: any; totalLuwang: string; location: any; bukid: { id: any; name: any; location: any; kabisilya: any; }; createdAt: any; updatedAt: any; }} */ pitak) => {
-      const assignmentRepo = AppDataSource.getRepository(Assignment);
-      
-      const assignmentStats = await assignmentRepo
-        .createQueryBuilder('assignment')
-        .select([
-          'COALESCE(SUM(assignment.luwangCount), 0) as totalAssignedLuWang',
-          'COUNT(*) as totalAssignments'
-        ])
-        .where('assignment.pitakId = :pitakId', { pitakId: pitak.id })
-        .andWhere('assignment.status IN (:...statuses)', { 
-          statuses: ['active', 'completed'] 
-        })
-        .getRawOne();
+    // Consolidated assignment stats (avoid N+1 queries)
+    const assignmentRepo = AppDataSource.getRepository(Assignment);
+    const assignmentStatsRaw = await assignmentRepo
+      .createQueryBuilder("assignment")
+      .select("assignment.pitakId", "pitakId")
+      .addSelect("COALESCE(SUM(assignment.luwangCount),0)", "totalAssignedLuwang")
+      .addSelect("COUNT(*)", "totalAssignments")
+      .where("assignment.status IN (:...statuses)", { statuses: ["active", "completed"] })
+      .groupBy("assignment.pitakId")
+      .getRawMany();
 
-      const totalAssignedLuWang = parseFloat(assignmentStats.totalAssignedLuWang) || 0;
-      const totalLuWang = parseFloat(pitak.totalLuwang);
-      const remainingLuWang = totalLuWang - totalAssignedLuWang;
-      const utilizationRate = totalLuWang > 0 ? (totalAssignedLuWang / totalLuWang) * 100 : 0;
+    const statsMap = assignmentStatsRaw.reduce((acc, row) => {
+      acc[row.pitakId] = {
+        totalAssignedLuwang: parseFloat(row.totalAssignedLuwang) || 0,
+        totalAssignments: parseInt(row.totalAssignments) || 0,
+      };
+      return acc;
+    }, {});
+
+    // Merge stats into pitaks
+    const pitaksWithAvailability = pitaks.map(p => {
+      // @ts-ignore
+      const stats = statsMap[p.id] || { totalAssignedLuwang: 0, totalAssignments: 0 };
+      // @ts-ignore
+      const totalLuWang = parseFloat(p.totalLuwang);
+      const remainingLuWang = totalLuWang - stats.totalAssignedLuwang;
+      const utilizationRate = totalLuWang > 0 ? (stats.totalAssignedLuwang / totalLuWang) * 100 : 0;
 
       return {
-        id: pitak.id,
-        location: pitak.location,
+        id: p.id,
+        location: p.location,
         totalLuwang: totalLuWang,
-        bukid: pitak.bukid ? {
-          id: pitak.bukid.id,
-          name: pitak.bukid.name,
-          location: pitak.bukid.location,
-          kabisilya: pitak.bukid.kabisilya
-        } : null,
+        // @ts-ignore
+        bukid: p.bukid ? { id: p.bukid.id, name: p.bukid.name, location: p.bukid.location } : null,
         availability: {
-          totalAssignedLuWang,
+          totalAssignedLuwang: stats.totalAssignedLuwang,
           remainingLuWang,
           utilizationRate,
           isAvailable: remainingLuWang > 0,
-          assignmentCount: parseInt(assignmentStats.totalAssignments) || 0
+          assignmentCount: stats.totalAssignments,
         },
-        createdAt: pitak.createdAt,
-        updatedAt: pitak.updatedAt
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
       };
-    }));
-
-    // Calculate summary statistics
-    const summary = pitaksWithAvailability.reduce((/** @type {{ totalPitaks: number; totalLuWangCapacity: any; totalAssignedLuWang: any; totalRemainingLuWang: any; availablePitaks: string | number; totalAssignments: any; }} */ stats, /** @type {{ totalLuwang: any; availability: { totalAssignedLuWang: any; remainingLuWang: any; isAvailable: any; assignmentCount: any; }; }} */ pitak) => {
-      stats.totalPitaks++;
-      stats.totalLuWangCapacity += pitak.totalLuwang;
-      stats.totalAssignedLuWang += pitak.availability.totalAssignedLuWang;
-      stats.totalRemainingLuWang += pitak.availability.remainingLuWang;
-      // @ts-ignore
-      stats.availablePitaks += pitak.availability.isAvailable ? 1 : 0;
-      stats.totalAssignments += pitak.availability.assignmentCount;
-      return stats;
-    }, {
-      totalPitaks: 0,
-      totalLuWangCapacity: 0,
-      totalAssignedLuWang: 0,
-      totalRemainingLuWang: 0,
-      availablePitaks: 0,
-      totalAssignments: 0
     });
 
-    summary.overallUtilizationRate = summary.totalLuWangCapacity > 0 
-      ? (summary.totalAssignedLuWang / summary.totalLuWangCapacity) * 100 
+    // Summary
+    const summary = pitaksWithAvailability.reduce((s, pitak) => {
+      s.totalPitaks++;
+      s.totalLuwangCapacity += pitak.totalLuwang;
+      s.totalAssignedLuwang += pitak.availability.totalAssignedLuwang;
+      s.totalRemainingLuwang += pitak.availability.remainingLuWang;
+      s.availablePitaks += pitak.availability.isAvailable ? 1 : 0;
+      s.totalAssignments += pitak.availability.assignmentCount;
+      return s;
+    }, {
+      totalPitaks: 0,
+      totalLuwangCapacity: 0,
+      totalAssignedLuwang: 0,
+      totalRemainingLuwang: 0,
+      availablePitaks: 0,
+      totalAssignments: 0,
+    });
+
+    // @ts-ignore
+    summary.overallUtilizationRate = summary.totalLuwangCapacity > 0
+      ? (summary.totalAssignedLuwang / summary.totalLuwangCapacity) * 100
       : 0;
 
     return {
@@ -152,17 +132,16 @@ module.exports = async (filters = {}, /** @type {any} */ userId) => {
         limit,
         totalPages: Math.ceil(total / limit),
         summary,
-        filters
-      }
+        filters,
+      },
     };
-
   } catch (error) {
     console.error("Error retrieving active pitaks:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to retrieve active pitaks: ${error.message}`,
-      data: null
+      data: null,
     };
   }
 };

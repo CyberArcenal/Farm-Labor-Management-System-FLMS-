@@ -7,26 +7,14 @@ import {
     PieChart,
     BarChart3,
     Calendar,
-    Download,
-    Filter,
-    RefreshCw,
-    Eye,
-    AlertTriangle,
-    CheckCircle,
-    Clock,
-    Users,
+    Download, RefreshCw, AlertTriangle,
+    CheckCircle, Users,
     Percent,
     ArrowUpRight,
     ArrowDownRight,
     ChevronRight,
     CreditCard,
-    Wallet,
-    TrendingDown,
-    Target,
-    Calculator,
-    LineChart,
-    History,
-    Bell
+    Wallet, Target, LineChart, Bell
 } from 'lucide-react';
 import dashboardAPI, {
     type FinancialOverviewData,
@@ -35,7 +23,8 @@ import dashboardAPI, {
     type RevenueTrendData,
     type DebtCollectionRateData
 } from '../../../apis/dashboard';
-import { formatCurrency, formatNumber, formatDate, formatPercentage } from '../../../utils/formatters';
+import { formatCurrency, formatDate, formatPercentage } from '../../../utils/formatters';
+import { hideLoading, showLoading } from '../../../utils/notification';
 
 const FinancialReportsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -77,6 +66,7 @@ const FinancialReportsPage: React.FC = () => {
             console.error('Failed to fetch financial reports:', err);
         } finally {
             setLoading(false);
+            hideLoading();
         }
     };
 
@@ -148,14 +138,7 @@ const FinancialReportsPage: React.FC = () => {
     }, [overviewData]);
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-3" style={{ borderColor: 'var(--primary-color)' }}></div>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading financial reports...</p>
-                </div>
-            </div>
-        );
+       showLoading('Loading financial reports...');
     }
 
     if (error) {
@@ -218,7 +201,7 @@ const FinancialReportsPage: React.FC = () => {
                             return (
                                 <button
                                     key={mode.id}
-                                    onClick={() => setViewMode(mode.id)}
+                                    onClick={() => setViewMode(mode.id as "summary" | "detailed")}
                                     className={`px-3 py-2 text-sm flex items-center gap-2 transition-colors ${isActive ? 'font-medium' : ''}`}
                                     style={{
                                         background: isActive ? 'var(--primary-color)' : 'var(--card-bg)',

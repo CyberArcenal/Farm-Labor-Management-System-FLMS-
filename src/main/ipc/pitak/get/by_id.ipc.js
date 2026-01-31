@@ -18,7 +18,7 @@ module.exports = async (/** @type {any} */ id, /** @type {any} */ userId) => {
 
     const pitak = await pitakRepo.findOne({
       where: { id },
-      relations: ['bukid', 'bukid.kabisilya', 'assignments', 'assignments.worker', 'payments']
+      relations: ['bukid', 'assignments', 'assignments.worker', 'payments']
     });
 
     if (!pitak) {
@@ -147,8 +147,6 @@ module.exports = async (/** @type {any} */ id, /** @type {any} */ userId) => {
           name: pitak.bukid.name,
           // @ts-ignore
           location: pitak.bukid.location,
-          // @ts-ignore
-          kabisilya: pitak.bukid.kabisilya
         } : null,
         stats: {
           assignments: {

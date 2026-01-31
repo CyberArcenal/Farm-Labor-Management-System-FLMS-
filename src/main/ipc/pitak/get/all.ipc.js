@@ -1,9 +1,7 @@
-// src/ipc/pitak/get/all.ipc
+// src/ipc/pitak/get/all.ipc.js
 //@ts-check
 
 const Pitak = require("../../../../entities/Pitak");
-// @ts-ignore
-const Bukid = require("../../../../entities/Bukid");
 const { AppDataSource } = require("../../../db/dataSource");
 
 // @ts-ignore
@@ -13,9 +11,7 @@ module.exports = async (filters = {}, userId) => {
 
     const query = pitakRepo
       .createQueryBuilder("pitak")
-      .leftJoinAndSelect("pitak.bukid", "bukid")
-      .leftJoin("bukid.kabisilya", "kabisilya")
-      .addSelect(["kabisilya.id", "kabisilya.name"]);
+      .leftJoinAndSelect("pitak.bukid", "bukid");
 
     // Apply filters
     // @ts-ignore
@@ -23,35 +19,25 @@ module.exports = async (filters = {}, userId) => {
       // @ts-ignore
       query.andWhere("pitak.status = :status", { status: filters.status });
     }
-
     // @ts-ignore
     if (filters.bukidId) {
       // @ts-ignore
       query.andWhere("pitak.bukidId = :bukidId", { bukidId: filters.bukidId });
     }
-
     // @ts-ignore
     if (filters.location) {
       // @ts-ignore
-      query.andWhere("pitak.location LIKE :location", {
-        location: `%${filters.location}%`,
-      });
+      query.andWhere("pitak.location LIKE :location", { location: `%${filters.location}%` });
     }
-
     // @ts-ignore
-    if (filters.minLuWang) {
+    if (filters.minLuwang) {
       // @ts-ignore
-      query.andWhere("pitak.totalLuwang >= :minLuWang", {
-        minLuWang: filters.minLuWang,
-      });
+      query.andWhere("pitak.totalLuwang >= :minLuwang", { minLuwang: filters.minLuwang });
     }
-
     // @ts-ignore
-    if (filters.maxLuWang) {
+    if (filters.maxLuwang) {
       // @ts-ignore
-      query.andWhere("pitak.totalLuwang <= :maxLuWang", {
-        maxLuWang: filters.maxLuWang,
-      });
+      query.andWhere("pitak.totalLuwang <= :maxLuwang", { maxLuwang: filters.maxLuwang });
     }
 
     // Sorting
@@ -67,7 +53,6 @@ module.exports = async (filters = {}, userId) => {
     // @ts-ignore
     const limit = parseInt(filters.limit) || 50;
     const skip = (page - 1) * limit;
-
     query.skip(skip).take(limit);
 
     const [pitaks, total] = await query.getManyAndCount();
@@ -77,19 +62,17 @@ module.exports = async (filters = {}, userId) => {
       .createQueryBuilder("pitak")
       .select([
         "COUNT(*) as total",
-        "SUM(pitak.totalLuwang) as totalLuWang",
-        "AVG(pitak.totalLuwang) as averageLuWang",
-        'SUM(CASE WHEN pitak.status = "active" THEN 1 ELSE 0 END) as activeCount',
-        'SUM(CASE WHEN pitak.status = "inactive" THEN 1 ELSE 0 END) as inactiveCount',
-        'SUM(CASE WHEN pitak.status = "completed" THEN 1 ELSE 0 END) as harvestedCount',
+        "SUM(pitak.totalLuwang) as totalLuwang",
+        "AVG(pitak.totalLuwang) as averageLuwang",
+        "SUM(CASE WHEN pitak.status = 'active' THEN 1 ELSE 0 END) as activeCount",
+        "SUM(CASE WHEN pitak.status = 'inactive' THEN 1 ELSE 0 END) as inactiveCount",
+        "SUM(CASE WHEN pitak.status = 'completed' THEN 1 ELSE 0 END) as harvestedCount",
       ]);
 
     // @ts-ignore
     if (filters.bukidId) {
       // @ts-ignore
-      statsQuery.where("pitak.bukidId = :bukidId", {
-        bukidId: filters.bukidId,
-      });
+      statsQuery.where("pitak.bukidId = :bukidId", { bukidId: filters.bukidId });
     }
 
     const stats = await statsQuery.getRawOne();
@@ -97,20 +80,21 @@ module.exports = async (filters = {}, userId) => {
     return {
       status: true,
       message: "Pitaks retrieved successfully",
-      // @ts-ignore
-      data: pitaks.map((p) => ({
+      data: pitaks.map(p => ({
         id: p.id,
         location: p.location,
+        // @ts-ignore
         totalLuwang: parseFloat(p.totalLuwang),
         status: p.status,
-        bukid: p.bukid
-          ? {
-              id: p.bukid.id,
-              name: p.bukid.name,
-              location: p.bukid.location,
-              kabisilya: p.bukid.kabisilya,
-            }
-          : null,
+        // @ts-ignore
+        bukid: p.bukid ? {
+          // @ts-ignore
+          id: p.bukid.id,
+          // @ts-ignore
+          name: p.bukid.name,
+          // @ts-ignore
+          location: p.bukid.location,
+        } : null,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       })),
@@ -121,12 +105,13 @@ module.exports = async (filters = {}, userId) => {
         totalPages: Math.ceil(total / limit),
         stats: {
           total: parseInt(stats.total) || 0,
-          totalLuWang: parseFloat(stats.totalLuWang) || 0,
-          averageLuWang: parseFloat(stats.averageLuWang) || 0,
+          totalLuwang: parseFloat(stats.totalLuwang) || 0,
+          averageLuwang: parseFloat(stats.averageLuwang) || 0,
           activeCount: parseInt(stats.activeCount) || 0,
           inactiveCount: parseInt(stats.inactiveCount) || 0,
           harvestedCount: parseInt(stats.harvestedCount) || 0,
         },
+        filters,
       },
     };
   } catch (error) {

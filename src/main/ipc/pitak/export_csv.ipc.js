@@ -14,8 +14,6 @@ module.exports = async (/** @type {{ filters?: {} | undefined; _userId: any; }} 
     
     const query = pitakRepo.createQueryBuilder('pitak')
       .leftJoinAndSelect('pitak.bukid', 'bukid')
-      .leftJoin('bukid.kabisilya', 'kabisilya')
-      .addSelect(['kabisilya.id', 'kabisilya.name']);
 
     // Apply filters
     // @ts-ignore
@@ -46,19 +44,25 @@ module.exports = async (/** @type {{ filters?: {} | undefined; _userId: any; }} 
     const pitaks = await query.getMany();
 
     // Prepare CSV data
-    const csvData = pitaks.map((/** @type {{ id: any; location: any; totalLuwang: string; status: any; bukidId: any; bukid: { name: any; location: any; kabisilya: { id: any; name: any; }; }; createdAt: { toISOString: () => string; }; updatedAt: { toISOString: () => string; }; }} */ pitak) => ({
+    const csvData = pitaks.map((pitak) => ({
       'ID': pitak.id,
       'Location': pitak.location || '',
+      // @ts-ignore
       'Total LuWang': parseFloat(pitak.totalLuwang).toFixed(2),
       'Status': pitak.status,
+      // @ts-ignore
       'Bukid ID': pitak.bukidId,
+      // @ts-ignore
       'Bukid Name': pitak.bukid ? pitak.bukid.name : '',
+      // @ts-ignore
       'Bukid Location': pitak.bukid ? (pitak.bukid.location || '') : '',
-      'Kabisilya ID': pitak.bukid && pitak.bukid.kabisilya ? pitak.bukid.kabisilya.id : '',
-      'Kabisilya Name': pitak.bukid && pitak.bukid.kabisilya ? pitak.bukid.kabisilya.name : '',
+      // @ts-ignore
       'Created Date': pitak.createdAt.toISOString().split('T')[0],
+      // @ts-ignore
       'Created Time': pitak.createdAt.toISOString().split('T')[1].split('.')[0],
+      // @ts-ignore
       'Updated Date': pitak.updatedAt.toISOString().split('T')[0],
+      // @ts-ignore
       'Updated Time': pitak.updatedAt.toISOString().split('T')[1].split('.')[0]
     }));
 
@@ -92,6 +96,7 @@ module.exports = async (/** @type {{ filters?: {} | undefined; _userId: any; }} 
         csv,
         filename,
         count: pitaks.length,
+        // @ts-ignore
         totalLuWang: pitaks.reduce((/** @type {number} */ sum, /** @type {{ totalLuwang: string; }} */ p) => sum + parseFloat(p.totalLuwang), 0).toFixed(2)
       }
     };

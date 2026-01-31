@@ -51,18 +51,27 @@ module.exports = async (/** @type {{ pitakId: any; dateRange?: {} | undefined; _
       .getMany();
 
     // Prepare CSV data
-    const csvData = assignments.map((/** @type {{ id: any; assignmentDate: { toISOString: () => string; }; luwangCount: string; status: any; workerId: any; worker: { name: any; contact: any; }; pitakId: any; pitak: { location: any; }; notes: any; createdAt: { toISOString: () => string; }; updatedAt: { toISOString: () => string; }; }} */ assignment) => ({
+    const csvData = assignments.map(( assignment) => ({
       'Assignment ID': assignment.id,
+      // @ts-ignore
       'Assignment Date': assignment.assignmentDate.toISOString().split('T')[0],
+      // @ts-ignore
       'LuWang Count': parseFloat(assignment.luwangCount).toFixed(2),
       'Status': assignment.status,
+      // @ts-ignore
       'Worker ID': assignment.workerId,
+      // @ts-ignore
       'Worker Name': assignment.worker ? assignment.worker.name : '',
+      // @ts-ignore
       'Worker Contact': assignment.worker ? (assignment.worker.contact || '') : '',
+      // @ts-ignore
       'Pitak ID': assignment.pitakId,
+      // @ts-ignore
       'Pitak Location': assignment.pitak ? assignment.pitak.location : '',
       'Notes': assignment.notes || '',
+      // @ts-ignore
       'Created Date': assignment.createdAt.toISOString().split('T')[0],
+      // @ts-ignore
       'Updated Date': assignment.updatedAt ? assignment.updatedAt.toISOString().split('T')[0] : ''
     }));
 
@@ -79,6 +88,7 @@ module.exports = async (/** @type {{ pitakId: any; dateRange?: {} | undefined; _
     const filename = `pitak_${pitakLocation}_assignments_${timestamp}.csv`;
 
     // Calculate summary
+    // @ts-ignore
     const summary = assignments.reduce((/** @type {{ totalAssignments: number; totalLuWang: number; completed: number; active: number; cancelled: number; }} */ sum, /** @type {{ luwangCount: string; status: string; }} */ assignment) => {
       sum.totalAssignments++;
       sum.totalLuWang += parseFloat(assignment.luwangCount);
@@ -117,12 +127,15 @@ module.exports = async (/** @type {{ pitakId: any; dateRange?: {} | undefined; _
         pitak: {
           id: pitak.id,
           location: pitak.location,
+          // @ts-ignore
           totalLuwang: parseFloat(pitak.totalLuwang)
         },
         summary: {
           ...summary,
+          // @ts-ignore
           totalLuWang: summary.totalLuWang.toFixed(2)
         },
+        // @ts-ignore
         assignments: assignments.map((/** @type {{ id: any; assignmentDate: any; luwangCount: string; status: any; worker: { id: any; name: any; }; }} */ a) => ({
           id: a.id,
           assignmentDate: a.assignmentDate,

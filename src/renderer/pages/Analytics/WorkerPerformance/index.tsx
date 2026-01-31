@@ -4,33 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import {
     Users,
     TrendingUp,
-    Target,
-    Award,
-    Clock,
-    Calendar,
+    Target, Calendar,
     Filter,
     Download,
     RefreshCw,
-    Eye,
-    CheckCircle,
-    AlertTriangle,
-    DollarSign,
-    Percent,
-    BarChart3,
+    Eye, AlertTriangle,
+    DollarSign, BarChart3,
     PieChart,
     Activity,
     ChevronRight,
     Star,
     Trophy,
     TrendingDown,
-    UserCheck,
-    UserX,
-    UserMinus,
-    LineChart,
-    Gauge,
-    Shield,
-    Zap,
-    Coffee
+    UserCheck, Coffee
 } from 'lucide-react';
 import dashboardAPI, {
     type WorkersOverviewData,
@@ -39,7 +25,8 @@ import dashboardAPI, {
     type TopPerformersData,
     type WorkerAttendanceData
 } from '../../../apis/dashboard';
-import { formatCurrency, formatNumber, formatDate, formatPercentage} from '../../../utils/formatters';
+import { formatCurrency, formatNumber, formatDate, formatPercentage } from '../../../utils/formatters';
+import { hideLoading, showLoading } from '../../../utils/notification';
 
 const WorkerPerformancePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -82,6 +69,7 @@ const WorkerPerformancePage: React.FC = () => {
             console.error('Failed to fetch worker performance data:', err);
         } finally {
             setLoading(false);
+            hideLoading();
         }
     };
 
@@ -168,14 +156,7 @@ const WorkerPerformancePage: React.FC = () => {
     }, [performanceData]);
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-3" style={{ borderColor: 'var(--primary-color)' }}></div>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading worker performance data...</p>
-                </div>
-            </div>
-        );
+       showLoading('Loading worker performance data...');
     }
 
     if (error) {
@@ -587,7 +568,7 @@ const WorkerPerformancePage: React.FC = () => {
                                             <div>
                                                 <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Completion Rate</div>
                                                 <div className="font-semibold" style={{ color: 'var(--accent-red)' }}>
-                                                    {formatPercentage((worker.assignmentsCompleted / (performanceData?.metrics.totalAssignments / performanceMetrics.totalWorkers || 1)) * 100)}
+                                                    {formatPercentage((worker.assignmentsCompleted / (performanceData?.metrics.totalAssignments || 0 / performanceMetrics.totalWorkers || 1)) * 100)}
                                                 </div>
                                             </div>
                                         </div>

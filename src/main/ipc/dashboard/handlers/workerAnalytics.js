@@ -2,7 +2,7 @@
 //@ts-check
 class WorkerAnalytics {
   /**
-     * @param {{ worker: any; kabisilya?: any; bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment?: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
+     * @param {{ worker: any;  bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment?: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
      * @param {{}} params
      */
   async getWorkersOverview(repositories, params) {
@@ -82,7 +82,7 @@ class WorkerAnalytics {
   }
   
   /**
-     * @param {{ worker: any; kabisilya?: any; bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
+     * @param {{ worker: any; bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
      * @param {{ period?: any; limit?: any; }} params
      */
   async getWorkerPerformance(repositories, params) {
@@ -184,7 +184,7 @@ class WorkerAnalytics {
   }
   
   /**
-     * @param {{ worker: any; kabisilya?: any; bukid?: any; pitak?: any; assignment?: any; debt?: any; debtHistory?: any; payment?: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
+     * @param {{ worker: any; bukid?: any; pitak?: any; assignment?: any; debt?: any; debtHistory?: any; payment?: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
      * @param {{}} params
      */
   async getWorkerStatusSummary(repositories, params) {
@@ -201,20 +201,6 @@ class WorkerAnalytics {
           "AVG(worker.totalDebt) as avgDebt"
         ])
         .groupBy("worker.status")
-        .getRawMany();
-      
-      // Get workers by kabisilya
-      const byKabisilya = await workerRepo
-        .createQueryBuilder("worker")
-        .leftJoin("worker.kabisilya", "kabisilya")
-        .select([
-          "kabisilya.name as kabisilyaName",
-          "COUNT(worker.id) as workerCount",
-          "SUM(worker.totalDebt) as totalDebt",
-          "AVG(worker.totalDebt) as avgDebt"
-        ])
-        .groupBy("kabisilya.name")
-        .orderBy("workerCount", "DESC")
         .getRawMany();
       
       // Get recent hires (last 30 days)
@@ -239,14 +225,7 @@ class WorkerAnalytics {
             totalDebt: parseFloat(item.totalDebt) || 0,
             averageDebt: parseFloat(item.avgDebt) || 0
           })),
-          byKabisilya: byKabisilya.map((/** @type {{ kabisilyaName: any; workerCount: string; totalDebt: string; avgDebt: string; }} */ item) => ({
-            kabisilyaName: item.kabisilyaName,
-            workerCount: parseInt(item.workerCount),
-            totalDebt: parseFloat(item.totalDebt) || 0,
-            averageDebt: parseFloat(item.avgDebt) || 0
-          })),
           recentHires: recentHires,
-          totalKabisilyas: byKabisilya.length
         }
       };
     } catch (error) {
@@ -256,7 +235,7 @@ class WorkerAnalytics {
   }
   
   /**
-     * @param {{ worker: any; kabisilya?: any; bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
+     * @param {{ worker: any; bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
      * @param {{ timeFrame?: any; category?: any; limit?: any; }} params
      */
   async getTopPerformers(repositories, params) {
@@ -368,7 +347,7 @@ class WorkerAnalytics {
   }
   
   /**
-     * @param {{ worker?: any; kabisilya?: any; bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment?: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
+     * @param {{ worker?: any; bukid?: any; pitak?: any; assignment: any; debt?: any; debtHistory?: any; payment?: any; paymentHistory?: any; auditTrail?: any; notification?: any; }} repositories
      * @param {{ startDate?: any; endDate?: any; workerId?: any; }} params
      */
   async getWorkerAttendance(repositories, params) {

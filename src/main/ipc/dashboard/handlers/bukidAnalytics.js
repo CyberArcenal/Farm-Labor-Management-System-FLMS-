@@ -94,7 +94,7 @@ class BukidAnalyticsHandler {
       // Get bukid information
       const bukidInfo = await bukid.findOne({
         where: { id: bukidId },
-        relations: ["kabisilya", "pitaks"],
+        relations: ["pitaks"],
       });
 
       if (!bukidInfo) {
@@ -468,7 +468,6 @@ class BukidAnalyticsHandler {
           // Get bukid info
           const bukidInfo = await bukid.findOne({
             where: { id: bukidId },
-            relations: ["kabisilya"],
           });
 
           // Get pitak count
@@ -506,7 +505,6 @@ class BukidAnalyticsHandler {
           return {
             bukidId,
             name: bukidInfo?.name,
-            kabisilya: bukidInfo?.kabisilya?.name,
             metrics: {
               pitaks: pitakCount,
               totalAssignments: parseInt(assignmentStats?.totalAssignments) || 0,

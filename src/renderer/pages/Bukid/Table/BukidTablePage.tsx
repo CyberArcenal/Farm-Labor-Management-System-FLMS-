@@ -80,7 +80,7 @@ const BukidTablePage: React.FC = () => {
     };
 
     const closeFormDialog = async () => {
-        if (!await dialogs.confirm({ title: 'Close Bukid View', message: 'Are you sure you want to close the bukid view?' })) return;
+
         setIsFormDialogOpen(false);
         setSelectedBukidId(null);
     };
@@ -90,9 +90,9 @@ const BukidTablePage: React.FC = () => {
         setSelectedBukidId(null);
     };
 
-    const handleFormSuccess = async(bukid: any) => {
+    const handleFormSuccess = async (bukid: any) => {
         // Refresh the list after successful operation
-        
+
         await fetchBukids();
         closeFormDialog();
     };
@@ -428,7 +428,7 @@ const BukidTablePage: React.FC = () => {
                 <BukidFormDialog
                     id={selectedBukidId || undefined}
                     mode={dialogMode}
-                    onClose={closeFormDialog}
+                    onClose={async () => { if (!await dialogs.confirm({ title: 'Close Bukid View', message: 'Are you sure you want to close the bukid view?' })) return; closeFormDialog(); }}
                     onSuccess={handleFormSuccess}
                 />
             )}

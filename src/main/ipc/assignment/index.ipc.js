@@ -5,6 +5,7 @@ const { withErrorHandling } = require("../../../utils/errorHandler");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/dataSource");
 const UserActivity = require("../../../entities/UserActivity");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 
 class AssignmentHandler {
   constructor() {
@@ -323,39 +324,50 @@ class AssignmentHandler {
     }
   }
 
-  /**
-   * @param {any} user_id
-   * @param {any} action
-   * @param {any} description
-   */
-  async logActivity(user_id, action, description, qr = null) {
-    try {
-      let activityRepo;
+/**
+ * Log user activity with session context
+ * @param {any} user_id
+ * @param {any} action
+ * @param {any} description
+ * @param {import("typeorm").QueryRunner} [qr] - optional query runner
+ */
+// @ts-ignore
+async logActivity(user_id, action, description, qr = null) {
+  try {
+    let activityRepo;
 
-      if (qr) {
-        // @ts-ignore
-        activityRepo = qr.manager.getRepository(UserActivity);
-      } else {
-        activityRepo = AppDataSource.getRepository(UserActivity);
-      }
+    if (qr) {
+      activityRepo = qr.manager.getRepository(UserActivity);
+    } else {
+      activityRepo = AppDataSource.getRepository(UserActivity);
+    }
 
-      const activity = activityRepo.create({
-        user_id: user_id,
-        action,
-        description,
-        ip_address: "127.0.0.1",
-        user_agent: "Kabisilya-Management-System",
-      });
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      throw new Error("No default session configured. Please set one in Settings.");
+    }
 
-      await activityRepo.save(activity);
-    } catch (error) {
-      console.warn("Failed to log assignment activity:", error);
-      if (logger) {
-        // @ts-ignore
-        logger.warn("Failed to log assignment activity:", error);
-      }
+    // @ts-ignore
+    const activity = activityRepo.create({
+      user_id,
+      action,
+      description,
+      session: { id: sessionId }, // 🔑 tie to default session
+      ip_address: "127.0.0.1",
+      user_agent: "Kabisilya-Management-System",
+      created_at: new Date(),
+    });
+
+    await activityRepo.save(activity);
+  } catch (error) {
+    console.warn("Failed to log activity:", error);
+    if (logger) {
+      // @ts-ignore
+      logger.warn("Failed to log activity:", error);
     }
   }
+}
 }
 
 // Register IPC handler

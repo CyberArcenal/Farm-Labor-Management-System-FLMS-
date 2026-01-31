@@ -3,6 +3,7 @@
 
 const Worker = require("../../../entities/Worker");
 // @ts-ignore
+// @ts-ignore
 const UserActivity = require("../../../entities/UserActivity");
 const { AppDataSource } = require("../../db/dataSource");
 const Payment = require("../../../entities/Payment");
@@ -23,6 +24,7 @@ module.exports = async function generateWorkerReport(params = {}) {
       // @ts-ignore
       format = 'json', // 'json', 'csv', 'pdf'
       // @ts-ignore
+      // @ts-ignore
       _userId 
     } = params;
 
@@ -42,7 +44,6 @@ module.exports = async function generateWorkerReport(params = {}) {
       const workerRepository = queryRunner.manager.getRepository(Worker);
       const worker = await workerRepository.findOne({
         where: { id: parseInt(workerId) },
-        relations: ['kabisilya']
       });
 
       if (!worker) {
@@ -64,7 +65,6 @@ module.exports = async function generateWorkerReport(params = {}) {
           address: worker.address,
           status: worker.status,
           hireDate: worker.hireDate,
-          kabisilya: worker.kabisilya?.name || 'Unassigned',
           totalDebt: worker.totalDebt,
           totalPaid: worker.totalPaid,
           currentBalance: worker.currentBalance
@@ -123,8 +123,11 @@ module.exports = async function generateWorkerReport(params = {}) {
               totalAmount: debts.reduce((/** @type {number} */ sum, /** @type {{ amount: any; }} */ d) => sum + parseFloat(d.amount || 0), 0),
               totalBalance: debts.reduce((/** @type {number} */ sum, /** @type {{ balance: any; }} */ d) => sum + parseFloat(d.balance || 0), 0),
               byStatus: {
+                // @ts-ignore
                 pending: debts.filter((/** @type {{ status: string; }} */ d) => d.status === 'pending').length,
+                // @ts-ignore
                 partially_paid: debts.filter((/** @type {{ status: string; }} */ d) => d.status === 'partially_paid').length,
+                // @ts-ignore
                 paid: debts.filter((/** @type {{ status: string; }} */ d) => d.status === 'paid').length
               }
             }
@@ -146,7 +149,9 @@ module.exports = async function generateWorkerReport(params = {}) {
                 sum + parseFloat(p.totalDebtDeduction || 0) + parseFloat(p.otherDeductions || 0), 0
               ),
               byStatus: {
+                // @ts-ignore
                 completed: payments.filter((/** @type {{ status: string; }} */ p) => p.status === 'completed').length,
+                // @ts-ignore
                 pending: payments.filter((/** @type {{ status: string; }} */ p) => p.status === 'pending').length
               }
             }
@@ -177,6 +182,7 @@ module.exports = async function generateWorkerReport(params = {}) {
         // @ts-ignore
         reportData.assignments = {
           total: assignments.length,
+          // @ts-ignore
           items: assignments.map((/** @type {{ id: any; luwangCount: any; status: any; assignmentDate: any; pitak: { bukid: { name: any; }; location: any; }; }} */ assignment) => ({
             id: assignment.id,
             luwangCount: assignment.luwangCount,
@@ -188,8 +194,11 @@ module.exports = async function generateWorkerReport(params = {}) {
           summary: {
             totalLuwang: assignments.reduce((/** @type {number} */ sum, /** @type {{ luwangCount: any; }} */ a) => sum + parseFloat(a.luwangCount || 0), 0),
             byStatus: {
+              // @ts-ignore
               active: assignments.filter((/** @type {{ status: string; }} */ a) => a.status === 'active').length,
+              // @ts-ignore
               completed: assignments.filter((/** @type {{ status: string; }} */ a) => a.status === 'completed').length,
+              // @ts-ignore
               cancelled: assignments.filter((/** @type {{ status: string; }} */ a) => a.status === 'cancelled').length
             },
             byBukid: {}
@@ -197,6 +206,7 @@ module.exports = async function generateWorkerReport(params = {}) {
         };
 
         // Group by bukid
+        // @ts-ignore
         assignments.forEach((/** @type {{ pitak: { bukid: { name: string; }; }; }} */ assignment) => {
           const bukidName = assignment.pitak?.bukid?.name || 'Unknown';
           // @ts-ignore
@@ -295,7 +305,7 @@ module.exports = async function generateWorkerReport(params = {}) {
 
 /**
  * Generate recommendations based on report data
- * @param {{ worker?: { id: any; name: any; contact: any; email: any; address: any; status: any; hireDate: any; kabisilya: any; totalDebt: any; totalPaid: any; currentBalance: any; }; generatedAt?: Date; period?: string | { startDate: any; endDate: any; }; financial?: any; assignments?: any; overallSummary?: any; }} reportData
+ * @param {{ worker?: { id: any; name: any; contact: any; email: any; address: any; status: any; hireDate: any; totalDebt: any; totalPaid: any; currentBalance: any; }; generatedAt?: Date; period?: string | { startDate: any; endDate: any; }; financial?: any; assignments?: any; overallSummary?: any; }} reportData
  */
 function generateReportRecommendations(reportData) {
   const recommendations = [];
@@ -376,7 +386,6 @@ function convertToCSV(reportData, reportType) {
   csvContent += `Name,${reportData.worker.name}\n`;
   csvContent += `Contact,${reportData.worker.contact || ''}\n`;
   csvContent += `Status,${reportData.worker.status}\n`;
-  csvContent += `Kabisilya,${reportData.worker.kabisilya}\n`;
   csvContent += `Current Balance,${reportData.worker.currentBalance}\n`;
   csvContent += `\n`;
   

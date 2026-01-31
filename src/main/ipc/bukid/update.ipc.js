@@ -20,7 +20,7 @@ module.exports = async function updateBukid(params = {}, queryRunner = null) {
 
   try {
     // @ts-ignore
-    const { id, name, location, kabisilyaId, _userId } = params;
+    const { id, name, location, _userId } = params;
 
     if (!id) {
       return {
@@ -46,9 +46,6 @@ module.exports = async function updateBukid(params = {}, queryRunner = null) {
     // Update fields
     if (name) bukid.name = name;
     if (location !== undefined) bukid.location = location;
-    if (kabisilyaId !== undefined) {
-      bukid.kabisilya = kabisilyaId ? { id: kabisilyaId } : null;
-    }
     bukid.updatedAt = new Date();
 
     // ✅ Save updated bukid
@@ -81,7 +78,6 @@ module.exports = async function updateBukid(params = {}, queryRunner = null) {
         id: updatedBukid.id,
         name: updatedBukid.name,
         location: updatedBukid.location,
-        kabisilyaId: kabisilyaId || null,
         createdAt: updatedBukid.createdAt,
         updatedAt: updatedBukid.updatedAt,
       },

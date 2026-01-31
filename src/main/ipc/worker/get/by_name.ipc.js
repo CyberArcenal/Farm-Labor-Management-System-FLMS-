@@ -20,8 +20,8 @@ module.exports = async function getWorkerByName(params = {}) {
     const workerRepository = AppDataSource.getRepository(Worker);
 
     const workers = await workerRepository.find({
-      where: { name },
-      relations: ['kabisilya']
+      where: { name }
+      // removed kabisilya relation
     });
 
     return {

@@ -7,6 +7,7 @@ const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/dataSource");
 const UserActivity = require("../../../entities/UserActivity");
 const { assignmentHandler } = require("../assignment/index.ipc");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 
 class DebtHandler {
   constructor() {
@@ -333,11 +334,16 @@ class DebtHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      throw new Error("No default session configured. Please set one in Settings.");
+    }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
+        session: {id:sessionId},
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
       });

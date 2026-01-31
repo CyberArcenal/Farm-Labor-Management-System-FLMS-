@@ -5,6 +5,7 @@ const { withErrorHandling } = require("../../../utils/errorHandler");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/dataSource");
 const UserActivity = require("../../../entities/UserActivity");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 
 class PitakHandler {
   constructor() {
@@ -20,7 +21,7 @@ class PitakHandler {
     this.getPitaksByBukid = this.importHandler("./get/by_bukid.ipc");
     this.getActivePitaks = this.importHandler("./get/active.ipc");
     this.getInactivePitaks = this.importHandler("./get/inactive.ipc");
-    this.getHarvestedPitaks = this.importHandler("./get/completed.ipc");
+    this.getCompletedPitaks = this.importHandler("./get/completed.ipc");
     this.getPitakStats = this.importHandler("./get/stats.ipc");
     this.getPitakWithAssignments = this.importHandler(
       "./get/with_assignments.ipc",
@@ -149,9 +150,9 @@ class PitakHandler {
           // @ts-ignore
           return await this.getInactivePitaks(enrichedParams.filters, userId);
 
-        case "getHarvestedPitaks":
+        case "getCompletedPitaks":
           // @ts-ignore
-          return await this.getHarvestedPitaks(enrichedParams.filters, userId);
+          return await this.getCompletedPitaks(enrichedParams.filters, userId);
 
         case "getPitakStats":
           // @ts-ignore
@@ -402,11 +403,16 @@ class PitakHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      throw new Error("No default session configured. Please set one in Settings.");
+    }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
+        session: {id:sessionId},
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
       });

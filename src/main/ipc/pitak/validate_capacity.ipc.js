@@ -9,6 +9,7 @@ const { In } = require("typeorm");
 module.exports = async (/** @type {{ pitakId: any; requestedLuWang: any; date: any; _userId: any; }} */ params) => {
   try {
     // @ts-ignore
+    // @ts-ignore
     const { pitakId, requestedLuWang, date, _userId } = params;
 
     if (!pitakId || requestedLuWang === undefined) {
@@ -41,6 +42,7 @@ module.exports = async (/** @type {{ pitakId: any; requestedLuWang: any; date: a
       return { status: false, message: "Pitak not found", data: null };
     }
 
+    // @ts-ignore
     const totalLuWang = parseFloat(pitak.totalLuwang);
 
     // Get existing assignments for capacity calculation
@@ -84,6 +86,7 @@ module.exports = async (/** @type {{ pitakId: any; requestedLuWang: any; date: a
       requested: requestedLuWangNum,
       canAccommodate,
       utilizationRate: (totalAssignedLuWang / totalLuWang) * 100,
+      // @ts-ignore
       assignments: assignments.map((/** @type {{ id: any; assignmentDate: any; luwangCount: string; status: any; worker: { id: any; name: any; }; }} */ a) => ({
         id: a.id,
         assignmentDate: a.assignmentDate,
@@ -143,6 +146,7 @@ module.exports = async (/** @type {{ pitakId: any; requestedLuWang: any; date: a
 
     // Check for scheduling conflicts if date provided
     if (date) {
+      // @ts-ignore
       const dateAssignments = assignments.filter((/** @type {{ assignmentDate: { toISOString: () => string; }; }} */ a) => 
         a.assignmentDate.toISOString().split('T')[0] === new Date(date).toISOString().split('T')[0]
       );
@@ -152,7 +156,9 @@ module.exports = async (/** @type {{ pitakId: any; requestedLuWang: any; date: a
         validation.dateAnalysis = {
           date: new Date(date).toISOString().split('T')[0],
           assignmentsCount: dateAssignments.length,
+          // @ts-ignore
           totalLuWangOnDate: dateAssignments.reduce((/** @type {number} */ sum, /** @type {{ luwangCount: string; }} */ a) => sum + parseFloat(a.luwangCount), 0),
+          // @ts-ignore
           workersAssigned: dateAssignments.map((/** @type {{ worker: { name: any; }; }} */ a) => a.worker ? a.worker.name : 'Unknown')
         };
       }

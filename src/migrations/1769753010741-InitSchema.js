@@ -7,8 +7,8 @@
  * @class
  * @implements {MigrationInterface}
  */
-module.exports = class InitSchema1769707484595 {
-    name = 'InitSchema1769707484595'
+module.exports = class InitSchema1769753010741 {
+    name = 'InitSchema1769753010741'
 
     /**
      * @param {QueryRunner} queryRunner
@@ -20,7 +20,7 @@ module.exports = class InitSchema1769707484595 {
         await queryRunner.query(`CREATE TABLE "audit_trails" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "action" varchar NOT NULL, "actor" varchar NOT NULL, "details" json, "timestamp" datetime NOT NULL DEFAULT (datetime('now')))`);
         await queryRunner.query(`CREATE INDEX "IDX_AUDIT_ACTION" ON "audit_trails" ("action") `);
         await queryRunner.query(`CREATE INDEX "IDX_AUDIT_TIMESTAMP" ON "audit_trails" ("timestamp") `);
-        await queryRunner.query(`CREATE TABLE "bukids" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "status" varchar NOT NULL DEFAULT ('active'), "location" varchar, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "kabisilyaId" integer)`);
+        await queryRunner.query(`CREATE TABLE "bukids" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "status" varchar NOT NULL DEFAULT ('active'), "location" varchar, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')))`);
         await queryRunner.query(`CREATE TABLE "debts" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "originalAmount" decimal(10,2) NOT NULL DEFAULT (0), "amount" decimal(10,2) NOT NULL DEFAULT (0), "reason" varchar, "balance" decimal(10,2) NOT NULL DEFAULT (0), "status" varchar NOT NULL DEFAULT ('pending'), "dateIncurred" datetime NOT NULL DEFAULT (datetime('now')), "dueDate" datetime, "paymentTerm" varchar, "interestRate" decimal(5,2) NOT NULL DEFAULT (0), "totalInterest" decimal(10,2) NOT NULL DEFAULT (0), "totalPaid" decimal(10,2) NOT NULL DEFAULT (0), "lastPaymentDate" datetime, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "workerId" integer)`);
         await queryRunner.query(`CREATE INDEX "IDX_DEBT_STATUS" ON "debts" ("status") `);
         await queryRunner.query(`CREATE INDEX "IDX_DEBT_DUE_DATE" ON "debts" ("dueDate") `);
@@ -33,7 +33,6 @@ module.exports = class InitSchema1769707484595 {
         await queryRunner.query(`CREATE INDEX "idx_expires_at" ON "license_cache" ("expires_at") `);
         await queryRunner.query(`CREATE INDEX "idx_next_sync" ON "license_cache" ("next_sync_due") `);
         await queryRunner.query(`CREATE INDEX "idx_license_status_expires" ON "license_cache" ("status", "expires_at") `);
-        await queryRunner.query(`CREATE TABLE "kabisilyas" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')))`);
         await queryRunner.query(`CREATE TABLE "notifications" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "type" varchar NOT NULL, "context" json, "timestamp" datetime NOT NULL DEFAULT (datetime('now')))`);
         await queryRunner.query(`CREATE INDEX "IDX_NOTIFICATION_TYPE" ON "notifications" ("type") `);
         await queryRunner.query(`CREATE TABLE "payments" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "grossPay" decimal(10,2) NOT NULL DEFAULT (0), "manualDeduction" decimal(10,2) DEFAULT (0), "netPay" decimal(10,2) NOT NULL DEFAULT (0), "status" varchar NOT NULL DEFAULT ('pending'), "paymentDate" datetime, "paymentMethod" varchar, "referenceNumber" varchar, "periodStart" datetime, "periodEnd" datetime, "totalDebtDeduction" decimal(10,2) NOT NULL DEFAULT (0), "otherDeductions" decimal(10,2) NOT NULL DEFAULT (0), "deductionBreakdown" json, "notes" varchar, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "workerId" integer, "pitakId" integer, CONSTRAINT "UQ_b1ccfcfabdda075c2742c0060c6" UNIQUE ("referenceNumber"))`);
@@ -51,7 +50,7 @@ module.exports = class InitSchema1769707484595 {
         await queryRunner.query(`CREATE INDEX "idx_user_activity_user" ON "user_activities" ("user_id") `);
         await queryRunner.query(`CREATE INDEX "idx_user_activity_action" ON "user_activities" ("action") `);
         await queryRunner.query(`CREATE INDEX "idx_user_activity_entity" ON "user_activities" ("entity", "entity_id") `);
-        await queryRunner.query(`CREATE TABLE "workers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "contact" varchar, "email" varchar, "address" varchar, "status" varchar NOT NULL DEFAULT ('active'), "hireDate" datetime, "totalDebt" decimal(10,2) NOT NULL DEFAULT (0), "totalPaid" decimal(10,2) NOT NULL DEFAULT (0), "currentBalance" decimal(10,2) NOT NULL DEFAULT (0), "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "kabisilyaId" integer, CONSTRAINT "UQ_87f2092ffaae628ef63547d2442" UNIQUE ("email"))`);
+        await queryRunner.query(`CREATE TABLE "workers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "contact" varchar, "email" varchar, "address" varchar, "status" varchar NOT NULL DEFAULT ('active'), "hireDate" datetime, "totalDebt" decimal(10,2) NOT NULL DEFAULT (0), "totalPaid" decimal(10,2) NOT NULL DEFAULT (0), "currentBalance" decimal(10,2) NOT NULL DEFAULT (0), "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), CONSTRAINT "UQ_87f2092ffaae628ef63547d2442" UNIQUE ("email"))`);
         await queryRunner.query(`CREATE INDEX "IDX_WORKER_STATUS" ON "workers" ("status") `);
         await queryRunner.query(`CREATE INDEX "IDX_WORKER_NAME" ON "workers" ("name") `);
         await queryRunner.query(`CREATE TABLE "system_settings" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "key" varchar(100) NOT NULL, "value" text NOT NULL, "setting_type" varchar CHECK( "setting_type" IN ('general','email','users_roles','attendance','device','audit_security','user_security','notifications','data_reports','integrations','inventory_sync') ) NOT NULL, "description" text, "is_public" boolean NOT NULL DEFAULT (0), "is_deleted" boolean NOT NULL DEFAULT (0), "created_at" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP), "updated_at" datetime NOT NULL DEFAULT (CURRENT_TIMESTAMP))`);
@@ -64,10 +63,6 @@ module.exports = class InitSchema1769707484595 {
         await queryRunner.query(`ALTER TABLE "temporary_assignments" RENAME TO "assignments"`);
         await queryRunner.query(`CREATE INDEX "IDX_ASSIGNMENT_DATE" ON "assignments" ("assignmentDate") `);
         await queryRunner.query(`CREATE INDEX "IDX_ASSIGNMENT_STATUS" ON "assignments" ("status") `);
-        await queryRunner.query(`CREATE TABLE "temporary_bukids" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "status" varchar NOT NULL DEFAULT ('active'), "location" varchar, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "kabisilyaId" integer, CONSTRAINT "FK_0caba19d01baf91c011e37eb701" FOREIGN KEY ("kabisilyaId") REFERENCES "kabisilyas" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "temporary_bukids"("id", "name", "status", "location", "createdAt", "updatedAt", "kabisilyaId") SELECT "id", "name", "status", "location", "createdAt", "updatedAt", "kabisilyaId" FROM "bukids"`);
-        await queryRunner.query(`DROP TABLE "bukids"`);
-        await queryRunner.query(`ALTER TABLE "temporary_bukids" RENAME TO "bukids"`);
         await queryRunner.query(`DROP INDEX "IDX_DEBT_STATUS"`);
         await queryRunner.query(`DROP INDEX "IDX_DEBT_DUE_DATE"`);
         await queryRunner.query(`DROP INDEX "IDX_DEBT_WORKER"`);
@@ -118,28 +113,12 @@ module.exports = class InitSchema1769707484595 {
         await queryRunner.query(`CREATE INDEX "idx_user_activity_user" ON "user_activities" ("user_id") `);
         await queryRunner.query(`CREATE INDEX "idx_user_activity_action" ON "user_activities" ("action") `);
         await queryRunner.query(`CREATE INDEX "idx_user_activity_entity" ON "user_activities" ("entity", "entity_id") `);
-        await queryRunner.query(`DROP INDEX "IDX_WORKER_STATUS"`);
-        await queryRunner.query(`DROP INDEX "IDX_WORKER_NAME"`);
-        await queryRunner.query(`CREATE TABLE "temporary_workers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "contact" varchar, "email" varchar, "address" varchar, "status" varchar NOT NULL DEFAULT ('active'), "hireDate" datetime, "totalDebt" decimal(10,2) NOT NULL DEFAULT (0), "totalPaid" decimal(10,2) NOT NULL DEFAULT (0), "currentBalance" decimal(10,2) NOT NULL DEFAULT (0), "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "kabisilyaId" integer, CONSTRAINT "UQ_87f2092ffaae628ef63547d2442" UNIQUE ("email"), CONSTRAINT "FK_2bfdfd5a9700eeef45cfaa87621" FOREIGN KEY ("kabisilyaId") REFERENCES "kabisilyas" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`);
-        await queryRunner.query(`INSERT INTO "temporary_workers"("id", "name", "contact", "email", "address", "status", "hireDate", "totalDebt", "totalPaid", "currentBalance", "createdAt", "updatedAt", "kabisilyaId") SELECT "id", "name", "contact", "email", "address", "status", "hireDate", "totalDebt", "totalPaid", "currentBalance", "createdAt", "updatedAt", "kabisilyaId" FROM "workers"`);
-        await queryRunner.query(`DROP TABLE "workers"`);
-        await queryRunner.query(`ALTER TABLE "temporary_workers" RENAME TO "workers"`);
-        await queryRunner.query(`CREATE INDEX "IDX_WORKER_STATUS" ON "workers" ("status") `);
-        await queryRunner.query(`CREATE INDEX "IDX_WORKER_NAME" ON "workers" ("name") `);
     }
 
     /**
      * @param {QueryRunner} queryRunner
      */
     async down(queryRunner) {
-        await queryRunner.query(`DROP INDEX "IDX_WORKER_NAME"`);
-        await queryRunner.query(`DROP INDEX "IDX_WORKER_STATUS"`);
-        await queryRunner.query(`ALTER TABLE "workers" RENAME TO "temporary_workers"`);
-        await queryRunner.query(`CREATE TABLE "workers" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "contact" varchar, "email" varchar, "address" varchar, "status" varchar NOT NULL DEFAULT ('active'), "hireDate" datetime, "totalDebt" decimal(10,2) NOT NULL DEFAULT (0), "totalPaid" decimal(10,2) NOT NULL DEFAULT (0), "currentBalance" decimal(10,2) NOT NULL DEFAULT (0), "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "kabisilyaId" integer, CONSTRAINT "UQ_87f2092ffaae628ef63547d2442" UNIQUE ("email"))`);
-        await queryRunner.query(`INSERT INTO "workers"("id", "name", "contact", "email", "address", "status", "hireDate", "totalDebt", "totalPaid", "currentBalance", "createdAt", "updatedAt", "kabisilyaId") SELECT "id", "name", "contact", "email", "address", "status", "hireDate", "totalDebt", "totalPaid", "currentBalance", "createdAt", "updatedAt", "kabisilyaId" FROM "temporary_workers"`);
-        await queryRunner.query(`DROP TABLE "temporary_workers"`);
-        await queryRunner.query(`CREATE INDEX "IDX_WORKER_NAME" ON "workers" ("name") `);
-        await queryRunner.query(`CREATE INDEX "IDX_WORKER_STATUS" ON "workers" ("status") `);
         await queryRunner.query(`DROP INDEX "idx_user_activity_entity"`);
         await queryRunner.query(`DROP INDEX "idx_user_activity_action"`);
         await queryRunner.query(`DROP INDEX "idx_user_activity_user"`);
@@ -190,10 +169,6 @@ module.exports = class InitSchema1769707484595 {
         await queryRunner.query(`CREATE INDEX "IDX_DEBT_WORKER" ON "debts" ("workerId") `);
         await queryRunner.query(`CREATE INDEX "IDX_DEBT_DUE_DATE" ON "debts" ("dueDate") `);
         await queryRunner.query(`CREATE INDEX "IDX_DEBT_STATUS" ON "debts" ("status") `);
-        await queryRunner.query(`ALTER TABLE "bukids" RENAME TO "temporary_bukids"`);
-        await queryRunner.query(`CREATE TABLE "bukids" ("id" integer PRIMARY KEY AUTOINCREMENT NOT NULL, "name" varchar NOT NULL, "status" varchar NOT NULL DEFAULT ('active'), "location" varchar, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "kabisilyaId" integer)`);
-        await queryRunner.query(`INSERT INTO "bukids"("id", "name", "status", "location", "createdAt", "updatedAt", "kabisilyaId") SELECT "id", "name", "status", "location", "createdAt", "updatedAt", "kabisilyaId" FROM "temporary_bukids"`);
-        await queryRunner.query(`DROP TABLE "temporary_bukids"`);
         await queryRunner.query(`DROP INDEX "IDX_ASSIGNMENT_STATUS"`);
         await queryRunner.query(`DROP INDEX "IDX_ASSIGNMENT_DATE"`);
         await queryRunner.query(`ALTER TABLE "assignments" RENAME TO "temporary_assignments"`);
@@ -224,7 +199,6 @@ module.exports = class InitSchema1769707484595 {
         await queryRunner.query(`DROP TABLE "payments"`);
         await queryRunner.query(`DROP INDEX "IDX_NOTIFICATION_TYPE"`);
         await queryRunner.query(`DROP TABLE "notifications"`);
-        await queryRunner.query(`DROP TABLE "kabisilyas"`);
         await queryRunner.query(`DROP INDEX "idx_license_status_expires"`);
         await queryRunner.query(`DROP INDEX "idx_next_sync"`);
         await queryRunner.query(`DROP INDEX "idx_expires_at"`);

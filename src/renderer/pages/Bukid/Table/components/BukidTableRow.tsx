@@ -169,18 +169,6 @@ const BukidTableRow: React.FC<BukidTableRowProps> = ({
 
       <div className="p-3 rounded-lg" style={{ background: 'var(--card-bg)' }}>
         <div className="flex items-center gap-2 mb-2">
-          <Sprout className="w-4 h-4" style={{ color: 'var(--accent-green)' }} />
-          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-            Kabisilya
-          </span>
-        </div>
-        <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          {bukidSummary?.kabisilya || 'Not assigned'}
-        </div>
-      </div>
-
-      <div className="p-3 rounded-lg" style={{ background: 'var(--card-bg)' }}>
-        <div className="flex items-center gap-2 mb-2">
           <Clock className="w-4 h-4" style={{ color: 'var(--accent-purple)' }} />
           <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
             Last Updated
@@ -306,14 +294,6 @@ const BukidTableRow: React.FC<BukidTableRowProps> = ({
                       Future Features
                     </div>
                     
-                    <button
-                      onClick={() => handleActionClick(() => {/* Assign Worker */})}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 cursor-not-allowed"
-                      disabled
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      Assign Worker
-                    </button>
                     <button
                       onClick={() => handleActionClick(() => {/* View Workers */})}
                       className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 cursor-not-allowed"

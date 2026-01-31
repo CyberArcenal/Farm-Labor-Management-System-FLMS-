@@ -319,7 +319,6 @@ class MobileDashboard {
       // Get worker details
       const worker = await workerRepo.findOne({
         where: { id: workerId },
-        relations: ['kabisilya']
       });
       
       if (!worker) {
@@ -461,7 +460,6 @@ class MobileDashboard {
             email: worker.email,
             status: worker.status,
             hireDate: worker.hireDate,
-            kabisilyaName: worker.kabisilya?.name || 'Unassigned'
           },
           overview: {
             assignments: {

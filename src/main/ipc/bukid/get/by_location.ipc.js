@@ -20,7 +20,7 @@ module.exports = async function getBukidByLocation(params = {}) {
 
     const bukids = await bukidRepository.find({
       where: { location: location },
-      relations: ['kabisilya', 'pitaks']
+      relations: ['pitaks']
     });
 
     return {

@@ -69,12 +69,21 @@ const UserActivity = new EntitySchema({
       joinColumn: { name: "user_id" }, // explicit FK column
       onDelete: "CASCADE",
     },
+    session: {
+      target: "Session",
+      type: "many-to-one",
+      joinColumn: true,
+      inverseSide: "userActivities",
+      nullable: true, // optional, kasi may mga global actions (login/logout)
+      onDelete: "SET NULL",
+    },
   },
 
   indices: [
     { name: "idx_user_activity_user", columns: ["user_id"] },
     { name: "idx_user_activity_action", columns: ["action"] },
     { name: "idx_user_activity_entity", columns: ["entity", "entity_id"] },
+    { name: "idx_user_activity_session", columns: ["session"] }, // ✅ new index
   ],
 });
 

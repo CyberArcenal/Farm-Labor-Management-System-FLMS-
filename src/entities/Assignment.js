@@ -1,64 +1,72 @@
 // src/entities/Assignment.js
 const { EntitySchema } = require("typeorm");
+
 const AssignmentStatus = {
-  ACTIVE: 'active',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled'
+  ACTIVE: "active",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
 };
+
 const Assignment = new EntitySchema({
   name: "Assignment",
   tableName: "assignments",
   columns: {
     id: { type: Number, primary: true, generated: true },
-    luwangCount: { 
-      type: "decimal", 
-      precision: 5, 
+    luwangCount: {
+      type: "decimal",
+      precision: 5,
       scale: 2,
-      default: 0.00
+      default: 0.0,
     },
     assignmentDate: { type: Date }, // Business date for the assignment
-    // status: "active", "completed", "cancelled" (application-level validation)
-    status: { 
-      type: String, 
-      default: "active" 
+    status: {
+      type: String,
+      default: AssignmentStatus.ACTIVE,
     },
     notes: { type: String, nullable: true },
     createdAt: { type: Date, createDate: true },
-    updatedAt: { type: Date, updateDate: true }
+    updatedAt: { type: Date, updateDate: true },
   },
   relations: {
-    worker: { 
-      target: "Worker", 
-      type: "many-to-one", 
-      joinColumn: true, 
+    worker: {
+      target: "Worker",
+      type: "many-to-one",
+      joinColumn: true,
       inverseSide: "assignments",
-      onDelete: "CASCADE" 
+      onDelete: "CASCADE",
     },
-    pitak: { 
-      target: "Pitak", 
-      type: "many-to-one", 
-      joinColumn: true, 
+    pitak: {
+      target: "Pitak",
+      type: "many-to-one",
+      joinColumn: true,
       inverseSide: "assignments",
-      onDelete: "CASCADE" 
-    }
+      onDelete: "CASCADE",
+    },
+    session: {
+      target: "Session",
+      type: "many-to-one",
+      joinColumn: true,
+      inverseSide: "assignments",
+      nullable: false,
+      onDelete: "CASCADE",
+    },
   },
   indices: [
     {
       name: "IDX_ASSIGNMENT_DATE",
-      columns: ["assignmentDate"]
+      columns: ["assignmentDate"],
     },
     {
       name: "IDX_ASSIGNMENT_STATUS",
-      columns: ["status"]
-    }
+      columns: ["status"],
+    },
   ],
   uniques: [
     {
-      name: "UQ_WORKER_PITAK",
-      columns: ["worker", "pitak"] // ✅ unique pair constraint
-    }
-  ]
-
+      name: "UQ_WORKER_PITAK_SESSION",
+      columns: ["worker", "pitak", "session"], // ✅ unique per session
+    },
+  ],
 });
 
 module.exports = Assignment;

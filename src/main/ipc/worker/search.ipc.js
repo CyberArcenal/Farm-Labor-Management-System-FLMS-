@@ -20,8 +20,6 @@ module.exports = async function searchWorkers(params = {}) {
       // @ts-ignore
       status = null,
       // @ts-ignore
-      kabisilyaId = null,
-      // @ts-ignore
       _userId 
     } = params;
 
@@ -35,10 +33,9 @@ module.exports = async function searchWorkers(params = {}) {
 
     const workerRepository = AppDataSource.getRepository(Worker);
 
-    // Build query
+    // Build query (removed kabisilya join)
     const qb = workerRepository
       .createQueryBuilder('worker')
-      .leftJoinAndSelect('worker.kabisilya', 'kabisilya')
       .where(
         'worker.name LIKE :query OR worker.contact LIKE :query OR worker.email LIKE :query OR worker.address LIKE :query',
         { query: `%${query}%` }
@@ -47,10 +44,6 @@ module.exports = async function searchWorkers(params = {}) {
     // Apply filters
     if (status) {
       qb.andWhere('worker.status = :status', { status });
-    }
-
-    if (kabisilyaId) {
-      qb.andWhere('worker.kabisilyaId = :kabisilyaId', { kabisilyaId: parseInt(kabisilyaId) });
     }
 
     // Get total count first

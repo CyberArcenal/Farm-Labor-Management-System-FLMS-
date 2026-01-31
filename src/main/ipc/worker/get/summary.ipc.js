@@ -7,6 +7,7 @@ const { AppDataSource } = require("../../../db/dataSource");
 module.exports = async function getWorkerSummary(params = {}) {
   try {
     // @ts-ignore
+    // @ts-ignore
     const { id, _userId } = params;
 
     if (!id) {
@@ -19,10 +20,9 @@ module.exports = async function getWorkerSummary(params = {}) {
 
     const workerRepository = AppDataSource.getRepository(Worker);
 
-    // Get basic worker info
+    // Get basic worker info (removed kabisilya relation)
     const worker = await workerRepository.findOne({
-      where: { id: parseInt(id) },
-      relations: ['kabisilya']
+      where: { id: parseInt(id) }
     });
 
     if (!worker) {
@@ -74,9 +74,10 @@ module.exports = async function getWorkerSummary(params = {}) {
               name: worker.name,
               status: worker.status,
               hireDate: worker.hireDate,
-              daysEmployed: worker.hireDate ? 
+              daysEmployed: worker.hireDate
                 // @ts-ignore
-                Math.floor((new Date() - new Date(worker.hireDate)) / (1000 * 60 * 60 * 24)) : 0
+                ? Math.floor((new Date() - new Date(worker.hireDate)) / (1000 * 60 * 60 * 24))
+                : 0
             },
             counts: {
               totalDebts: parseInt(debtCount[0].count),
@@ -85,8 +86,11 @@ module.exports = async function getWorkerSummary(params = {}) {
               activeAssignments: parseInt(activeAssignmentCount[0].count)
             },
             financial: {
+              // @ts-ignore
               totalDebt: parseFloat(worker.totalDebt || 0),
+              // @ts-ignore
               totalPaid: parseFloat(worker.totalPaid || 0),
+              // @ts-ignore
               currentBalance: parseFloat(worker.currentBalance || 0)
             }
           }

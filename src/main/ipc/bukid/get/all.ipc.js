@@ -15,7 +15,6 @@ module.exports = async function getAllBukid(params = {}) {
     } = params;
     
     const { 
-      kabisilyaId, 
       status, 
       page = 1, 
       limit = 50,
@@ -24,12 +23,8 @@ module.exports = async function getAllBukid(params = {}) {
     } = filters;
 
     const queryBuilder = bukidRepository.createQueryBuilder('bukid')
-      .leftJoinAndSelect('bukid.kabisilya', 'kabisilya')
       .leftJoinAndSelect('bukid.pitaks', 'pitaks');
 
-    if (kabisilyaId) {
-      queryBuilder.andWhere('bukid.kabisilyaId = :kabisilyaId', { kabisilyaId });
-    }
     if (status) {
       queryBuilder.andWhere('bukid.status = :status', { status });
     }

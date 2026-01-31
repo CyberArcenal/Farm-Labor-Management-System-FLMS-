@@ -1,14 +1,28 @@
-// src/ipc/payment/bulk_create.ipc
+// src/ipc/payment/bulk_create.ipc.js
 //@ts-check
-module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params, /** @type {{ manager: { getRepository: (arg0: string) => any; }; }} */ queryRunner) => {
+
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
+
+// @ts-ignore
+module.exports = async (params, queryRunner) => {
   try {
-    const { payments } = params;
-    
+    const { payments, _userId } = params;
+
     if (!payments || !Array.isArray(payments) || payments.length === 0) {
       return {
         status: false,
         message: "Payments array is required and cannot be empty",
-        data: null
+        data: null,
+      };
+    }
+
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      return {
+        status: false,
+        message: "No default session configured. Please set one in Settings.",
+        data: null,
       };
     }
 
@@ -23,38 +37,36 @@ module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params
 
     for (let i = 0; i < payments.length; i++) {
       const paymentData = payments[i];
-      
+
       try {
-        // Validate required fields
         if (!paymentData.worker_id || !paymentData.grossPay) {
           errors.push(`Payment ${i + 1}: Missing required fields (worker_id or grossPay)`);
           continue;
         }
 
-        // Check if worker exists
         const worker = await workerRepository.findOne({ where: { id: paymentData.worker_id } });
         if (!worker) {
           errors.push(`Payment ${i + 1}: Worker with ID ${paymentData.worker_id} not found`);
           continue;
         }
 
-        // Calculate net pay
         const grossPay = parseFloat(paymentData.grossPay);
         const manualDeduction = parseFloat(paymentData.manualDeduction || 0);
         const totalDebtDeduction = parseFloat(paymentData.totalDebtDeduction || 0);
         const otherDeductions = parseFloat(paymentData.otherDeductions || 0);
-        
+
         const netPay = grossPay - manualDeduction - totalDebtDeduction - otherDeductions;
 
-        // Create payment
+        // ✅ Create payment tied to session
         const payment = paymentRepository.create({
           worker: { id: paymentData.worker_id },
           pitak: paymentData.pitak_id ? { id: paymentData.pitak_id } : null,
-          grossPay: grossPay,
-          manualDeduction: manualDeduction,
-          netPay: netPay,
-          totalDebtDeduction: totalDebtDeduction,
-          otherDeductions: otherDeductions,
+          session: { id: sessionId }, // 🔑 tie to default session
+          grossPay,
+          manualDeduction,
+          netPay,
+          totalDebtDeduction,
+          otherDeductions,
           deductionBreakdown: paymentData.deductionBreakdown || null,
           status: paymentData.status || "pending",
           paymentDate: paymentData.paymentDate || null,
@@ -62,12 +74,11 @@ module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params
           referenceNumber: paymentData.referenceNumber || null,
           periodStart: paymentData.periodStart || null,
           periodEnd: paymentData.periodEnd || null,
-          notes: paymentData.notes || null
+          notes: paymentData.notes || null,
         });
 
         const savedPayment = await paymentRepository.save(payment);
 
-        // Create payment history record
         const paymentHistory = paymentHistoryRepository.create({
           payment: { id: savedPayment.id },
           actionType: "create",
@@ -77,13 +88,12 @@ module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params
           oldAmount: 0,
           newAmount: grossPay,
           notes: "Bulk payment creation",
-          performedBy: params._userId ? String(params._userId) : "system",
-          changeDate: new Date()
+          performedBy: _userId ? String(_userId) : "system",
+          changeDate: new Date(),
         });
 
         await paymentHistoryRepository.save(paymentHistory);
 
-        // If there's debt deduction, update worker's debt summary
         if (totalDebtDeduction > 0) {
           worker.totalPaid = parseFloat(worker.totalPaid) + totalDebtDeduction;
           worker.currentBalance = Math.max(0, parseFloat(worker.currentBalance) - totalDebtDeduction);
@@ -94,10 +104,10 @@ module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params
           index: i,
           paymentId: savedPayment.id,
           workerId: paymentData.worker_id,
+          sessionId,
           status: "success",
-          message: "Payment created successfully"
+          message: "Payment created successfully",
         });
-        
       } catch (error) {
         // @ts-ignore
         errors.push(`Payment ${i + 1}: ${error.message}`);
@@ -105,25 +115,27 @@ module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params
           index: i,
           status: "error",
           // @ts-ignore
-          message: error.message
+          message: error.message,
         });
       }
     }
 
     return {
       status: errors.length === 0,
-      message: errors.length > 0 
-        ? `Processed ${results.length} payments with ${errors.length} errors` 
-        : `Successfully created ${results.length} payments`,
+      message:
+        errors.length > 0
+          ? `Processed ${results.length} payments with ${errors.length} errors`
+          : `Successfully created ${results.length} payments`,
       data: {
         results,
         errors: errors.length > 0 ? errors : null,
         summary: {
           total: payments.length,
-          successful: results.filter(r => r.status === "success").length,
-          failed: results.filter(r => r.status === "error").length
-        }
-      }
+          successful: results.filter((r) => r.status === "success").length,
+          failed: results.filter((r) => r.status === "error").length,
+          sessionId,
+        },
+      },
     };
   } catch (error) {
     console.error("Error in bulk create payments:", error);
@@ -131,7 +143,7 @@ module.exports = async (/** @type {{ _userId?: any; payments?: any; }} */ params
       status: false,
       // @ts-ignore
       message: error.message,
-      data: null
+      data: null,
     };
   }
 };

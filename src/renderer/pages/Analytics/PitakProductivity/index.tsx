@@ -9,18 +9,10 @@ import {
     Clock,
     Award,
     Filter,
-    Download,
-    Calendar,
-    RefreshCw,
+    Download, RefreshCw,
     Eye,
     Layers,
-    Activity,
-    PieChart,
-    DollarSign,
-    CheckCircle,
-    AlertTriangle,
-    ChevronRight,
-    MapPin,
+    Activity, DollarSign, AlertTriangle, MapPin,
     Home,
     Sparkles,
     LineChart,
@@ -34,7 +26,8 @@ import dashboardAPI, {
     type PitakEfficiencyAnalysisData,
     type ComparePitaksProductivityData
 } from '../../../apis/dashboard';
-import { formatCurrency, formatNumber, formatDate, formatPercentage } from '../../../utils/formatters';
+import { formatCurrency, formatNumber, formatPercentage } from '../../../utils/formatters';
+import { hideLoading, showLoading } from '../../../utils/notification';
 
 const PitakProductivityPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -114,6 +107,7 @@ const PitakProductivityPage: React.FC = () => {
             console.error('Failed to fetch pitak productivity data:', err);
         } finally {
             setLoading(false);
+            hideLoading();
         }
     };
 
@@ -181,14 +175,7 @@ const PitakProductivityPage: React.FC = () => {
     ];
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-3" style={{ borderColor: 'var(--primary-color)' }}></div>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading productivity data...</p>
-                </div>
-            </div>
-        );
+        showLoading('Loading pitak productivity data...');
     }
 
     if (error) {
@@ -492,14 +479,6 @@ const PitakProductivityPage: React.FC = () => {
                                                 <tr key={index} className="hover:bg-gray-50"
                                                     style={{ borderBottom: '1px solid var(--border-color)' }}
                                                 >
-                                                    <td className="py-3 px-4">
-                                                        <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                            {pitak.location}
-                                                        </div>
-                                                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                            {pitak.kabisilyaName}
-                                                        </div>
-                                                    </td>
                                                     <td className="py-3 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>
                                                         {pitak.bukidName}
                                                     </td>
@@ -661,13 +640,6 @@ const PitakProductivityPage: React.FC = () => {
                                         <span style={{ color: 'var(--text-secondary)' }}>Bukid:</span>
                                         <span className="font-medium ml-1" style={{ color: 'var(--text-primary)' }}>
                                             {detailsData.pitakInfo.bukid}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Users className="w-4 h-4 mr-1" style={{ color: 'var(--text-secondary)' }} />
-                                        <span style={{ color: 'var(--text-secondary)' }}>Kabisilya:</span>
-                                        <span className="font-medium ml-1" style={{ color: 'var(--text-primary)' }}>
-                                            {detailsData.pitakInfo.kabisilya}
                                         </span>
                                     </div>
                                     <div className="flex items-center">
@@ -1397,14 +1369,6 @@ const PitakProductivityPage: React.FC = () => {
                                                         }}
                                                     >
                                                         #{index + 1}
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-4">
-                                                    <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                        {pitak.info.location}
-                                                    </div>
-                                                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                        {pitak.info.bukid} • {pitak.info.kabisilya}
                                                     </div>
                                                 </td>
                                                 <td className="py-3 px-4">

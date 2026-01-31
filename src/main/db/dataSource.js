@@ -5,7 +5,6 @@ const AuditTrail = require("../../entities/AuditTrail");
 const Bukid = require("../../entities/Bukid");
 const Debt = require("../../entities/Debt");
 const DebtHistory = require("../../entities/DebtHistory");
-const Kabisilya = require("../../entities/Kabisilya");
 const LicenseCache = require("../../entities/LicenseCache");
 const Notification = require("../../entities/Notification");
 const Payment = require("../../entities/Payment");
@@ -16,17 +15,18 @@ const UserActivity = require("../../entities/UserActivity");
 const Worker = require("../../entities/Worker");
 const { getDatabaseConfig } = require("./database");
 const { SystemSetting } = require("../../entities/systemSettings");
+const Session = require("../../entities/Session");
 
 const config = getDatabaseConfig();
 
 const entities = [
+  Session,
   Assignment,
   AuditTrail,
   Bukid,
   Debt,
   DebtHistory,
   LicenseCache,
-  Kabisilya,
   Notification,
   Payment,
   PaymentHistory,

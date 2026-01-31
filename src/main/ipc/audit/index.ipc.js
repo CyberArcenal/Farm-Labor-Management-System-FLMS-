@@ -4,6 +4,7 @@ const { ipcMain } = require("electron");
 const { withErrorHandling } = require("../../../utils/errorHandler");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/dataSource");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 
 class AuditTrailHandler {
   constructor() {
@@ -220,7 +221,11 @@ class AuditTrailHandler {
       } else {
         auditRepo = AppDataSource.getRepository("AuditTrail");
       }
-
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      throw new Error("No default session configured. Please set one in Settings.");
+    }
       const auditEntry = auditRepo.create({
         action,
         actor: `User ${user_id}`,

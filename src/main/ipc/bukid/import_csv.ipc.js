@@ -58,7 +58,7 @@ module.exports = async function importBukidFromCSV(params = {}, queryRunner = nu
     // @ts-ignore
     for (const [index, bukidData] of bukids.entries()) {
       try {
-        const { name, location, kabisilyaId, status } = bukidData;
+        const { name, location, status } = bukidData;
         
         if (!name) {
           // @ts-ignore
@@ -92,7 +92,6 @@ module.exports = async function importBukidFromCSV(params = {}, queryRunner = nu
         const bukid = queryRunner.manager.create(Bukid, {
           name,
           location: location || null,
-          kabisilya: kabisilyaId ? { id: parseInt(kabisilyaId) } : null,
           status: status || 'active',
           createdAt: new Date(),
           updatedAt: new Date()

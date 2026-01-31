@@ -4,7 +4,6 @@ ipc/
     ├── get/
     │   ├── all.ipc.js
     │   ├── by_id.ipc.js
-    │   ├── by_kabisilya.ipc.js
     │   ├── by_name.ipc.js
     │   ├── by_location.ipc.js
     │   ├── with_pitaks.ipc.js
@@ -16,9 +15,6 @@ ipc/
     ├── delete.ipc.js
     ├── update_status.ipc.js
     ├── add_note.ipc.js
-    ├── assign_to_kabisilya.ipc.js
-    ├── remove_from_kabisilya.ipc.js
-    ├── get_kabisilya_info.ipc.js
     ├── get_pitak_counts.ipc.js
     ├── get_worker_counts.ipc.js
     ├── bulk_create.ipc.js

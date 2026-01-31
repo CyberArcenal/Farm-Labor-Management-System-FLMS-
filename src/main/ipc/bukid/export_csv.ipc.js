@@ -15,12 +15,8 @@ module.exports = async function exportBukidToCSV(params = {}) {
     const bukidRepository = AppDataSource.getRepository(Bukid);
 
     const queryBuilder = bukidRepository.createQueryBuilder('bukid')
-      .leftJoinAndSelect('bukid.kabisilya', 'kabisilya')
       .leftJoinAndSelect('bukid.pitaks', 'pitaks');
 
-    if (filters.kabisilyaId) {
-      queryBuilder.andWhere('bukid.kabisilyaId = :kabisilyaId', { kabisilyaId: filters.kabisilyaId });
-    }
     if (filters.status) {
       queryBuilder.andWhere('bukid.status = :status', { status: filters.status });
     }
@@ -29,13 +25,11 @@ module.exports = async function exportBukidToCSV(params = {}) {
 
     // Prepare data for CSV
     // @ts-ignore
-    const csvData = bukids.map((/** @type {{ id: any; name: any; location: any; status: any; kabisilya: { id: any; name: any; }; pitaks: string | any[]; createdAt: any; updatedAt: any; }} */ bukid) => ({
+    const csvData = bukids.map((/** @type {{ id: any; name: any; location: any; status: any; pitaks: string | any[]; createdAt: any; updatedAt: any; }} */ bukid) => ({
       id: bukid.id,
       name: bukid.name,
       location: bukid.location || '',
       status: bukid.status,
-      kabisilya_id: bukid.kabisilya?.id || '',
-      kabisilya_name: bukid.kabisilya?.name || '',
       pitak_count: bukid.pitaks?.length || 0,
       created_at: bukid.createdAt,
       updated_at: bukid.updatedAt

@@ -9,6 +9,7 @@ const { In } = require("typeorm");
 module.exports = async (/** @type {{ pitakId: any; date: any; workerId: any; _userId: any; }} */ params) => {
   try {
     // @ts-ignore
+    // @ts-ignore
     const { pitakId, date, workerId, _userId } = params;
 
     if (!pitakId) {
@@ -33,6 +34,7 @@ module.exports = async (/** @type {{ pitakId: any; date: any; workerId: any; _us
       pitakId,
       location: pitak.location,
       status: pitak.status,
+      // @ts-ignore
       totalLuwang: parseFloat(pitak.totalLuwang),
       isAvailable: pitak.status === 'active',
       reasons: []
@@ -50,6 +52,7 @@ module.exports = async (/** @type {{ pitakId: any; date: any; workerId: any; _us
       // Check for existing assignments on this date
       const existingAssignments = await assignmentRepo.find({
         where: {
+          // @ts-ignore
           pitakId,
           assignmentDate: checkDate,
           status: In(['active', 'completed'])
@@ -58,6 +61,7 @@ module.exports = async (/** @type {{ pitakId: any; date: any; workerId: any; _us
       });
 
       if (existingAssignments.length > 0) {
+        // @ts-ignore
         const assignedWorkers = existingAssignments.map((/** @type {{ workerId: any; worker: { name: any; }; luwangCount: string; }} */ a) => ({
           workerId: a.workerId,
           workerName: a.worker ? a.worker.name : 'Unknown',
@@ -76,6 +80,7 @@ module.exports = async (/** @type {{ pitakId: any; date: any; workerId: any; _us
 
         // Check if worker is already assigned
         if (workerId) {
+          // @ts-ignore
           const isWorkerAssigned = existingAssignments.some((/** @type {{ workerId: any; }} */ a) => a.workerId === workerId);
           if (isWorkerAssigned) {
             availability.isAvailable = false;
@@ -102,6 +107,7 @@ module.exports = async (/** @type {{ pitakId: any; date: any; workerId: any; _us
     // Check if pitak has any active assignments overall
     const activeAssignmentsCount = await assignmentRepo.count({
       where: {
+        // @ts-ignore
         pitakId,
         status: 'active'
       }

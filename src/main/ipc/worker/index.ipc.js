@@ -5,6 +5,7 @@ const { withErrorHandling } = require("../../../utils/errorHandler");
 const { logger } = require("../../../utils/logger");
 const { AppDataSource } = require("../../db/dataSource");
 const UserActivity = require("../../../entities/UserActivity");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 
 class WorkerHandler {
   constructor() {
@@ -17,7 +18,6 @@ class WorkerHandler {
     this.getAllWorkers = this.importHandler("./get/all.ipc");
     this.getWorkerById = this.importHandler("./get/by_id.ipc");
     this.getWorkerByName = this.importHandler("./get/by_name.ipc");
-    this.getWorkerByKabisilya = this.importHandler("./get/by_kabisilya.ipc");
     this.getWorkerByStatus = this.importHandler("./get/by_status.ipc");
     this.getWorkerWithDebts = this.importHandler("./get/with_debts.ipc");
     this.getWorkerWithPayments = this.importHandler("./get/with_payments.ipc");
@@ -34,11 +34,6 @@ class WorkerHandler {
     this.updateWorkerStatus = this.importHandler("./update_status.ipc");
     this.updateWorkerContact = this.importHandler("./update_contact.ipc");
     this.updateWorkerFinancials = this.importHandler("./update_financials.ipc");
-
-    // 🔗 RELATIONSHIP HANDLERS
-    this.assignToKabisilya = this.importHandler("./assign_to_kabisilya.ipc");
-    this.removeFromKabisilya = this.importHandler("./remove_from_kabisilya.ipc");
-    this.getKabisilyaInfo = this.importHandler("./get_kabisilya_info.ipc");
 
     // 💰 FINANCIAL HANDLERS
     this.getWorkerDebtSummary = this.importHandler("./get_debt_summary.ipc");
@@ -109,9 +104,6 @@ class WorkerHandler {
         case "getWorkerByName":
           return await this.getWorkerByName(enrichedParams);
         
-        case "getWorkerByKabisilya":
-          return await this.getWorkerByKabisilya(enrichedParams);
-        
         case "getWorkerByStatus":
           return await this.getWorkerByStatus(enrichedParams);
         
@@ -154,16 +146,6 @@ class WorkerHandler {
         
         case "updateWorkerFinancials":
           return await this.handleWithTransaction(this.updateWorkerFinancials, enrichedParams);
-
-        // 🔗 RELATIONSHIP OPERATIONS
-        case "assignToKabisilya":
-          return await this.handleWithTransaction(this.assignToKabisilya, enrichedParams);
-        
-        case "removeFromKabisilya":
-          return await this.handleWithTransaction(this.removeFromKabisilya, enrichedParams);
-        
-        case "getKabisilyaInfo":
-          return await this.getKabisilyaInfo(enrichedParams);
 
         // 💰 FINANCIAL OPERATIONS
         case "getWorkerDebtSummary":
@@ -266,11 +248,16 @@ class WorkerHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      throw new Error("No default session configured. Please set one in Settings.");
+    }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
+        session:{id:sessionId},
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
         created_at: new Date()

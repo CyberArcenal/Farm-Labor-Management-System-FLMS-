@@ -23,11 +23,9 @@ module.exports = async function searchBukid(params = {}) {
 
     const searchQuery = bukidRepository
       .createQueryBuilder('bukid')
-      .leftJoinAndSelect('bukid.kabisilya', 'kabisilya')
       .leftJoinAndSelect('bukid.pitaks', 'pitaks')
       .where('bukid.name LIKE :query', { query: `%${query}%` })
       .orWhere('bukid.location LIKE :query', { query: `%${query}%` })
-      .orWhere('kabisilya.name LIKE :query', { query: `%${query}%` })
       .orderBy('bukid.name', 'ASC');
 
     const skip = (page - 1) * limit;

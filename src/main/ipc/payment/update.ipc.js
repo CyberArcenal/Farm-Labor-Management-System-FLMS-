@@ -1,4 +1,4 @@
-// ipc/payment/update.ipc.js
+// src/ipc/payment/update.ipc.js
 //@ts-check
 
 const Payment = require("../../../entities/Payment");
@@ -8,8 +8,9 @@ const { AppDataSource } = require("../../db/dataSource");
 
 module.exports = async function updatePayment(params = {}, queryRunner = null) {
   let shouldRelease = false;
-  
+
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -19,11 +20,11 @@ module.exports = async function updatePayment(params = {}, queryRunner = null) {
   }
 
   try {
-    const { 
+    const {
       // @ts-ignore
-      paymentId, 
+      paymentId,
       // @ts-ignore
-      grossPay, 
+      grossPay,
       // @ts-ignore
       manualDeduction,
       // @ts-ignore
@@ -35,131 +36,225 @@ module.exports = async function updatePayment(params = {}, queryRunner = null) {
       // @ts-ignore
       periodEnd,
       // @ts-ignore
-      _userId 
+      _userId,
     } = params;
-    
+
     if (!paymentId) {
-      return {
-        status: false,
-        message: 'Payment ID is required',
-        data: null
-      };
+      return { status: false, message: "Payment ID is required", data: null };
+    }
+    if (!_userId) {
+      return { status: false, message: "User ID is required for audit trail", data: null };
     }
 
     // @ts-ignore
     const paymentRepository = queryRunner.manager.getRepository(Payment);
     const payment = await paymentRepository.findOne({
-      where: { id: paymentId }
+      where: { id: paymentId },
+      relations: ["worker"],
     });
 
     if (!payment) {
+      return { status: false, message: "Payment not found", data: null };
+    }
+
+    // If payment is completed, only allow notes update (policy)
+    const isCompleted = payment.status === "completed";
+    if (isCompleted && (grossPay !== undefined || manualDeduction !== undefined || otherDeductions !== undefined || periodStart !== undefined || periodEnd !== undefined)) {
       return {
         status: false,
-        message: 'Payment not found',
-        data: null
+        message: "Only notes can be updated for completed payments. To change amounts, use a reversal/refund workflow.",
+        data: null,
       };
     }
 
-    // Store old values for history
+    // Store old values for history and worker adjustments
     const oldValues = {
-      grossPay: payment.grossPay,
-      manualDeduction: payment.manualDeduction,
-      otherDeductions: payment.otherDeductions,
+      grossPay: parseFloat(payment.grossPay || 0),
+      manualDeduction: parseFloat(payment.manualDeduction || 0),
+      otherDeductions: parseFloat(payment.otherDeductions || 0),
+      totalDebtDeduction: parseFloat(payment.totalDebtDeduction || 0),
+      netPay: parseFloat(payment.netPay || 0),
       notes: payment.notes,
       periodStart: payment.periodStart,
-      periodEnd: payment.periodEnd
+      periodEnd: payment.periodEnd,
     };
 
-    // Update fields if provided
+    const historyEntries = [];
+    let needsRecalc = false;
+
+    // Apply updates (only allowed fields for non-completed payments)
     if (grossPay !== undefined) {
-      payment.grossPay = grossPay;
-      // Recalculate net pay
-      payment.netPay = (
-        parseFloat(grossPay) - 
-        parseFloat(payment.totalDebtDeduction) - 
-        parseFloat(payment.manualDeduction || 0) - 
-        parseFloat(payment.otherDeductions || 0)
-      ).toFixed(2);
+      const newGross = parseFloat(grossPay);
+      if (isNaN(newGross) || newGross < 0) {
+        return { status: false, message: "grossPay must be a non-negative number", data: null };
+      }
+      if (newGross !== oldValues.grossPay) {
+        historyEntries.push({
+          actionType: "update",
+          changedField: "grossPay",
+          oldAmount: oldValues.grossPay,
+          newAmount: newGross,
+          notes: "Gross pay updated",
+          changeReason: "update_payment",
+        });
+        payment.grossPay = newGross;
+        needsRecalc = true;
+      }
     }
 
     if (manualDeduction !== undefined) {
-      payment.manualDeduction = manualDeduction;
-      payment.netPay = (
-        parseFloat(payment.grossPay) - 
-        parseFloat(payment.totalDebtDeduction) - 
-        parseFloat(manualDeduction) - 
-        parseFloat(payment.otherDeductions || 0)
-      ).toFixed(2);
+      const newManual = parseFloat(manualDeduction || 0);
+      if (isNaN(newManual) || newManual < 0) {
+        return { status: false, message: "manualDeduction must be a non-negative number", data: null };
+      }
+      if (newManual !== oldValues.manualDeduction) {
+        historyEntries.push({
+          actionType: "update",
+          changedField: "manualDeduction",
+          oldAmount: oldValues.manualDeduction,
+          newAmount: newManual,
+          notes: "Manual deduction updated",
+          changeReason: "update_payment",
+        });
+        payment.manualDeduction = newManual;
+        needsRecalc = true;
+      }
     }
 
     if (otherDeductions !== undefined) {
-      payment.otherDeductions = otherDeductions;
-      payment.netPay = (
-        parseFloat(payment.grossPay) - 
-        parseFloat(payment.totalDebtDeduction) - 
-        parseFloat(payment.manualDeduction || 0) - 
-        parseFloat(otherDeductions)
-      ).toFixed(2);
+      const newOther = parseFloat(otherDeductions || 0);
+      if (isNaN(newOther) || newOther < 0) {
+        return { status: false, message: "otherDeductions must be a non-negative number", data: null };
+      }
+      if (newOther !== oldValues.otherDeductions) {
+        historyEntries.push({
+          actionType: "update",
+          changedField: "otherDeductions",
+          oldAmount: oldValues.otherDeductions,
+          newAmount: newOther,
+          notes: "Other deductions updated",
+          changeReason: "update_payment",
+        });
+        payment.otherDeductions = newOther;
+        needsRecalc = true;
+      }
     }
 
     if (notes !== undefined) {
-      payment.notes = notes;
+      const timestamp = new Date().toISOString();
+      const appended = payment.notes ? `${payment.notes}\n[${timestamp}] ${notes}` : `[${timestamp}] ${notes}`;
+      historyEntries.push({
+        actionType: "update",
+        changedField: "notes",
+        oldValue: payment.notes || null,
+        newValue: appended,
+        notes: "Notes updated",
+        changeReason: "update_payment",
+      });
+      payment.notes = appended;
     }
 
     if (periodStart !== undefined) {
-      payment.periodStart = periodStart ? new Date(periodStart) : null;
+      const newStart = periodStart ? new Date(periodStart) : null;
+      historyEntries.push({
+        actionType: "update",
+        changedField: "periodStart",
+        oldValue: payment.periodStart ? payment.periodStart.toISOString() : null,
+        newValue: newStart ? newStart.toISOString() : null,
+        notes: "Period start updated",
+        changeReason: "update_payment",
+      });
+      payment.periodStart = newStart;
     }
 
     if (periodEnd !== undefined) {
-      payment.periodEnd = periodEnd ? new Date(periodEnd) : null;
+      const newEnd = periodEnd ? new Date(periodEnd) : null;
+      historyEntries.push({
+        actionType: "update",
+        changedField: "periodEnd",
+        oldValue: payment.periodEnd ? payment.periodEnd.toISOString() : null,
+        newValue: newEnd ? newEnd.toISOString() : null,
+        notes: "Period end updated",
+        changeReason: "update_payment",
+      });
+      payment.periodEnd = newEnd;
+    }
+
+    // Recalculate netPay if needed
+    if (needsRecalc) {
+      const gross = parseFloat(payment.grossPay || 0);
+      const totalDebt = parseFloat(payment.totalDebtDeduction || 0);
+      const manual = parseFloat(payment.manualDeduction || 0);
+      const other = parseFloat(payment.otherDeductions || 0);
+
+      const recalculated = parseFloat((gross - totalDebt - manual - other).toFixed(2));
+      if (recalculated < 0) {
+        return { status: false, message: "Recalculated netPay would be negative", data: null };
+      }
+
+      if (recalculated !== oldValues.netPay) {
+        historyEntries.push({
+          actionType: "update",
+          changedField: "netPay",
+          oldAmount: oldValues.netPay,
+          newAmount: recalculated,
+          notes: "Net pay recalculated",
+          changeReason: "update_payment",
+        });
+        payment.netPay = recalculated;
+      }
     }
 
     payment.updatedAt = new Date();
 
     const updatedPayment = await paymentRepository.save(payment);
 
-    // Create payment history entry for each changed field
+    // If payment is completed and netPay changed, adjust worker aggregates
+    if (isCompleted) {
+      const newNet = parseFloat(updatedPayment.netPay || 0);
+      const oldNet = oldValues.netPay;
+      const netDelta = parseFloat((newNet - oldNet).toFixed(2));
+
+      if (netDelta !== 0 && updatedPayment.worker && updatedPayment.worker.id) {
+        // @ts-ignore
+        const workerRepo = queryRunner.manager.getRepository("Worker");
+        const worker = await workerRepo.findOne({ where: { id: updatedPayment.worker.id } });
+        if (worker) {
+          // Adjust totals: totalPaid increases by netDelta; currentBalance decreases by netDelta
+          worker.totalPaid = parseFloat((parseFloat(worker.totalPaid || 0) + netDelta).toFixed(2));
+          worker.currentBalance = parseFloat(Math.max(0, parseFloat(worker.currentBalance || 0) - netDelta).toFixed(2));
+          worker.updatedAt = new Date();
+          await workerRepo.save(worker);
+
+          // Record worker aggregate adjustment in payment history
+          historyEntries.push({
+            actionType: "adjustment",
+            changedField: "worker_totals",
+            oldAmount: null,
+            newAmount: null,
+            notes: `Adjusted worker totals by ${netDelta.toFixed(2)} due to payment update`,
+            changeReason: "update_payment_worker_adjustment",
+          });
+        }
+      }
+    }
+
+    // Persist history entries
     // @ts-ignore
     const paymentHistoryRepository = queryRunner.manager.getRepository(PaymentHistory);
-    
-    const changes = [];
-    if (grossPay !== undefined && parseFloat(oldValues.grossPay) !== parseFloat(grossPay)) {
-      changes.push({
-        actionType: 'update',
-        changedField: 'grossPay',
-        oldAmount: parseFloat(oldValues.grossPay),
-        newAmount: parseFloat(grossPay),
-        notes: 'Gross pay updated'
-      });
-    }
-
-    if (manualDeduction !== undefined && parseFloat(oldValues.manualDeduction || 0) !== parseFloat(manualDeduction || 0)) {
-      changes.push({
-        actionType: 'update',
-        changedField: 'manualDeduction',
-        oldAmount: parseFloat(oldValues.manualDeduction || 0),
-        newAmount: parseFloat(manualDeduction || 0),
-        notes: 'Manual deduction updated'
-      });
-    }
-
-    if (otherDeductions !== undefined && parseFloat(oldValues.otherDeductions || 0) !== parseFloat(otherDeductions || 0)) {
-      changes.push({
-        actionType: 'update',
-        changedField: 'otherDeductions',
-        oldAmount: parseFloat(oldValues.otherDeductions || 0),
-        newAmount: parseFloat(otherDeductions || 0),
-        notes: 'Other deductions updated'
-      });
-    }
-
-    // Save all history entries
-    for (const change of changes) {
+    for (const entry of historyEntries) {
       const history = paymentHistoryRepository.create({
         payment: updatedPayment,
-        ...change,
-        performedBy: _userId,
-        changeDate: new Date()
+        actionType: entry.actionType,
+        changedField: entry.changedField,
+        oldValue: entry.oldValue !== undefined ? String(entry.oldValue) : undefined,
+        newValue: entry.newValue !== undefined ? String(entry.newValue) : undefined,
+        oldAmount: entry.oldAmount !== undefined ? entry.oldAmount : undefined,
+        newAmount: entry.newAmount !== undefined ? entry.newAmount : undefined,
+        notes: entry.notes || null,
+        performedBy: String(_userId),
+        changeDate: new Date(),
+        changeReason: entry.changeReason || "update_payment",
       });
       await paymentHistoryRepository.save(history);
     }
@@ -169,11 +264,11 @@ module.exports = async function updatePayment(params = {}, queryRunner = null) {
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'update_payment',
+      action: "update_payment",
       description: `Updated payment #${paymentId}`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
-      created_at: new Date()
+      created_at: new Date(),
     });
     await activityRepo.save(activity);
 
@@ -182,23 +277,15 @@ module.exports = async function updatePayment(params = {}, queryRunner = null) {
       await queryRunner.commitTransaction();
     }
 
-    return {
-      status: true,
-      message: 'Payment updated successfully',
-      data: { payment: updatedPayment }
-    };
+    return { status: true, message: "Payment updated successfully", data: { payment: updatedPayment } };
   } catch (error) {
     if (shouldRelease) {
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in updatePayment:', error);
-    return {
-      status: false,
-      // @ts-ignore
-      message: `Failed to update payment: ${error.message}`,
-      data: null
-    };
+    console.error("Error in updatePayment:", error);
+    // @ts-ignore
+    return { status: false, message: `Failed to update payment: ${error.message}`, data: null };
   } finally {
     if (shouldRelease) {
       // @ts-ignore

@@ -65,7 +65,6 @@ const BukidTablePage: React.FC = () => {
                 sortBy,
                 sortOrder,
                 status: statusFilter !== 'all' ? statusFilter : undefined,
-                kabisilyaId: kabisilyaFilter || undefined
             };
 
             // If search query exists, use search endpoint
@@ -258,8 +257,7 @@ const BukidTablePage: React.FC = () => {
         try {
             showToast('Exporting to CSV...', 'info');
             const response = await bukidAPI.exportToCSV({
-                status: statusFilter !== 'all' ? statusFilter : undefined,
-                kabisilyaId: kabisilyaFilter || undefined
+                status: statusFilter !== 'all' ? statusFilter : undefined
             });
 
             if (response.status) {
@@ -868,9 +866,6 @@ const BukidTablePage: React.FC = () => {
                                                                         Kabisilya
                                                                     </span>
                                                                 </div>
-                                                                <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                                                    {bukidSummary.kabisilya || 'Not assigned'}
-                                                                </div>
                                                             </div>
 
                                                             <div className="p-3 rounded-lg" style={{ background: 'var(--card-bg)' }}>
@@ -962,13 +957,6 @@ const BukidTablePage: React.FC = () => {
                                                 {bukidSummary.totalLuwang}
                                             </div>
                                             <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Total Luwang</div>
-                                        </div>
-                                        <div className="text-center p-2 rounded" style={{ background: 'var(--card-secondary-bg)' }}>
-                                            <Sprout className="w-5 h-5 mx-auto mb-1" style={{ color: 'var(--accent-green)' }} />
-                                            <div className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
-                                                {bukidSummary.kabisilya || 'None'}
-                                            </div>
-                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Kabisilya</div>
                                         </div>
                                     </div>
                                 )}

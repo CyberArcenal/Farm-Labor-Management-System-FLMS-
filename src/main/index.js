@@ -61,6 +61,7 @@ async function initializeDatabase() {
     log("INFO", `Database path: ${dbPath}`);
 
     // Initialize the data source
+    
     await AppDataSource.initialize();
     log("SUCCESS", "Database connected successfully!");
 
@@ -666,7 +667,7 @@ function registerIpcHandlers() {
   require("./ipc/bukid/index.ipc");
   require("./ipc/dashboard/index.ipc");
   require("./ipc/debt/index.ipc");
-  require("./ipc/kabisilya/index.ipc");
+  // require("./ipc/kabisilya/index.ipc");
   // require("./ipc/notification/index.ipc");
   require("./ipc/payment/index.ipc");
   require("./ipc/pitak/index.ipc");
@@ -675,6 +676,7 @@ function registerIpcHandlers() {
   require("./ipc/system_config.ipc");
   require("./ipc/windows_control.ipc");
   require("./ipc/attendance/index.ipc");
+  require("./ipc/session/index.ipc");
 }
 
 // Application event handlers

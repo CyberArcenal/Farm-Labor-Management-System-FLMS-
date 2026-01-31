@@ -7,6 +7,7 @@ const { AppDataSource } = require("../../../db/dataSource");
 module.exports = async function getWorkerWithDebts(params = {}) {
   try {
     // @ts-ignore
+    // @ts-ignore
     const { id, _userId } = params;
 
     if (!id) {
@@ -21,7 +22,7 @@ module.exports = async function getWorkerWithDebts(params = {}) {
 
     const worker = await workerRepository.findOne({
       where: { id: parseInt(id) },
-      relations: ['kabisilya', 'debts', 'debts.history']
+      relations: ['debts', 'debts.history'] // removed kabisilya
     });
 
     if (!worker) {
@@ -33,12 +34,14 @@ module.exports = async function getWorkerWithDebts(params = {}) {
     }
 
     // Calculate total active debt
-    const activeDebts = worker.debts.filter((/** @type {{ status: string; }} */ debt) => 
+    // @ts-ignore
+    const activeDebts = worker.debts.filter((/** @type {{ status: string; }} */ debt) =>
       debt.status === 'pending' || debt.status === 'partially_paid'
     );
     
-    const totalActiveDebt = activeDebts.reduce((/** @type {number} */ sum, /** @type {{ balance: string; }} */ debt) => 
-      sum + parseFloat(debt.balance), 0
+    const totalActiveDebt = activeDebts.reduce(
+      (/** @type {number} */ sum, /** @type {{ balance: string; }} */ debt) => sum + parseFloat(debt.balance), 
+      0
     );
 
     return {
@@ -47,9 +50,11 @@ module.exports = async function getWorkerWithDebts(params = {}) {
       data: { 
         worker,
         debtSummary: {
+          // @ts-ignore
           totalDebts: worker.debts.length,
           activeDebts: activeDebts.length,
           totalActiveDebt,
+          // @ts-ignore
           paidDebts: worker.debts.filter((/** @type {{ status: string; }} */ d) => d.status === 'paid').length
         }
       }

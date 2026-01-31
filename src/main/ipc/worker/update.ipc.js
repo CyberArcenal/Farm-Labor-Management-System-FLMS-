@@ -10,6 +10,7 @@ module.exports = async function updateWorker(params = {}, queryRunner = null) {
   let shouldRelease = false;
   
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -20,7 +21,7 @@ module.exports = async function updateWorker(params = {}, queryRunner = null) {
 
   try {
     // @ts-ignore
-    const { id, name, contact, email, address, status, hireDate, kabisilyaId, _userId } = params;
+    const { id, name, contact, email, address, status, hireDate, _userId } = params;
     
     if (!id) {
       return {
@@ -63,11 +64,6 @@ module.exports = async function updateWorker(params = {}, queryRunner = null) {
     existingWorker.address = address !== undefined ? address : existingWorker.address;
     existingWorker.status = status || existingWorker.status;
     existingWorker.hireDate = hireDate ? new Date(hireDate) : existingWorker.hireDate;
-    if (kabisilyaId) {
-      existingWorker.kabisilya = { id: kabisilyaId };
-    } else if (kabisilyaId === null) {
-      existingWorker.kabisilya = null;
-    }
     existingWorker.updatedAt = new Date();
 
     // @ts-ignore
@@ -81,7 +77,7 @@ module.exports = async function updateWorker(params = {}, queryRunner = null) {
       action: 'update_worker',
       description: `Updated worker: ${existingWorker.name} (ID: ${id})`,
       ip_address: "127.0.0.1",
-      user_agent: "Kabisilya-Management-System",
+      user_agent: "Worker-Management-System",
       created_at: new Date()
     });
     await activityRepo.save(activity);

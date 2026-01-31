@@ -2,7 +2,6 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("backendAPI", {
-  kabisilyaDashboard: (payload) => ipcRenderer.invoke("kabisilyaDashboard", payload),
   // 🪟 Window controls
   windowControl: (payload) => ipcRenderer.invoke("window-control", payload),
   
@@ -10,15 +9,15 @@ contextBridge.exposeInMainWorld("backendAPI", {
   assignment: (payload) => ipcRenderer.invoke("assignment", payload),
   auditTrail: (payload) => ipcRenderer.invoke("auditTrail", payload),
   bukid: (payload) => ipcRenderer.invoke("bukid", payload),
-  kabisilyaDashboard: (payload) => ipcRenderer.invoke("kabisilyaDashboard", payload),
+  dashboard: (payload) => ipcRenderer.invoke("dashboard", payload),
   debt: (payload) => ipcRenderer.invoke("debt", payload),
-  kabisilya: (payload) => ipcRenderer.invoke("kabisilya", payload),
   notification: (payload) => ipcRenderer.invoke("notification", payload),
   payment: (payload) => ipcRenderer.invoke("payment", payload),
   pitak: (payload) => ipcRenderer.invoke("pitak", payload),
   user: (payload) => ipcRenderer.invoke("user", payload),
   worker: (payload) => ipcRenderer.invoke("worker", payload),
   attendance: (payload) => ipcRenderer.invoke("attendance", payload),
+  session: (payload) => ipcRenderer.invoke("session", payload),
 
   // ⚙️ System & Configuration
   activation: (payload) => ipcRenderer.invoke("activation", payload),

@@ -39,13 +39,13 @@ const Worker = new EntitySchema({
     updatedAt: { type: Date, updateDate: true }
   },
   relations: {
-    kabisilya: { 
-      target: "Kabisilya", 
-      type: "many-to-one", 
-      joinColumn: true, 
-      inverseSide: "workers",
-      onDelete: "SET NULL" 
-    },
+    // kabisilya: { 
+    //   target: "Kabisilya", 
+    //   type: "many-to-one", 
+    //   joinColumn: true, 
+    //   inverseSide: "workers",
+    //   onDelete: "SET NULL" 
+    // },
     debts: { 
       target: "Debt", 
       type: "one-to-many", 

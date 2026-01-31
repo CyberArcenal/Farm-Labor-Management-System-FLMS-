@@ -5,13 +5,12 @@ declare global {
   interface Window {
     backendAPI: {
       // 📊 Dashboard
-      kabisilyaDashboard: (payload: {
+      dashboard: (payload: {
         method: string;
         params?: Record<string, any>;
       }) => Promise<any>;
 
       // 👥 Core Management Modules
-      kabisilya?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
       worker?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
       assignment?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
       bukid?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
@@ -31,7 +30,7 @@ declare global {
 
       // 🔔 Notifications
       notification?: (payload: any) => Promise<any>;
-
+session?: (payload: { method: string; params?: Record<string, any> }) => Promise<any>;
       // ⚙️ System Config
       systemConfig: (payload: { method: string; params?: any }) => Promise<{
         status: boolean;

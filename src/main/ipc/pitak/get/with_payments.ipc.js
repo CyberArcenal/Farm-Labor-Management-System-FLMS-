@@ -18,7 +18,7 @@ module.exports = async (/** @type {any} */ pitakId, dateRange = {}, /** @type {a
     // Get pitak with bukid and kabisilya
     const pitak = await pitakRepo.findOne({
       where: { id: pitakId },
-      relations: ['bukid', 'bukid.kabisilya']
+      relations: ['bukid']
     });
 
     if (!pitak) {
@@ -118,8 +118,6 @@ module.exports = async (/** @type {any} */ pitakId, dateRange = {}, /** @type {a
             id: pitak.bukid.id,
             // @ts-ignore
             name: pitak.bukid.name,
-            // @ts-ignore
-            kabisilya: pitak.bukid.kabisilya
           } : null
         },
         payments: payments.map(p => ({

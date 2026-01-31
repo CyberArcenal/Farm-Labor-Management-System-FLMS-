@@ -27,8 +27,8 @@ import {
 } from 'lucide-react';
 import type { Assignment, AssignmentFilters, AssignmentStats } from '../../../apis/assignment';
 import assignmentAPI from '../../../apis/assignment';
-import { showError, showSuccess, showToast } from '../../../utils/notification';
-import { showConfirm } from '../../../utils/dialogs';
+import { hideLoading, showError, showLoading, showSuccess, showToast } from '../../../utils/notification';
+import { dialogs, showConfirm } from '../../../utils/dialogs';
 import { formatDate, formatNumber } from '../../../utils/formatters';
 import PitakSelect from '../../../components/Selects/Pitak';
 import WorkerSelect from '../../../components/Selects/Worker';
@@ -111,6 +111,7 @@ const AssignmentTablePage: React.FC = () => {
         } finally {
             setLoading(false);
             setRefreshing(false);
+            hideLoading();
         }
     }, [currentPage, limit, searchQuery, statusFilter, workerFilter, pitakFilter, dateFrom, dateTo, sortBy, sortOrder]);
 
@@ -411,19 +412,7 @@ const AssignmentTablePage: React.FC = () => {
 
     // Loading state
     if (loading && !refreshing) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <div
-                        className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-3 transition-colors duration-300"
-                        style={{ borderColor: 'var(--primary-color)' }}
-                    ></div>
-                    <p className="text-sm transition-colors duration-300" style={{ color: 'var(--text-secondary)' }}>
-                        Loading assignments...
-                    </p>
-                </div>
-            </div>
-        );
+        showLoading('Loading assignments...');
     }
 
     // Error state

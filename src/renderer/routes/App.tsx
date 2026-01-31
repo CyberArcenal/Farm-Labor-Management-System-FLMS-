@@ -4,7 +4,7 @@ import userAPI from '../apis/user';
 import ProtectedRoute from '../app/ProtectedRoute';
 import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
-import KabisilyaDashboardPage from '../pages/dashboard';
+import DashboardPage from '../pages/dashboard';
 import KabisilyaFirstRunSetup from '../pages/Setup';
 import Login from '../pages/Auth/Login';
 // import BukidTablePage from '../pages/Bukid/Table';
@@ -21,19 +21,22 @@ import PitakProductivityPage from '../pages/Analytics/PitakProductivity';
 import FinancialReportsPage from '../pages/Analytics/FinancialReports';
 import WorkerPerformancePage from '../pages/Analytics/WorkerPerformance';
 import BukidFormPage from '../pages/Bukid/Form';
-import KabisilyaFormPage from '../pages/Kabisilya/Form';
+// import KabisilyaFormPage from '../pages/Kabisilya/Form';
 import PitakFormPage from '../pages/Pitak/Form';
 import WorkerFormPage from '../pages/Worker/Form/WorkerForm';
 import DebtFormPage from '../pages/Debt/Form/DebtForm';
 import PitakTablePage from '../pages/Pitak/Table';
 import BukidTablePage from '../pages/Bukid/Table/BukidTablePage';
 import AssignmentTablePage from '../pages/Assignment/Table/AssignmentTablePage';
-import KabisilyaTablePage from '../pages/Kabisilya/Table/KabisilyaTablePage';
+// import KabisilyaTablePage from '../pages/Kabisilya/Table/KabisilyaTablePage';
 import WorkerTablePage from '../pages/Worker/Table/WorkerTablePage';
 import PaymentTablePage from '../pages/Payment/Table/PaymentTablePage';
 import DebtTablePage from '../pages/Debt/Table/DebtTablePage';
 import UserTablePage from '../pages/User/Table/UserTablePage';
 import AuditTrailTablePage from '../pages/Audit/AuditTrailTablePage';
+import SessionTablePage from '../pages/Session/SessionTablePage';
+import FarmManagementSettingsPage from '../pages/Settings';
+// import FarmManagementSettingsPage from '../pages/Settings/FarmManagementSettingsPage';
 
 // 🔹 Placeholder components para hindi mag red mark
 const Placeholder = ({ title }: { title: string }) => (
@@ -107,7 +110,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
 
             {/* Dashboard */}
-            <Route path="dashboard" element={<KabisilyaDashboardPage />} />
+            <Route path="dashboard" element={<DashboardPage />} />
 
             {/* Bukid & Pitak */}
             <Route path="/farms/bukid" element={<BukidTablePage />} />
@@ -122,14 +125,14 @@ function App() {
             <Route path="/farms/assignments/form" element={<Placeholder title="Assignment Form" />} />
             <Route path="/farms/assignments/form/:id" element={<Placeholder title="Assignment Form" />} />
             {/* Kabisilya & Workers */}
-            <Route path="/workers/kabisilya" element={<KabisilyaTablePage />} />
+            {/* <Route path="/workers/kabisilya" element={<KabisilyaTablePage />} />
             <Route path="/workers/kabisilya/form" element={<KabisilyaFormPage />} />
-            <Route path="/workers/kabisilya/form/:id" element={<KabisilyaFormPage />} />
+            <Route path="/workers/kabisilya/form/:id" element={<KabisilyaFormPage />} /> */}
 
             <Route path="/workers/list" element={<WorkerTablePage />} />
             <Route path="/workers" element={<WorkerTablePage />} />
-            <Route path="/workers/form" element={<WorkerFormPage/>} />
-            <Route path="/workers/form/:id" element={<WorkerFormPage/>} />
+            <Route path="/workers/form" element={<WorkerFormPage />} />
+            <Route path="/workers/form/:id" element={<WorkerFormPage />} />
             <Route path="/workers/attendance" element={<WorkerAttendancePage />} />
 
             {/* Payroll & Finance */}
@@ -151,6 +154,9 @@ function App() {
             <Route path="/system/audit" element={<AuditTrailTablePage />} />
             <Route path="/system/notifications" element={<Placeholder title="Notifications" />} />
             <Route path="/system/backup" element={<Placeholder title="Backup & Restore" />} />
+
+            <Route path="/system/sessions" element={<SessionTablePage/>} />
+            <Route path="/system/settings" element={<FarmManagementSettingsPage />} />
 
             {/* Default redirect */}
             <Route path="/" element={

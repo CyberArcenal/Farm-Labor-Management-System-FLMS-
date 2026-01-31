@@ -1,7 +1,8 @@
-// workerAPI.ts - Similar structure to activation.ts
+// workerAPI.ts - Updated to remove kabisilya references
 import { kabAuthStore } from "../lib/kabAuthStore";
 
 export interface WorkerData {
+  notes: string;
   id: number;
   name: string;
   contact: string | null;
@@ -14,10 +15,7 @@ export interface WorkerData {
   currentBalance: number;
   createdAt: string;
   updatedAt: string;
-  kabisilya?: {
-    id: number;
-    name: string;
-  };
+  // Removed kabisilya reference
 }
 
 export interface WorkerDebtSummaryData {
@@ -102,8 +100,8 @@ export interface WorkerStatsData {
     terminated: number;
   };
   distribution: {
-    byKabisilya: Array<{ name: string; count: number }>;
     byStatus: Array<{ status: string; count: number }>;
+    // Removed byKabisilya
   };
   financial: {
     averageBalance: number;
@@ -217,7 +215,7 @@ export interface WorkerReportData {
     address: string | null;
     status: string;
     hireDate: string | null;
-    kabisilya: string;
+    // Removed kabisilya
     totalDebt: number;
     totalPaid: number;
     currentBalance: number;
@@ -257,7 +255,7 @@ export interface WorkerCreateData {
   address?: string;
   status?: 'active' | 'inactive' | 'on-leave' | 'terminated';
   hireDate?: string;
-  kabisilyaId?: number;
+  // Removed kabisilyaId
 }
 
 export interface WorkerUpdateData {
@@ -268,7 +266,7 @@ export interface WorkerUpdateData {
   address?: string;
   status?: 'active' | 'inactive' | 'on-leave' | 'terminated';
   hireDate?: string;
-  kabisilyaId?: number;
+  // Removed kabisilyaId
 }
 
 export interface WorkerSearchParams {
@@ -278,7 +276,7 @@ export interface WorkerSearchParams {
   sortBy?: string;
   sortOrder?: 'ASC' | 'DESC';
   status?: string;
-  kabisilyaId?: number;
+  // Removed kabisilyaId
 }
 
 export interface WorkerBulkCreateData {
@@ -295,7 +293,7 @@ export interface WorkerBulkUpdateData {
 export interface WorkerExportParams {
   workerIds?: number[];
   status?: string;
-  kabisilyaId?: number;
+  // Removed kabisilyaId
   startDate?: string;
   endDate?: string;
   includeFields?: string | string[];
@@ -420,25 +418,7 @@ class WorkerAPI {
     }
   }
 
-  async getWorkerByKabisilya(kabisilyaId: number, status?: string): Promise<WorkerResponse<WorkerListResponseData>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.worker) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.worker({
-        method: "getWorkerByKabisilya",
-        params: this.enrichParams({ kabisilyaId, status }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to get workers by kabisilya");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get workers by kabisilya");
-    }
-  }
+  // REMOVED: getWorkerByKabisilya method
 
   async getWorkerByStatus(status: string, page?: number, limit?: number): Promise<WorkerResponse<WorkerListResponseData>> {
     try {
@@ -545,7 +525,7 @@ class WorkerAPI {
     limit?: number;
     sortBy?: string;
     sortOrder?: 'ASC' | 'DESC';
-    includeKabisilya?: boolean;
+    // Removed includeKabisilya
   }): Promise<WorkerResponse<WorkerListResponseData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.worker) {
@@ -606,25 +586,7 @@ class WorkerAPI {
     }
   }
 
-  async getKabisilyaInfo(workerId: number): Promise<WorkerResponse<any>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.worker) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.worker({
-        method: "getKabisilyaInfo",
-        params: this.enrichParams({ workerId }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to get kabisilya information");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get kabisilya information");
-    }
-  }
+  // REMOVED: getKabisilyaInfo method
 
   async getWorkerDebtSummary(workerId: number, includeHistory?: boolean): Promise<WorkerResponse<{ debts: any[]; summary: WorkerDebtSummaryData }>> {
     try {
@@ -868,45 +830,8 @@ class WorkerAPI {
     }
   }
 
-  async assignToKabisilya(workerId: number, kabisilyaId: number): Promise<WorkerResponse<any>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.worker) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.worker({
-        method: "assignToKabisilya",
-        params: this.enrichParams({ workerId, kabisilyaId }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to assign worker to kabisilya");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to assign worker to kabisilya");
-    }
-  }
-
-  async removeFromKabisilya(workerId: number): Promise<WorkerResponse<any>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.worker) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.worker({
-        method: "removeFromKabisilya",
-        params: this.enrichParams({ workerId }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to remove worker from kabisilya");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to remove worker from kabisilya");
-    }
-  }
+  // REMOVED: assignToKabisilya method
+  // REMOVED: removeFromKabisilya method
 
   // 🔄 BATCH OPERATIONS
 
@@ -1190,19 +1115,7 @@ class WorkerAPI {
     }
   }
 
-  async getWorkersByKabisilyaName(kabisilyaName: string): Promise<WorkerData[]> {
-    try {
-      // Note: This might require a different endpoint or filtering
-      // For now, we'll get all workers and filter by kabisilya name
-      const response = await this.getAllWorkers({ limit: 1000 });
-      return response.data.workers.filter(worker => 
-        worker.kabisilya?.name === kabisilyaName
-      );
-    } catch (error) {
-      console.error("Error getting workers by kabisilya name:", error);
-      return [];
-    }
-  }
+  // REMOVED: getWorkersByKabisilyaName method
 
   async getWorkersWithDebt(debtThreshold: number = 0): Promise<WorkerData[]> {
     try {

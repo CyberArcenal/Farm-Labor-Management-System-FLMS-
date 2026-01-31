@@ -1,7 +1,6 @@
 // components/Worker/components/WorkerFilters.tsx
 import React, { useState } from 'react';
 import { Search, Filter, RefreshCw, List, Grid, ChevronDown, ChevronUp } from 'lucide-react';
-import KabisilyaSelect from '../../../../components/Selects/Kabisilya';
 
 
 interface WorkerFiltersProps {
@@ -9,8 +8,6 @@ interface WorkerFiltersProps {
     setSearchQuery: (value: string) => void;
     statusFilter: string;
     setStatusFilter: (value: string) => void;
-    kabisilyaFilter: number | null;
-    setKabisilyaFilter: (value: number | null) => void;
     viewMode: 'table' | 'grid';
     setViewMode: (mode: 'table' | 'grid') => void;
     handleRefresh: () => void;
@@ -30,8 +27,6 @@ const WorkerFilters: React.FC<WorkerFiltersProps> = ({
     setSearchQuery,
     statusFilter,
     setStatusFilter,
-    kabisilyaFilter,
-    setKabisilyaFilter,
     viewMode,
     setViewMode,
     handleRefresh,
@@ -52,7 +47,6 @@ const WorkerFilters: React.FC<WorkerFiltersProps> = ({
     const clearFilters = () => {
         setSearchQuery('');
         setStatusFilter('all');
-        setKabisilyaFilter(null);
         setDateFrom('');
         setDateTo('');
         setHasDebtFilter(null);
@@ -141,16 +135,6 @@ const WorkerFilters: React.FC<WorkerFiltersProps> = ({
             {showAdvancedFilters && (
                 <div className="pt-6 border-t border-gray-200">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                        <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-2">
-                                Kabisilya
-                            </label>
-                            <KabisilyaSelect
-                                value={kabisilyaFilter}
-                                onChange={setKabisilyaFilter}
-                                placeholder="All kabisilyas"
-                            />
-                        </div>
                         <div>
                             <label className="block text-xs font-medium text-gray-700 mb-2">
                                 Hire Date From

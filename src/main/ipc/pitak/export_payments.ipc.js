@@ -50,6 +50,7 @@ module.exports = async (/** @type {{ pitakId: any; dateRange?: {} | undefined; _
       .getMany();
 
     // Prepare CSV data
+    // @ts-ignore
     const csvData = payments.map((/** @type {{ id: any; paymentDate: { toISOString: () => string; }; grossPay: string; netPay: string; manualDeduction: any; totalDebtDeduction: any; otherDeductions: any; status: any; paymentMethod: any; referenceNumber: any; periodStart: { toISOString: () => string; }; periodEnd: { toISOString: () => string; }; workerId: any; worker: { name: any; }; pitakId: any; pitak: { location: any; }; notes: any; createdAt: { toISOString: () => string; }; updatedAt: { toISOString: () => string; }; }} */ payment) => ({
       'Payment ID': payment.id,
       'Payment Date': payment.paymentDate ? payment.paymentDate.toISOString().split('T')[0] : '',
@@ -85,6 +86,7 @@ module.exports = async (/** @type {{ pitakId: any; dateRange?: {} | undefined; _
     const filename = `pitak_${pitakLocation}_payments_${timestamp}.csv`;
 
     // Calculate summary
+    // @ts-ignore
     const summary = payments.reduce((/** @type {{ totalPayments: number; totalGrossPay: number; totalNetPay: number; totalDeductions: number; completed: number; }} */ sum, /** @type {{ grossPay: string; netPay: string; totalDebtDeduction: string; otherDeductions: string; status: string; }} */ payment) => {
       sum.totalPayments++;
       sum.totalGrossPay += parseFloat(payment.grossPay);
@@ -125,15 +127,22 @@ module.exports = async (/** @type {{ pitakId: any; dateRange?: {} | undefined; _
         pitak: {
           id: pitak.id,
           location: pitak.location,
+          // @ts-ignore
           totalLuwang: parseFloat(pitak.totalLuwang)
         },
         summary: {
+          // @ts-ignore
           totalPayments: summary.totalPayments,
+          // @ts-ignore
           totalGrossPay: summary.totalGrossPay.toFixed(2),
+          // @ts-ignore
           totalNetPay: summary.totalNetPay.toFixed(2),
+          // @ts-ignore
           totalDeductions: summary.totalDeductions.toFixed(2),
+          // @ts-ignore
           completed: summary.completed
         },
+        // @ts-ignore
         payments: payments.map((/** @type {{ id: any; paymentDate: any; grossPay: string; netPay: string; status: any; worker: { id: any; name: any; }; }} */ p) => ({
           id: p.id,
           paymentDate: p.paymentDate,

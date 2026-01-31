@@ -8,6 +8,7 @@ module.exports = async function getBukidSummary(params = {}) {
   try {
     const bukidRepository = AppDataSource.getRepository(Bukid);
     // @ts-ignore
+    // @ts-ignore
     const { id, _userId } = params;
     
     if (!id) {
@@ -20,7 +21,7 @@ module.exports = async function getBukidSummary(params = {}) {
 
     const bukid = await bukidRepository.findOne({
       where: { id },
-      relations: ['kabisilya', 'pitaks', 'pitaks.assignments']
+      relations: ['pitaks', 'pitaks.assignments']
     });
 
     if (!bukid) {
@@ -37,13 +38,15 @@ module.exports = async function getBukidSummary(params = {}) {
       name: bukid.name,
       location: bukid.location,
       status: bukid.status,
-      kabisilya: bukid.kabisilya?.name || 'Unassigned',
-      kabisilyaId: bukid.kabisilya?.id || null,
+      // @ts-ignore
       pitakCount: bukid.pitaks?.length || 0,
+      // @ts-ignore
       totalLuwang: bukid.pitaks?.reduce((/** @type {number} */ sum, /** @type {{ totalLuwang: any; }} */ pitak) => 
         sum + parseFloat(pitak.totalLuwang || 0), 0) || 0,
+      // @ts-ignore
       assignmentCount: bukid.pitaks?.reduce((/** @type {any} */ sum, /** @type {{ assignments: string | any[]; }} */ pitak) => 
         sum + (pitak.assignments?.length || 0), 0) || 0,
+      // @ts-ignore
       activeAssignments: bukid.pitaks?.reduce((/** @type {any} */ sum, /** @type {{ assignments: { filter: (arg0: (a: any) => boolean) => { (): any; new (): any; length: any; }; }; }} */ pitak) => 
         sum + (pitak.assignments?.filter((/** @type {{ status: string; }} */ a) => a.status === 'active')?.length || 0), 0) || 0,
       createdAt: bukid.createdAt,

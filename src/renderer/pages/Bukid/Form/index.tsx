@@ -8,17 +8,13 @@ import {
 import { showError, showSuccess } from '../../../utils/notification';
 import { dialogs } from '../../../utils/dialogs';
 import type { BukidData } from '../../../apis/bukid';
-import type { KabisilyaData } from '../../../apis/kabisilya';
-import kabisilyaAPI from '../../../apis/kabisilya';
 import bukidAPI from '../../../apis/bukid';
-import KabisilyaSelect from '../../../components/Selects/Kabisilya';
 
 interface BukidFormPageProps { }
 
 interface FormData {
     name: string;
     location: string;
-    kabisilyaId: number | null;
     status: 'active' | 'inactive' | 'pending';
     notes: string;
 }
@@ -31,12 +27,10 @@ const BukidFormPage: React.FC<BukidFormPageProps> = () => {
     const [formData, setFormData] = useState<FormData>({
         name: '',
         location: '',
-        kabisilyaId: null,
         status: 'active',
         notes: ''
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [kabisilyas, setKabisilyas] = useState<KabisilyaData[]>([]);
     const [bukid, setBukid] = useState<BukidData | null>(null);
     const [stats, setStats] = useState<{
         pitakCount: number;
@@ -52,12 +46,6 @@ const BukidFormPage: React.FC<BukidFormPageProps> = () => {
             try {
                 setLoading(true);
 
-                // Fetch kabisilyas for dropdown
-                const kabisilyaResponse = await kabisilyaAPI.getAll();
-                if (kabisilyaResponse.status) {
-                    setKabisilyas(kabisilyaResponse.data);
-                }
-
                 // Fetch bukid data if in edit mode
                 if (mode === 'edit' && id) {
                     const bukidId = parseInt(id);
@@ -69,7 +57,6 @@ const BukidFormPage: React.FC<BukidFormPageProps> = () => {
                         setFormData({
                             name: bukidData.name || '',
                             location: bukidData.location || '',
-                            kabisilyaId: bukidData.kabisilyaId || null,
                             status: (bukidData.status as 'active' | 'inactive' | 'pending') || 'active',
                             notes: bukidData.notes || ''
                         });
@@ -114,10 +101,6 @@ const BukidFormPage: React.FC<BukidFormPageProps> = () => {
         }
     };
 
-    // Handle kabisilya selection
-    const handleKabisilyaSelect = (kabisilyaId: number | null) => {
-        handleChange('kabisilyaId', kabisilyaId);
-    };
 
     // Validate form
     const validateForm = (): boolean => {
@@ -157,7 +140,6 @@ const BukidFormPage: React.FC<BukidFormPageProps> = () => {
             const bukidData: any = {
                 name: formData.name.trim(),
                 location: formData.location.trim(),
-                kabisilyaId: formData.kabisilyaId,
                 status: formData.status,
                 notes: formData.notes.trim()
             };
@@ -220,8 +202,6 @@ const BukidFormPage: React.FC<BukidFormPageProps> = () => {
         }
     };
 
-    // Get selected kabisilya name
-    const selectedKabisilya = kabisilyas.find(k => k.id === formData.kabisilyaId);
 
     // Loading state
     if (loading) {
@@ -391,70 +371,6 @@ const BukidFormPage: React.FC<BukidFormPageProps> = () => {
                                 </div>
                             </div>
 
-                            {/* Kabisilya Assignment Card */}
-                            <div className="bg-white rounded-2xl border border-[var(--border-color)] shadow-sm">
-                                <div className="p-6 border-b border-[var(--border-color)] bg-gradient-to-r from-[var(--accent-sky-light)] to-transparent">
-                                    <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                                        <Users className="w-5 h-5" style={{ color: 'var(--accent-sky)' }} />
-                                        Kabisilya Assignment
-                                    </h2>
-                                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                                        Assign this farm to a Kabisilya manager
-                                    </p>
-                                </div>
-                                <div className="p-6 space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                            Assign to Kabisilya
-                                        </label>
-
-                                        <KabisilyaSelect
-                                            value={formData.kabisilyaId}
-                                            onChange={handleKabisilyaSelect}
-                                            placeholder="Search or select a Kabisilya..."
-                                            className="w-full"
-                                        />
-
-                                        <p className="mt-2 text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-                                            <Info className="w-3 h-3" />
-                                            Assign this bukid to a kabisilya for management and oversight
-                                        </p>
-                                    </div>
-
-                                    {selectedKabisilya && (
-                                        <div className="bg-[var(--card-secondary-bg)] p-4 rounded-lg border border-[var(--border-color)]">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <Users className="w-4 h-4" style={{ color: 'var(--accent-sky)' }} />
-                                                        <h3 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                            {selectedKabisilya.name}
-                                                        </h3>
-                                                    </div>
-                                                    {selectedKabisilya.phone && (
-                                                        <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
-                                                            📱 {selectedKabisilya.phone}
-                                                        </p>
-                                                    )}
-                                                    {selectedKabisilya.email && (
-                                                        <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                                                            ✉️ {selectedKabisilya.email}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleChange('kabisilyaId', null)}
-                                                    className="p-1.5 rounded-lg hover:bg-white transition-colors"
-                                                    style={{ color: 'var(--text-secondary)' }}
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
                         </div>
 
                         {/* Right Column */}

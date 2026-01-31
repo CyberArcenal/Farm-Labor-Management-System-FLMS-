@@ -20,7 +20,7 @@ module.exports = async function getBukidById(params = {}) {
 
     const bukid = await bukidRepository.findOne({
       where: { id },
-      relations: ['kabisilya', 'pitaks', 'pitaks.assignments', 'pitaks.assignments.worker']
+      relations: ['pitaks', 'pitaks.assignments', 'pitaks.assignments.worker']
     });
 
     if (!bukid) {

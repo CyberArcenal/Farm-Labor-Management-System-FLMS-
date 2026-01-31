@@ -22,7 +22,6 @@ module.exports = async function getAllWorkers(params = {}) {
     const workerRepository = AppDataSource.getRepository(Worker);
 
     const [workers, total] = await workerRepository.findAndCount({
-      relations: ['kabisilya'],
       order: { [sortBy]: sortOrder },
       skip: (page - 1) * limit,
       take: limit

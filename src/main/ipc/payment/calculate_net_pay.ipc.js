@@ -1,63 +1,76 @@
-// ipc/payment/calculate_net_pay.ipc.js
+// src/ipc/payment/calculate_net_pay.ipc.js
 //@ts-check
 
 module.exports = async function calculateNetPay(params = {}) {
   try {
-    const { 
+    const {
       // @ts-ignore
-      grossPay, 
+      grossPay,
       // @ts-ignore
-      manualDeduction = 0, 
+      manualDeduction = 0,
       // @ts-ignore
       debtDeductions = 0,
       // @ts-ignore
-      otherDeductions = 0 
+      otherDeductions = 0,
     } = params;
-    
-    if (!grossPay || grossPay <= 0) {
+
+    // Validate grossPay
+    const gross = parseFloat(grossPay);
+    if (isNaN(gross) || gross <= 0) {
       return {
         status: false,
-        message: 'Gross pay must be greater than 0',
-        data: null
+        message: "Gross pay must be a number greater than 0",
+        data: null,
       };
     }
 
-    // Calculate net pay
-    const totalDeductions = 
-      parseFloat(manualDeduction || 0) + 
-      parseFloat(debtDeductions || 0) + 
-      parseFloat(otherDeductions || 0);
-    
-    const netPay = parseFloat(grossPay) - totalDeductions;
+    // Parse and validate deductions (must be non-negative numbers)
+    const manual = parseFloat(manualDeduction || 0);
+    const debt = parseFloat(debtDeductions || 0);
+    const other = parseFloat(otherDeductions || 0);
 
-    // Ensure net pay is not negative
-    const finalNetPay = Math.max(0, netPay);
+    if ([manual, debt, other].some((v) => isNaN(v) || v < 0)) {
+      return {
+        status: false,
+        message: "Deductions must be non-negative numbers",
+        data: null,
+      };
+    }
 
-    // Create deduction breakdown
+    // Compute totals with safe rounding
+    const totalDeductionsRaw = manual + debt + other;
+    const totalDeductions = parseFloat(totalDeductionsRaw.toFixed(2));
+
+    // If deductions exceed gross, final net pay is 0 and we flag it
+    const rawNet = gross - totalDeductions;
+    const deductionExceeded = rawNet < 0;
+    const finalNetPay = parseFloat(Math.max(0, rawNet).toFixed(2));
+
     const deductionBreakdown = {
-      manualDeduction: parseFloat(manualDeduction || 0),
-      debtDeductions: parseFloat(debtDeductions || 0),
-      otherDeductions: parseFloat(otherDeductions || 0),
-      totalDeductions: totalDeductions
+      manualDeduction: parseFloat(manual.toFixed(2)),
+      debtDeductions: parseFloat(debt.toFixed(2)),
+      otherDeductions: parseFloat(other.toFixed(2)),
+      totalDeductions,
     };
 
     return {
       status: true,
-      message: 'Net pay calculated successfully',
+      message: "Net pay calculated successfully",
       data: {
-        grossPay: parseFloat(grossPay),
+        grossPay: parseFloat(gross.toFixed(2)),
         netPay: finalNetPay,
         totalDeductions,
-        deductionBreakdown
-      }
+        deductionBreakdown,
+        deductionExceeded, // true when deductions > grossPay
+      },
     };
   } catch (error) {
-    console.error('Error in calculateNetPay:', error);
+    console.error("Error in calculateNetPay:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to calculate net pay: ${error.message}`,
-      data: null
+      data: null,
     };
   }
 };

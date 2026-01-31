@@ -3,16 +3,13 @@ const { EntitySchema } = require("typeorm");
 
 const SettingType = {
   GENERAL: "general",
-  EMAIL: "email",
-  USERS_ROLES: "users_roles",
-  ATTENDANCE: "attendance",
-  DEVICE: "device",
-  SECURITY: "audit_security",
-  USER_SECURITY: "user_security",
-  NOTIFICATION: "notifications",
-  DATA_REPORTS: "data_reports",
-  INTEGRATIONS: "integrations",
-  INVENTORY_SYNC: "inventory_sync", // IDAGDAG ITO
+  FARM_SESSION: "farm_session",
+  FARM_BUKID: "farm_bukid",
+  FARM_PITAK: "farm_pitak",
+  FARM_ASSIGNMENT: "farm_assignment",
+  FARM_PAYMENT: "farm_payment",
+  FARM_DEBT: "farm_debt",
+  FARM_AUDIT: "farm_audit",
 };
 
 const SystemSetting = new EntitySchema({

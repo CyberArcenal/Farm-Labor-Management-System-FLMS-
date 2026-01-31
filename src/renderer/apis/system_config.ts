@@ -1,35 +1,14 @@
-// systemConfigAPI.ts - Comprehensive System Configuration API
+// Farm Management System Configuration API
 
-export interface PublicSystemSettings {
-  general: {
-    [key: string]: {
-      value: string | number | boolean;
-      description: string;
-    };
-  };
-  system: {
-    site_name: string;
-    currency: string;
-    cache_timestamp: string;
-  };
-}
-
-export interface FrontendSystemInfo {
-  site_name: string;
-  logo: string;
-  currency: string;
-  admin_email: string;
-  tax_enabled: boolean;
-  tax_rate: number;
-  shipping_threshold_enabled: boolean;
-  system_version: string;
-}
-// 📊 Setting Types
+// 📊 Farm Setting Types
 export const SettingType = {
-  GENERAL: "general",
-  DATA_REPORTS: "data_reports",
-  AUDIT_SECURITY: "audit_security",
-  USER_SECURITY: "user_security",
+  FARM_SESSION: "farm_session",
+  FARM_BUKID: "farm_bukid",
+  FARM_PITAK: "farm_pitak",
+  FARM_ASSIGNMENT: "farm_assignment",
+  FARM_PAYMENT: "farm_payment",
+  FARM_DEBT: "farm_debt",
+  FARM_AUDIT: "farm_audit",
 } as const;
 
 export type SettingType = (typeof SettingType)[keyof typeof SettingType];
@@ -49,293 +28,109 @@ export interface SystemSettingData {
 export interface GroupedSettingsData {
   settings: SystemSettingData[];
   grouped_settings: {
-    general: GeneralSettings;
-    users_roles: UsersRolesSettings;
-    booking_rules: BookingRulesSettings;
-    notifications: NotificationsSettings;
-    data_reports: DataReportsSettings;
-    integrations: IntegrationsSettings;
-    audit_security: AuditSecuritySettings;
-    user_security: UserSecuritySettings;
+    farm_session: FarmSessionSettings;
+    farm_bukid: FarmBukidSettings;
+    farm_pitak: FarmPitakSettings;
+    farm_assignment: FarmAssignmentSettings;
+    farm_payment: FarmPaymentSettings;
+    farm_debt: FarmDebtSettings;
+    farm_audit: FarmAuditSettings;
   };
-  system_info: SystemInfoData;
-}
-// 8. USER SECURITY SETTINGS
-export interface UserSecuritySettings {
-  // Account lockout
-  max_login_attempts?: number;
-  lockout_duration_minutes?: number;
-
-  // Password policy
-  password_min_length?: number;
-  password_expiry_days?: number;
-  password_require_uppercase?: boolean;
-  password_require_lowercase?: boolean;
-  password_require_numbers?: boolean;
-  password_require_symbols?: boolean;
-  password_history_size?: number;
-
-  // Two-factor authentication
-  enable_two_factor_auth?: boolean;
-  require_two_factor_auth?: boolean;
-  two_factor_methods?: string[]; // email, sms, authenticator
-
-  // Session security
-  session_timeout_minutes?: number;
-  allow_multiple_sessions?: boolean;
-  session_encryption_enabled?: boolean;
-
-  // Account lifecycle
-  auto_delete_inactive_users_days?: number;
-  require_email_verification?: boolean;
-  require_approval_for_new_users?: boolean;
-}
-export interface SystemInfoData {
-  version: string;
-  name: string;
-  environment: string;
-  debug_mode: boolean;
-  timezone: string;
-  current_time: string;
-  setting_types: string[];
 }
 
-// 1. GENERAL SETTINGS
-export interface GeneralSettings {
-  company_name?: string;
-  default_timezone?: string;
-  working_hours_start?: string;
-  working_hours_end?: string;
-  holidays?: string[];
-  date_format?: string;
-  time_format?: string;
-  currency?: string;
-  language?: string;
-  auto_logout_minutes?: number;
-  maintenance_mode?: boolean;
-  system_version?: string;
-  cache_timeout?: number;
+// 1. FARM SESSION SETTINGS
+export interface FarmSessionSettings {
+  default_session_id?: number;
+  season_type?: "tag-ulan" | "tag-araw" | "custom";
+  year?: number;
+  start_date?: string;
+  end_date?: string;
+  status?: "active" | "closed" | "archived";
+  notes?: string;
+  require_default_session?: boolean;
+  auto_close_previous?: boolean;
+  allow_multiple_active_sessions?: boolean;
 }
 
-// 2. USERS & ROLES SETTINGS
-export interface UsersRolesSettings {
-  // Role definitions
-  roles?: string[]; // Admin, HR, Employee, Manager, etc.
-
-  // Permission groups
-  permissions?: {
-    [role: string]: string[];
-  };
-
-  // Password policy
-  password_min_length?: number;
-  password_expiry_days?: number;
-  password_require_uppercase?: boolean;
-  password_require_lowercase?: boolean;
-  password_require_numbers?: boolean;
-  password_require_symbols?: boolean;
-  password_history_size?: number;
-  max_login_attempts?: number;
-  lockout_duration_minutes?: number;
-
-  // User management
-  allow_user_registration?: boolean;
-  require_email_verification?: boolean;
-  require_approval_for_new_users?: boolean;
-  default_user_role?: string;
-
-  // Session management
-  session_timeout_minutes?: number;
-  allow_multiple_sessions?: boolean;
+// 2. FARM BUKID SETTINGS
+export interface FarmBukidSettings {
+  name_format?: string;
+  enable_location_descriptor?: boolean;
+  auto_duplicate_per_session?: boolean;
+  default_status?: "active" | "inactive";
+  location_required?: boolean;
+  area_unit?: string; // hectares, acres, etc.
+  max_bukid_per_session?: number;
+  auto_generate_code?: boolean;
+  code_prefix?: string;
 }
 
-// 3. BOOKING RULES SETTINGS
-export interface BookingRulesSettings {
-  // Appointment settings
-  default_appointment_duration?: number; // minutes
-  min_appointment_duration?: number;
-  max_appointment_duration?: number;
-
-  // Buffer times
-  buffer_time_before_appointments?: number; // minutes
-  buffer_time_after_appointments?: number;
-
-  // Scheduling limits
-  max_concurrent_bookings?: number;
-  max_daily_appointments_per_employee?: number;
-  max_weekly_appointments_per_employee?: number;
-  max_future_days_booking?: number;
-  min_advance_booking_hours?: number;
-
-  // Assignment rules
-  allow_double_booking_employees?: boolean;
-  allow_double_booking_rooms?: boolean;
-  auto_assign_employees?: boolean;
-  auto_assign_rooms?: boolean;
-
-  // Cancellation rules
-  cancellation_deadline_hours?: number;
-  allow_online_cancellations?: boolean;
-  no_show_penalty?: string; // 'none', 'warning', 'restrict_booking'
-
-  // Confirmation rules
-  require_confirmation?: boolean;
-  auto_confirm_after_hours?: number;
+// 3. FARM PITAK SETTINGS
+export interface FarmPitakSettings {
+  default_total_luwang_capacity?: number;
+  location_format?: string;
+  status_options?: string[]; // ['active', 'inactive', 'completed']
+  auto_generate_pitak_ids?: boolean;
+  id_prefix?: string;
+  min_capacity?: number;
+  max_capacity?: number;
+  require_location?: boolean;
+  pitak_number_format?: string;
 }
 
-// 4. NOTIFICATIONS SETTINGS
-export interface NotificationsSettings {
-  // Email settings
-  email_enabled?: boolean;
-  email_smtp_host?: string;
-  email_smtp_port?: number;
-  email_smtp_username?: string;
-  email_smtp_password?: string;
-  email_from_address?: string;
-  email_from_name?: string;
-  email_use_ssl?: boolean;
-  email_use_tls?: boolean;
-  sendgrid_api_key?: string;
-
-  // SMS settings (if applicable)
-  sms_enabled?: boolean;
-  sms_provider?: string;
-  sms_api_key?: string;
-  sms_sender_id?: string;
-
-  // Notification templates
-  templates?: {
-    appointment_confirmation?: NotificationTemplate;
-    appointment_reminder?: NotificationTemplate;
-    appointment_cancellation?: NotificationTemplate;
-    password_reset?: NotificationTemplate;
-    user_welcome?: NotificationTemplate;
-    daily_summary?: NotificationTemplate;
-  };
-
-  // Reminder settings
-  reminders_enabled?: boolean;
-  reminder_times?: number[]; // hours before appointment
-  send_same_day_reminder?: boolean;
-  send_day_before_reminder?: boolean;
-  send_week_before_reminder?: boolean;
-
-  // Real-time notifications
-  push_notifications_enabled?: boolean;
-  browser_notifications_enabled?: boolean;
+// 4. FARM ASSIGNMENT SETTINGS
+export interface FarmAssignmentSettings {
+  default_luwang_per_worker?: number;
+  date_behavior?: "system_date" | "manual_entry";
+  status_options?: string[]; // ['active', 'completed', 'cancelled']
+  enable_notes_remarks?: boolean;
+  auto_assign_bukid?: boolean;
+  assignment_duration_days?: number;
+  allow_reassignment?: boolean;
+  max_workers_per_pitak?: number;
+  require_assignment_date?: boolean;
 }
 
-export interface NotificationTemplate {
-  subject?: string;
-  body?: string;
-  enabled?: boolean;
-  variables?: string[];
+// 5. FARM PAYMENT SETTINGS
+export interface FarmPaymentSettings {
+  default_wage_multiplier?: number;
+  deduction_rules?: "manual" | "auto_debt_deduction";
+  other_deductions_config?: string; // JSON string for breakdown
+  payment_methods?: string[]; // ['cash', 'gcash', 'bank', 'check']
+  require_reference_number?: boolean;
+  status_options?: string[]; // ['pending', 'processing', 'completed', 'cancelled', 'partially_paid']
+  payment_terms_days?: number;
+  auto_calculate_total?: boolean;
+  tax_percentage?: number;
+  require_payment_date?: boolean;
 }
 
-// 5. DATA & REPORTS SETTINGS
-export interface DataReportsSettings {
-  // Export formats
-  export_formats?: string[]; // CSV, Excel, PDF
-  default_export_format?: string;
-
-  // Auto-export schedule
-  auto_export_enabled?: boolean;
-  auto_export_schedule?: string; // daily, weekly, monthly
-  auto_export_day?: string; // Monday, Tuesday, etc.
-  auto_export_time?: string; // HH:MM
-  auto_export_keep_days?: number;
-
-  // Report types
-  available_reports?: string[];
-
-  // Data retention
-  data_retention_days?: number;
-  auto_archive_old_data?: boolean;
-  archive_after_days?: number;
-
-  // Backup settings
-  auto_backup_enabled?: boolean;
-  backup_schedule?: string;
-  backup_location?: string;
-  max_backup_files?: number;
-
-  // Privacy settings
-  anonymize_old_data?: boolean;
-  anonymize_after_days?: number;
+// 6. FARM DEBT SETTINGS
+export interface FarmDebtSettings {
+  default_interest_rate?: number;
+  payment_term_days?: number;
+  grace_period_days?: number;
+  carry_over_to_next_session?: boolean;
+  status_options?: string[]; // ['pending', 'partially_paid', 'paid', 'cancelled', 'overdue']
+  interest_calculation_method?: "simple" | "compound";
+  compound_frequency?: "daily" | "weekly" | "monthly";
+  max_debt_amount?: number;
+  require_debt_reason?: boolean;
+  auto_apply_interest?: boolean;
 }
 
-// 6. INTEGRATIONS SETTINGS
-export interface IntegrationsSettings {
-  // Calendar integrations
-  google_calendar_enabled?: boolean;
-  google_client_id?: string;
-  google_client_secret?: string;
-  google_calendar_id?: string;
-
-  outlook_calendar_enabled?: boolean;
-  outlook_client_id?: string;
-  outlook_client_secret?: string;
-
-  // Calendar sync settings
-  sync_direction?: string; // 'both', 'to_calendar', 'from_calendar'
-  sync_interval_minutes?: number;
-
-  // Payroll integration
-  payroll_integration_enabled?: boolean;
-  payroll_api_key?: string;
-  payroll_api_url?: string;
-  payroll_sync_frequency?: string;
-
-  // Webhooks
-  webhooks_enabled?: boolean;
-  webhooks?: WebhookSetting[];
-
-  // API settings
-  api_enabled?: boolean;
-  api_rate_limit?: number;
-  api_key_expiry_days?: number;
-}
-
-export interface WebhookSetting {
-  url: string;
-  events: string[];
-  enabled: boolean;
-  secret?: string;
-}
-
-// 7. AUDIT & SECURITY SETTINGS
-export interface AuditSecuritySettings {
-  // Audit logging
-  audit_log_enabled?: boolean;
-  log_retention_days?: number;
-  log_events?: string[]; // login, logout, create, update, delete, etc.
-
-  // Security settings
-  enable_two_factor_auth?: boolean;
-  require_two_factor_auth?: boolean;
-  two_factor_methods?: string[]; // email, sms, authenticator
-
-  // IP restrictions
-  ip_whitelist?: string[];
-  ip_blacklist?: string[];
-
-  // Rate limiting
-  rate_limit_enabled?: boolean;
-  rate_limit_requests?: number;
-  rate_limit_period?: number; // seconds
-
-  // Backup settings
-  backup_frequency?: string;
-  backup_encryption_enabled?: boolean;
-  backup_encryption_key?: string;
-
-  // Session security
-  session_encryption_enabled?: boolean;
-  force_https?: boolean;
-
-  // Compliance
-  gdpr_compliance_enabled?: boolean;
-  auto_delete_inactive_users_days?: number;
+// 7. FARM AUDIT SETTINGS
+export interface FarmAuditSettings {
+  log_actions_enabled?: boolean;
+  track_entity_id?: boolean;
+  capture_ip_address?: boolean;
+  capture_user_agent?: boolean;
+  tie_to_session?: boolean;
+  audit_retention_days?: number;
+  log_events?: string[]; // ['create', 'update', 'delete', 'view', 'export']
+  enable_real_time_logging?: boolean;
+  notify_on_critical_events?: boolean;
+  critical_events?: string[];
 }
 
 // 📊 API Responses
@@ -343,12 +138,6 @@ export interface SystemConfigResponse {
   status: boolean;
   message: string;
   data: GroupedSettingsData | null;
-}
-
-export interface SystemInfoResponse {
-  status: boolean;
-  message: string;
-  data: SystemInfoData | null;
 }
 
 export interface SettingsListResponse {
@@ -434,7 +223,25 @@ export interface BulkUpdateData {
     isPublic?: boolean;
   }>;
 }
+// 📌 Default Session Interface (pang-display sa frontend)
+export interface DefaultSessionData {
+  id: number;
+  seasonType: string;
+  year: number;
+  startDate: string | null;
+  endDate: string | null;
+  status: string;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
+// 📌 Response wrapper (same format as backend)
+export interface DefaultSessionResponse {
+  status: boolean;
+  message: string;
+  data: DefaultSessionData | null;
+}
 export interface UpdateCategorySettingsData {
   [category: string]: Record<string, any>;
 }
@@ -461,18 +268,42 @@ class SystemConfigAPI {
         return response;
       }
       throw new Error(
-        response.message || "Failed to fetch system configuration"
+        response.message || "Failed to fetch system configuration",
       );
     } catch (error: any) {
       throw new Error(error.message || "Failed to fetch system configuration");
     }
   }
 
+  /** 🔑 Get default session data (pang-display sa frontend) */
+  async getDefaultSessionData(): Promise<DefaultSessionResponse> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.systemConfig) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.systemConfig({
+        method: "getDefaultSessionData",
+        params: {},
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(
+        response.message || "Failed to fetch default session data",
+      );
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to fetch default session data");
+    }
+  }
+
   /**
    * Update multiple settings by category
    */
+
   async updateGroupedConfig(
-    configData: UpdateCategorySettingsData
+    configData: UpdateCategorySettingsData,
   ): Promise<SystemConfigResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -481,40 +312,17 @@ class SystemConfigAPI {
 
       const response = await window.backendAPI.systemConfig({
         method: "updateGroupedConfig",
-        params: JSON.stringify(configData),
+        params: { configData: JSON.stringify(configData) }, // Baguhin ito
       });
 
       if (response.status) {
         return response;
       }
       throw new Error(
-        response.message || "Failed to update system configuration"
+        response.message || "Failed to update system configuration",
       );
     } catch (error: any) {
       throw new Error(error.message || "Failed to update system configuration");
-    }
-  }
-
-  /**
-   * Get system information
-   */
-  async getSystemInfo(): Promise<SystemInfoResponse> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.systemConfig) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.systemConfig({
-        method: "getSystemInfo",
-        params: {},
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to fetch system information");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch system information");
     }
   }
 
@@ -542,34 +350,11 @@ class SystemConfigAPI {
   }
 
   /**
-   * Get public settings only
-   */
-  async getPublicSettings(): Promise<SettingsListResponse> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.systemConfig) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.systemConfig({
-        method: "getPublicSettings",
-        params: {},
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to fetch public settings");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch public settings");
-    }
-  }
-
-  /**
    * Get setting by key
    */
   async getSettingByKey(
     key: string,
-    settingType?: SettingType
+    settingType?: SettingType,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -594,7 +379,7 @@ class SystemConfigAPI {
    * Create a new setting
    */
   async createSetting(
-    settingData: CreateSettingData
+    settingData: CreateSettingData,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -620,7 +405,7 @@ class SystemConfigAPI {
    */
   async updateSetting(
     id: number,
-    settingData: UpdateSettingData
+    settingData: UpdateSettingData,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -692,7 +477,7 @@ class SystemConfigAPI {
    */
   async getValueByKey(
     key: string,
-    defaultValue?: any
+    defaultValue?: any,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -719,7 +504,7 @@ class SystemConfigAPI {
   async setValueByKey(
     key: string,
     value: any,
-    options?: Partial<SetValueByKeyData>
+    options?: Partial<SetValueByKeyData>,
   ): Promise<SettingResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -744,7 +529,7 @@ class SystemConfigAPI {
    * Bulk update multiple settings
    */
   async bulkUpdate(
-    settingsData: BulkUpdateData["settingsData"]
+    settingsData: BulkUpdateData["settingsData"],
   ): Promise<BulkOperationResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.systemConfig) {
@@ -811,194 +596,181 @@ class SystemConfigAPI {
     }
   }
 
-  // 🎯 Category-Specific Methods
+  // 🎯 Farm Management Category Methods
 
   /**
-   * Get general settings
+   * Get farm session settings
    */
-  async getGeneralSettings(): Promise<GeneralSettings> {
+  async getFarmSessionSettings(): Promise<FarmSessionSettings> {
     try {
       const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.general) {
-        return config.data.grouped_settings.general;
+      if (config.data?.grouped_settings?.farm_session) {
+        return config.data.grouped_settings.farm_session;
       }
       return {};
     } catch (error) {
-      console.error("Error getting general settings:", error);
-      return {};
-    }
-  }
-
-    async getUserSecuritySettings(): Promise<UserSecuritySettings> {
-    try {
-      const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.user_security) {
-        return config.data.grouped_settings.user_security;
-      }
-      return {};
-    } catch (error) {
-      console.error("Error getting general settings:", error);
+      console.error("Error getting farm session settings:", error);
       return {};
     }
   }
 
   /**
-   * Get users and roles settings
+   * Get farm bukid settings
    */
-  async getUsersRolesSettings(): Promise<UsersRolesSettings> {
+  async getFarmBukidSettings(): Promise<FarmBukidSettings> {
     try {
       const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.users_roles) {
-        return config.data.grouped_settings.users_roles;
+      if (config.data?.grouped_settings?.farm_bukid) {
+        return config.data.grouped_settings.farm_bukid;
       }
       return {};
     } catch (error) {
-      console.error("Error getting users & roles settings:", error);
+      console.error("Error getting farm bukid settings:", error);
       return {};
     }
   }
 
   /**
-   * Get booking rules settings
+   * Get farm pitak settings
    */
-  async getBookingRulesSettings(): Promise<BookingRulesSettings> {
+  async getFarmPitakSettings(): Promise<FarmPitakSettings> {
     try {
       const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.booking_rules) {
-        return config.data.grouped_settings.booking_rules;
+      if (config.data?.grouped_settings?.farm_pitak) {
+        return config.data.grouped_settings.farm_pitak;
       }
       return {};
     } catch (error) {
-      console.error("Error getting booking rules settings:", error);
+      console.error("Error getting farm pitak settings:", error);
       return {};
     }
   }
 
   /**
-   * Get notifications settings
+   * Get farm assignment settings
    */
-  async getNotificationsSettings(): Promise<NotificationsSettings> {
+  async getFarmAssignmentSettings(): Promise<FarmAssignmentSettings> {
     try {
       const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.notifications) {
-        return config.data.grouped_settings.notifications;
+      if (config.data?.grouped_settings?.farm_assignment) {
+        return config.data.grouped_settings.farm_assignment;
       }
       return {};
     } catch (error) {
-      console.error("Error getting notifications settings:", error);
+      console.error("Error getting farm assignment settings:", error);
       return {};
     }
   }
 
   /**
-   * Get data and reports settings
+   * Get farm payment settings
    */
-  async getDataReportsSettings(): Promise<DataReportsSettings> {
+  async getFarmPaymentSettings(): Promise<FarmPaymentSettings> {
     try {
       const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.data_reports) {
-        return config.data.grouped_settings.data_reports;
+      if (config.data?.grouped_settings?.farm_payment) {
+        return config.data.grouped_settings.farm_payment;
       }
       return {};
     } catch (error) {
-      console.error("Error getting data & reports settings:", error);
+      console.error("Error getting farm payment settings:", error);
       return {};
     }
   }
 
   /**
-   * Get integrations settings
+   * Get farm debt settings
    */
-  async getIntegrationsSettings(): Promise<IntegrationsSettings> {
+  async getFarmDebtSettings(): Promise<FarmDebtSettings> {
     try {
       const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.integrations) {
-        return config.data.grouped_settings.integrations;
+      if (config.data?.grouped_settings?.farm_debt) {
+        return config.data.grouped_settings.farm_debt;
       }
       return {};
     } catch (error) {
-      console.error("Error getting integrations settings:", error);
+      console.error("Error getting farm debt settings:", error);
       return {};
     }
   }
 
   /**
-   * Get audit and security settings
+   * Get farm audit settings
    */
-  async getAuditSecuritySettings(): Promise<AuditSecuritySettings> {
+  async getFarmAuditSettings(): Promise<FarmAuditSettings> {
     try {
       const config = await this.getGroupedConfig();
-      if (config.data?.grouped_settings?.audit_security) {
-        return config.data.grouped_settings.audit_security;
+      if (config.data?.grouped_settings?.farm_audit) {
+        return config.data.grouped_settings.farm_audit;
       }
       return {};
     } catch (error) {
-      console.error("Error getting audit & security settings:", error);
+      console.error("Error getting farm audit settings:", error);
       return {};
     }
   }
 
   /**
-   * Update general settings
+   * Update farm session settings
    */
-  async updateGeneralSettings(
-    settings: Partial<GeneralSettings>
+  async updateFarmSessionSettings(
+    settings: Partial<FarmSessionSettings>,
   ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("general", settings);
+    return this.updateCategorySettings("farm_session", settings);
   }
 
   /**
-   * Update users and roles settings
+   * Update farm bukid settings
    */
-  async updateUsersRolesSettings(
-    settings: Partial<UsersRolesSettings>
+  async updateFarmBukidSettings(
+    settings: Partial<FarmBukidSettings>,
   ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("users_roles", settings);
+    return this.updateCategorySettings("farm_bukid", settings);
   }
 
   /**
-   * Update booking rules settings
+   * Update farm pitak settings
    */
-  async updateBookingRulesSettings(
-    settings: Partial<BookingRulesSettings>
+  async updateFarmPitakSettings(
+    settings: Partial<FarmPitakSettings>,
   ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("booking_rules", settings);
+    return this.updateCategorySettings("farm_pitak", settings);
   }
 
   /**
-   * Update notifications settings
+   * Update farm assignment settings
    */
-  async updateNotificationsSettings(
-    settings: Partial<NotificationsSettings>
+  async updateFarmAssignmentSettings(
+    settings: Partial<FarmAssignmentSettings>,
   ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("notifications", settings);
+    return this.updateCategorySettings("farm_assignment", settings);
   }
 
   /**
-   * Update data and reports settings
+   * Update farm payment settings
    */
-  async updateDataReportsSettings(
-    settings: Partial<DataReportsSettings>
+  async updateFarmPaymentSettings(
+    settings: Partial<FarmPaymentSettings>,
   ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("data_reports", settings);
+    return this.updateCategorySettings("farm_payment", settings);
   }
 
   /**
-   * Update integrations settings
+   * Update farm debt settings
    */
-  async updateIntegrationsSettings(
-    settings: Partial<IntegrationsSettings>
+  async updateFarmDebtSettings(
+    settings: Partial<FarmDebtSettings>,
   ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("integrations", settings);
+    return this.updateCategorySettings("farm_debt", settings);
   }
 
   /**
-   * Update audit and security settings
+   * Update farm audit settings
    */
-  async updateAuditSecuritySettings(
-    settings: Partial<AuditSecuritySettings>
+  async updateFarmAuditSettings(
+    settings: Partial<FarmAuditSettings>,
   ): Promise<SystemConfigResponse> {
-    return this.updateCategorySettings("audit_security", settings);
+    return this.updateCategorySettings("farm_audit", settings);
   }
 
   /**
@@ -1006,7 +778,7 @@ class SystemConfigAPI {
    */
   async updateCategorySettings(
     category: string,
-    settings: Record<string, any>
+    settings: Record<string, any>,
   ): Promise<SystemConfigResponse> {
     const configData = {
       [category]: settings,
@@ -1043,7 +815,7 @@ class SystemConfigAPI {
   async getSetting(
     category: string,
     key: string,
-    defaultValue?: any
+    defaultValue?: any,
   ): Promise<any> {
     try {
       const fullKey = `${category}.${key}`;
@@ -1062,7 +834,7 @@ class SystemConfigAPI {
     category: string,
     key: string,
     value: any,
-    description?: string
+    description?: string,
   ): Promise<SettingResponse> {
     const options = {
       setting_type: category as SettingType,
@@ -1078,7 +850,7 @@ class SystemConfigAPI {
    */
   async settingExists(
     key: string,
-    settingType?: SettingType
+    settingType?: SettingType,
   ): Promise<boolean> {
     try {
       const response = await this.getSettingByKey(key, settingType);
@@ -1094,7 +866,7 @@ class SystemConfigAPI {
   async getBooleanSetting(
     category: string,
     key: string,
-    defaultValue: boolean = false
+    defaultValue: boolean = false,
   ): Promise<boolean> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1120,7 +892,7 @@ class SystemConfigAPI {
   async getNumberSetting(
     category: string,
     key: string,
-    defaultValue: number = 0
+    defaultValue: number = 0,
   ): Promise<number> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1138,7 +910,7 @@ class SystemConfigAPI {
   async getStringSetting(
     category: string,
     key: string,
-    defaultValue: string = ""
+    defaultValue: string = "",
   ): Promise<string> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1155,7 +927,7 @@ class SystemConfigAPI {
   async getArraySetting(
     category: string,
     key: string,
-    defaultValue: any[] = []
+    defaultValue: any[] = [],
   ): Promise<any[]> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1182,7 +954,7 @@ class SystemConfigAPI {
   async getObjectSetting(
     category: string,
     key: string,
-    defaultValue: object = {}
+    defaultValue: object = {},
   ): Promise<object> {
     try {
       const value = await this.getSetting(category, key, defaultValue);
@@ -1212,30 +984,96 @@ class SystemConfigAPI {
   }
 
   /**
-   * Initialize default settings if they don't exist
+   * Initialize default farm settings if they don't exist
    */
   async initializeDefaultSettings(): Promise<void> {
     try {
-      // Default general settings
       const defaultSettings = [
+        // Farm session defaults
         {
-          key: "company_name",
-          value: "POS Management",
-          setting_type: SettingType.GENERAL,
-          description: "Company name",
+          key: "require_default_session",
+          value: true,
+          setting_type: SettingType.FARM_SESSION,
+          description: "Require default session for all farm operations",
         },
         {
-          key: "default_timezone",
-          value: "Asia/Manila",
-          setting_type: SettingType.GENERAL,
-          description: "Default timezone",
+          key: "season_type",
+          value: "tag-ulan",
+          setting_type: SettingType.FARM_SESSION,
+          description: "Default season type",
+        },
+        // Farm bukid defaults
+        {
+          key: "default_status",
+          value: "active",
+          setting_type: SettingType.FARM_BUKID,
+          description: "Default bukid status",
+        },
+        {
+          key: "auto_duplicate_per_session",
+          value: true,
+          setting_type: SettingType.FARM_BUKID,
+          description: "Auto duplicate bukid per session",
+        },
+        // Farm pitak defaults
+        {
+          key: "default_total_luwang_capacity",
+          value: 100,
+          setting_type: SettingType.FARM_PITAK,
+          description: "Default total luwang capacity per pitak",
+        },
+        // Farm assignment defaults
+        {
+          key: "default_luwang_per_worker",
+          value: 5,
+          setting_type: SettingType.FARM_ASSIGNMENT,
+          description: "Default luwang count per worker",
+        },
+        // Farm payment defaults
+        {
+          key: "default_wage_multiplier",
+          value: 1.0,
+          setting_type: SettingType.FARM_PAYMENT,
+          description: "Default wage multiplier",
+        },
+        {
+          key: "payment_methods",
+          value: JSON.stringify(["cash", "gcash"]),
+          setting_type: SettingType.FARM_PAYMENT,
+          description: "Available payment methods",
+        },
+        // Farm debt defaults
+        {
+          key: "default_interest_rate",
+          value: 5,
+          setting_type: SettingType.FARM_DEBT,
+          description: "Default interest rate percentage",
+        },
+        {
+          key: "carry_over_to_next_session",
+          value: true,
+          setting_type: SettingType.FARM_DEBT,
+          description: "Carry over debt to next session",
+        },
+        // Farm audit defaults
+        {
+          key: "log_actions_enabled",
+          value: true,
+          setting_type: SettingType.FARM_AUDIT,
+          description: "Enable logging of farm actions",
+        },
+        {
+          key: "tie_to_session",
+          value: true,
+          setting_type: SettingType.FARM_AUDIT,
+          description: "Tie audit logs to session",
         },
       ];
 
       for (const setting of defaultSettings) {
         const exists = await this.settingExists(
           setting.key,
-          setting.setting_type
+          setting.setting_type,
         );
         if (!exists) {
           await this.createSetting({
@@ -1273,7 +1111,7 @@ class SystemConfigAPI {
    * Import settings from JSON file
    */
   async importSettingsFromFile(
-    jsonData: string
+    jsonData: string,
   ): Promise<SystemConfigResponse> {
     try {
       const configData = JSON.parse(jsonData);
@@ -1309,38 +1147,7 @@ class SystemConfigAPI {
   }
 
   /**
-   * Get system health status
-   */
-  async getSystemHealth(): Promise<{
-    settings_count: number;
-    last_updated: string;
-    has_errors: boolean;
-    categories: string[];
-  }> {
-    try {
-      const stats = await this.getSettingsStats();
-      const config = await this.getGroupedConfig();
-
-      return {
-        settings_count: stats.data?.total || 0,
-        last_updated:
-          config.data?.system_info?.current_time || new Date().toISOString(),
-        has_errors: false,
-        categories: config.data?.system_info?.setting_types || [],
-      };
-    } catch (error) {
-      console.error("Error getting system health:", error);
-      return {
-        settings_count: 0,
-        last_updated: new Date().toISOString(),
-        has_errors: true,
-        categories: [],
-      };
-    }
-  }
-
-  /**
-   * Validate settings configuration
+   * Validate farm settings configuration
    */
   async validateSettings(): Promise<{
     valid: boolean;
@@ -1360,11 +1167,12 @@ class SystemConfigAPI {
 
       const settings = config.data.settings || [];
 
-      // Check for required settings
+      // Check for required farm settings
       const requiredSettings = [
-        { category: "general", key: "company_name" },
-        { category: "general", key: "default_timezone" },
-        { category: "booking_rules", key: "default_appointment_duration" },
+        { category: "farm_session", key: "require_default_session" },
+        { category: "farm_bukid", key: "default_status" },
+        { category: "farm_pitak", key: "default_total_luwang_capacity" },
+        { category: "farm_assignment", key: "default_luwang_per_worker" },
       ];
 
       for (const required of requiredSettings) {
@@ -1372,34 +1180,28 @@ class SystemConfigAPI {
           (s) =>
             s.setting_type === required.category &&
             s.key === required.key &&
-            !s.is_deleted
+            !s.is_deleted,
         );
 
         if (!exists) {
           warnings.push(
-            `Missing setting: ${required.category}.${required.key}`
+            `Missing setting: ${required.category}.${required.key}`,
           );
         }
       }
 
-      // Validate email settings if email is enabled
-      const emailEnabled = await this.getBooleanSetting(
-        "notifications",
-        "email_enabled"
+      // Validate that default_session_id is set if required
+      const requireDefaultSession = await this.getBooleanSetting(
+        "farm_session",
+        "require_default_session",
       );
-      if (emailEnabled) {
-        const emailSettings = [
-          "email_smtp_host",
-          "email_smtp_port",
-          "email_from_address",
-        ];
-        for (const setting of emailSettings) {
-          const value = await this.getStringSetting("notifications", setting);
-          if (!value) {
-            warnings.push(
-              `Email setting ${setting} is empty but email is enabled`
-            );
-          }
+      if (requireDefaultSession) {
+        const defaultSessionId = await this.getNumberSetting(
+          "farm_session",
+          "default_session_id",
+        );
+        if (!defaultSessionId) {
+          warnings.push("Default session ID is required but not set");
         }
       }
 
@@ -1418,50 +1220,48 @@ class SystemConfigAPI {
     }
   }
 
-    async getPublicSystemSettings(): Promise<PublicSystemSettings> {
-    try {
-  if (!window.backendAPI || !window.backendAPI.systemConfig) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.systemConfig({
-        method: "getPublicSystemSettings",
-        params: {},
-      });
-
-      if (response.status) {
-        return response.data;
-      }
-      throw new Error(response.message || "Failed to fetch public settings");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch public settings");
-    }
-  }
-
-    async getSystemInfoForFrontend(): Promise<{
-    system_info: FrontendSystemInfo;
-    public_settings: any;
-    cache_timestamp: string;
+  /**
+   * Get farm system health status
+   */
+  async getSystemHealth(): Promise<{
+    settings_count: number;
+    last_updated: string;
+    has_errors: boolean;
+    categories: string[];
   }> {
     try {
-  if (!window.backendAPI || !window.backendAPI.systemConfig) {
-        throw new Error("Electron API not available");
+      const stats = await this.getSettingsStats();
+      const config = await this.getGroupedConfig();
+
+      // Get all settings to find the most recent update
+      const allSettings = await this.getAllSettings();
+      let lastUpdated = "";
+      if (allSettings.data && allSettings.data.length > 0) {
+        // Find the most recent updated_at timestamp
+        const timestamps = allSettings.data
+          .map((s) => s.updated_at || s.created_at || "")
+          .filter((t) => t);
+        if (timestamps.length > 0) {
+          lastUpdated = timestamps.sort().reverse()[0];
+        }
       }
 
-      const response = await window.backendAPI.systemConfig({
-        method: "getSystemInfoForFrontend",
-        params: {},
-      });
-
-      if (response.status) {
-        return response.data;
-      }
-      throw new Error(response.message || "Failed to fetch system info");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to fetch system info");
+      return {
+        settings_count: stats.data?.total || 0,
+        last_updated: lastUpdated || new Date().toISOString(),
+        has_errors: false,
+        categories: Object.values(SettingType),
+      };
+    } catch (error) {
+      console.error("Error getting system health:", error);
+      return {
+        settings_count: 0,
+        last_updated: new Date().toISOString(),
+        has_errors: true,
+        categories: [],
+      };
     }
   }
-
 }
 
 const systemConfigAPI = new SystemConfigAPI();

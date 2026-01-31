@@ -1,8 +1,9 @@
-// ipc/bukid/bulk_create.ipc.js
+// src/ipc/bukid/bulk_create.ipc.js
 //@ts-check
 
 const Bukid = require("../../../entities/Bukid");
 const UserActivity = require("../../../entities/UserActivity");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 const { AppDataSource } = require("../../db/dataSource");
 
 module.exports = async function bulkCreateBukid(params = {}, queryRunner = null) {
@@ -26,6 +27,16 @@ module.exports = async function bulkCreateBukid(params = {}, queryRunner = null)
       return {
         status: false,
         message: "No bukid data provided",
+        data: null,
+      };
+    }
+
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      return {
+        status: false,
+        message: "No default session configured. Please set one in Settings.",
         data: null,
       };
     }
@@ -54,33 +65,25 @@ module.exports = async function bulkCreateBukid(params = {}, queryRunner = null)
     // Process each bukid
     for (const [index, bukidData] of bukids.entries()) {
       try {
-        const { name, location, kabisilyaId } = bukidData;
+        const { name, location } = bukidData;
 
         if (!name) {
           // @ts-ignore
-          results.failed.push({
-            index,
-            name,
-            error: "Name is required",
-          });
+          results.failed.push({ index, name, error: "Name is required" });
           continue;
         }
 
         if (existingNameSet.has(name)) {
           // @ts-ignore
-          results.failed.push({
-            index,
-            name,
-            error: "Name already exists",
-          });
+          results.failed.push({ index, name, error: "Name already exists" });
           continue;
         }
 
-        // ✅ Create bukid using repository
+        // ✅ Create bukid tied to session
         const bukid = bukidRepo.create({
           name,
           location: location || null,
-          kabisilya: kabisilyaId ? { id: kabisilyaId } : null,
+          session: { id: sessionId }, // 🔑 tie to default session
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -99,13 +102,14 @@ module.exports = async function bulkCreateBukid(params = {}, queryRunner = null)
       }
     }
 
-    // Log activity
+    // ✅ Log activity with session context
     // @ts-ignore
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
       action: "bulk_create_bukid",
       entity: "Bukid",
+      session: { id: sessionId },
       description: `Bulk created ${results.successful.length} bukids`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
@@ -127,7 +131,7 @@ module.exports = async function bulkCreateBukid(params = {}, queryRunner = null)
         results.successful.length > 0
           ? `Created ${results.successful.length} of ${results.total} bukids successfully`
           : "No bukids were created",
-      data: { results },
+      data: { results, sessionId },
     };
   } catch (error) {
     if (shouldRelease) {

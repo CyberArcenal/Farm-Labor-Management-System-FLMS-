@@ -13,7 +13,6 @@ module.exports = async function getActiveBukid(params = {}) {
     const { page = 1, limit = 50 } = filters;
 
     const queryBuilder = bukidRepository.createQueryBuilder('bukid')
-      .leftJoinAndSelect('bukid.kabisilya', 'kabisilya')
       .leftJoinAndSelect('bukid.pitaks', 'pitaks')
       .where('bukid.status = :status', { status: 'active' })
       .orderBy('bukid.name', 'ASC');

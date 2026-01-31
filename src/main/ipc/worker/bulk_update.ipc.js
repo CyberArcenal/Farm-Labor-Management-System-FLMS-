@@ -9,6 +9,7 @@ module.exports = async function bulkUpdateWorkers(params = {}, queryRunner = nul
   let shouldRelease = false;
   
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -83,10 +84,6 @@ module.exports = async function bulkUpdateWorkers(params = {}, queryRunner = nul
         if (updateData.address !== undefined) worker.address = updateData.address;
         if (updateData.status !== undefined) worker.status = updateData.status;
         if (updateData.hireDate !== undefined) worker.hireDate = new Date(updateData.hireDate);
-        
-        if (updateData.kabisilyaId !== undefined) {
-          worker.kabisilya = updateData.kabisilyaId ? { id: updateData.kabisilyaId } : null;
-        }
         
         if (updateData.totalDebt !== undefined) worker.totalDebt = updateData.totalDebt;
         if (updateData.totalPaid !== undefined) worker.totalPaid = updateData.totalPaid;

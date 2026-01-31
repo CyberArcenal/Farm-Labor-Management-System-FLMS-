@@ -1,4 +1,4 @@
-// ipc/worker/get/with_payments.ipc.js (Optimized)
+// ipc/worker/get/with_payments.ipc.js (Optimized, no kabisilya)
 //@ts-check
 
 const Worker = require("../../../../entities/Worker");
@@ -6,6 +6,7 @@ const { AppDataSource } = require("../../../db/dataSource");
 
 module.exports = async function getWorkerWithPayments(params = {}) {
   try {
+    // @ts-ignore
     // @ts-ignore
     const { id, periodStart, periodEnd, includeDetails = true, _userId } = params;
 
@@ -21,7 +22,7 @@ module.exports = async function getWorkerWithPayments(params = {}) {
 
     const worker = await workerRepository.findOne({
       where: { id: parseInt(id) },
-      relations: includeDetails ? ['kabisilya', 'payments', 'payments.history'] : ['kabisilya']
+      relations: includeDetails ? ['payments', 'payments.history'] : []
     });
 
     if (!worker) {
@@ -33,12 +34,12 @@ module.exports = async function getWorkerWithPayments(params = {}) {
     }
 
     // Filter payments by date if specified
+    // @ts-ignore
     let filteredPayments = worker.payments || [];
     if (periodStart && periodEnd) {
       const startDate = new Date(periodStart);
       const endDate = new Date(periodEnd);
-      // @ts-ignore
-      filteredPayments = filteredPayments.filter(payment => {
+      filteredPayments = filteredPayments.filter((/** @type {{ paymentDate: any; createdAt: any; }} */ payment) => {
         const paymentDate = new Date(payment.paymentDate || payment.createdAt);
         return paymentDate >= startDate && paymentDate <= endDate;
       });
@@ -46,27 +47,22 @@ module.exports = async function getWorkerWithPayments(params = {}) {
 
     // Calculate totals
     const totalPayments = filteredPayments.length;
-    // @ts-ignore
-    const totalNetPay = filteredPayments.reduce((sum, payment) => 
+    const totalNetPay = filteredPayments.reduce((/** @type {number} */ sum, /** @type {{ netPay: any; }} */ payment) =>
       sum + parseFloat(payment.netPay || 0), 0
     );
-    // @ts-ignore
-    const totalGrossPay = filteredPayments.reduce((sum, payment) => 
+    const totalGrossPay = filteredPayments.reduce((/** @type {number} */ sum, /** @type {{ grossPay: any; }} */ payment) =>
       sum + parseFloat(payment.grossPay || 0), 0
     );
-    // @ts-ignore
-    const totalDebtDeduction = filteredPayments.reduce((sum, payment) => 
+    const totalDebtDeduction = filteredPayments.reduce((/** @type {number} */ sum, /** @type {{ totalDebtDeduction: any; }} */ payment) =>
       sum + parseFloat(payment.totalDebtDeduction || 0), 0
     );
-    // @ts-ignore
-    const totalOtherDeductions = filteredPayments.reduce((sum, payment) => 
+    const totalOtherDeductions = filteredPayments.reduce((/** @type {number} */ sum, /** @type {{ otherDeductions: any; }} */ payment) =>
       sum + parseFloat(payment.otherDeductions || 0), 0
     );
 
     // Group by payment method
     const paymentsByMethod = {};
-    // @ts-ignore
-    filteredPayments.forEach(payment => {
+    filteredPayments.forEach((/** @type {{ paymentMethod: string; netPay: any; id: any; paymentDate: any; status: any; }} */ payment) => {
       const method = payment.paymentMethod || 'Unknown';
       // @ts-ignore
       if (!paymentsByMethod[method]) {
@@ -94,8 +90,7 @@ module.exports = async function getWorkerWithPayments(params = {}) {
 
     // Group by status
     const paymentsByStatus = {};
-    // @ts-ignore
-    filteredPayments.forEach(payment => {
+    filteredPayments.forEach((/** @type {{ status: string; netPay: any; }} */ payment) => {
       const status = payment.status || 'unknown';
       // @ts-ignore
       if (!paymentsByStatus[status]) {
@@ -118,7 +113,6 @@ module.exports = async function getWorkerWithPayments(params = {}) {
         worker: {
           id: worker.id,
           name: worker.name,
-          kabisilya: worker.kabisilya,
           totalDebt: worker.totalDebt,
           totalPaid: worker.totalPaid,
           currentBalance: worker.currentBalance
@@ -148,10 +142,9 @@ module.exports = async function getWorkerWithPayments(params = {}) {
           })),
           recentPayments: filteredPayments
             // @ts-ignore
-            .sort((a, b) => new Date(b.paymentDate || b.createdAt) - new Date(a.paymentDate || a.createdAt))
+            .sort((/** @type {{ paymentDate: any; createdAt: any; }} */ a, /** @type {{ paymentDate: any; createdAt: any; }} */ b) => new Date(b.paymentDate || b.createdAt) - new Date(a.paymentDate || a.createdAt))
             .slice(0, 10)
-            // @ts-ignore
-            .map(payment => ({
+            .map((/** @type {{ id: any; paymentDate: any; netPay: any; status: any; paymentMethod: any; }} */ payment) => ({
               id: payment.id,
               date: payment.paymentDate,
               netPay: payment.netPay,

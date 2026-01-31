@@ -24,12 +24,9 @@ module.exports = async (/** @type {{ trim: () => { (): any; new (): any; length:
     // Build search query
     const searchQuery = pitakRepo.createQueryBuilder('pitak')
       .leftJoinAndSelect('pitak.bukid', 'bukid')
-      .leftJoin('bukid.kabisilya', 'kabisilya')
-      .addSelect(['kabisilya.id', 'kabisilya.name'])
       .where('pitak.location LIKE :term', { term: `%${searchTerm}%` })
       .orWhere('CAST(pitak.id AS CHAR) LIKE :term', { term: `%${searchTerm}%` })
       .orWhere('bukid.name LIKE :term', { term: `%${searchTerm}%` })
-      .orWhere('kabisilya.name LIKE :term', { term: `%${searchTerm}%` })
       .orWhere('pitak.notes LIKE :term', { term: `%${searchTerm}%` })
       .orderBy('pitak.location', 'ASC')
       .take(50); // Limit results
@@ -41,7 +38,6 @@ module.exports = async (/** @type {{ trim: () => { (): any; new (): any; length:
       exactMatches: [],
       locationMatches: [],
       bukidMatches: [],
-      kabisilyaMatches: [],
       otherMatches: []
     };
 
@@ -58,8 +54,6 @@ module.exports = async (/** @type {{ trim: () => { (): any; new (): any; length:
           id: pitak.bukid.id,
           // @ts-ignore
           name: pitak.bukid.name,
-          // @ts-ignore
-          kabisilya: pitak.bukid.kabisilya
         } : null,
         matchType: [],
         matchScore: 0
@@ -86,14 +80,6 @@ module.exports = async (/** @type {{ trim: () => { (): any; new (): any; length:
         result.matchScore += 30;
       }
 
-      // @ts-ignore
-      if (pitak.bukid && pitak.bukid.kabisilya && 
-          // @ts-ignore
-          pitak.bukid.kabisilya.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        // @ts-ignore
-        result.matchType.push('kabisilya');
-        result.matchScore += 20;
-      }
 
       // @ts-ignore
       if (pitak.id.toString().includes(searchTerm)) {
@@ -116,9 +102,6 @@ module.exports = async (/** @type {{ trim: () => { (): any; new (): any; length:
         // @ts-ignore
         results.bukidMatches.push(result);
       // @ts-ignore
-      } else if (result.matchType.includes('kabisilya')) {
-        // @ts-ignore
-        results.kabisilyaMatches.push(result);
       } else {
         // @ts-ignore
         results.otherMatches.push(result);

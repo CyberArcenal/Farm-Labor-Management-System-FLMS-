@@ -8,12 +8,9 @@ import {
     Users, Briefcase, CreditCard, TrendingUp, Info
 } from 'lucide-react';
 import type { WorkerData } from '../../../apis/worker';
-import type { KabisilyaData } from '../../../apis/kabisilya';
-import kabisilyaAPI from '../../../apis/kabisilya';
 import workerAPI from '../../../apis/worker';
 import { showError, showSuccess } from '../../../utils/notification';
 import { dialogs } from '../../../utils/dialogs';
-import KabisilyaSelect from '../../../components/Selects/Kabisilya';
 
 interface WorkerFormPageProps { }
 
@@ -24,7 +21,6 @@ interface FormData {
     address: string;
     status: 'active' | 'inactive' | 'on-leave' | 'terminated';
     hireDate: string;
-    kabisilyaId: number | null;
     notes: string;
 }
 
@@ -40,11 +36,9 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
         address: '',
         status: 'active',
         hireDate: new Date().toISOString().split('T')[0],
-        kabisilyaId: null,
         notes: ''
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [kabisilyas, setKabisilyas] = useState<KabisilyaData[]>([]);
     const [worker, setWorker] = useState<WorkerData | null>(null);
     const [financialInfo, setFinancialInfo] = useState<{
         totalDebt: number;
@@ -60,11 +54,6 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
             try {
                 setLoading(true);
 
-                // Fetch kabisilyas for dropdown
-                const kabisilyaResponse = await kabisilyaAPI.getAll();
-                if (kabisilyaResponse.status && kabisilyaResponse.data) {
-                    setKabisilyas(kabisilyaResponse.data);
-                }
 
                 // Fetch worker data if in edit mode
                 if (mode === 'edit' && id) {
@@ -81,7 +70,6 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
                             address: workerData.address || '',
                             status: workerData.status,
                             hireDate: workerData.hireDate ? new Date(workerData.hireDate).toISOString().split('T')[0] : '',
-                            kabisilyaId: workerData.kabisilya?.id || null,
                             notes: ''
                         });
 
@@ -121,11 +109,6 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
                 [field]: ''
             }));
         }
-    };
-
-    // Handle kabisilya selection
-    const handleKabisilyaSelect = (kabisilyaId: number | null) => {
-        handleChange('kabisilyaId', kabisilyaId);
     };
 
     // Validate form
@@ -191,7 +174,6 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
             if (formData.email.trim()) workerData.email = formData.email.trim();
             if (formData.address.trim()) workerData.address = formData.address.trim();
             if (formData.hireDate) workerData.hireDate = formData.hireDate;
-            if (formData.kabisilyaId) workerData.kabisilyaId = formData.kabisilyaId;
             if (formData.notes.trim()) workerData.notes = formData.notes.trim();
 
             let response;
@@ -246,10 +228,6 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
             navigate('/workers');
         }
     };
-
-    // Get selected kabisilya details
-    const selectedKabisilya = kabisilyas.find(k => k.id === formData.kabisilyaId);
-
     // Loading state
     if (loading) {
         return (
@@ -331,15 +309,6 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
                                         : 'var(--text-primary)'
                                 }}>
                                     ₱{financialInfo?.currentBalance.toLocaleString() || '0.00'}
-                                </p>
-                            </div>
-                            <div className="bg-white/80 p-3 rounded-lg border border-[var(--border-color)]">
-                                <div className="flex items-center gap-2">
-                                    <Users className="w-4 h-4" style={{ color: 'var(--accent-earth)' }} />
-                                    <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Kabisilya</span>
-                                </div>
-                                <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-primary)' }}>
-                                    {selectedKabisilya?.name || 'Not assigned'}
                                 </p>
                             </div>
                         </div>
@@ -484,61 +453,6 @@ const WorkerFormPage: React.FC<WorkerFormPageProps> = () => {
                                             </p>
                                         )}
                                     </div>
-                                </div>
-                            </div>
-
-                            {/* Kabisilya Assignment Card */}
-                            <div className="bg-white rounded-2xl border border-[var(--border-color)] shadow-sm">
-                                <div className="p-6 border-b border-[var(--border-color)] bg-gradient-to-r from-[var(--accent-earth-light)] to-transparent">
-                                    <h2 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                                        <Users className="w-5 h-5" style={{ color: 'var(--accent-earth)' }} />
-                                        Kabisilya Assignment
-                                    </h2>
-                                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                                        Assign this worker to a kabisilya (optional)
-                                    </p>
-                                </div>
-                                <div className="p-6 space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                            Select Kabisilya
-                                        </label>
-                                        <KabisilyaSelect
-                                            value={formData.kabisilyaId}
-                                            onChange={handleKabisilyaSelect}
-                                            placeholder="Select a kabisilya..."
-                                        />
-                                        <p className="mt-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                            Assigning to a kabisilya helps organize workers into groups
-                                        </p>
-                                    </div>
-
-                                    {selectedKabisilya && (
-                                        <div className="bg-[var(--card-secondary-bg)] p-4 rounded-lg border border-[var(--border-color)]">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2">
-                                                        <Users className="w-4 h-4" style={{ color: 'var(--accent-earth)' }} />
-                                                        <h3 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                            {selectedKabisilya.name}
-                                                        </h3>
-                                                    </div>
-                                                    <p className="text-xs flex items-center gap-1 mt-2" style={{ color: 'var(--text-secondary)' }}>
-                                                        <Hash className="w-3 h-3" />
-                                                        Kabisilya #{selectedKabisilya.id}
-                                                    </p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleChange('kabisilyaId', null)}
-                                                    className="p-1.5 rounded-lg hover:bg-white transition-colors"
-                                                    style={{ color: 'var(--text-secondary)' }}
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>

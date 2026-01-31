@@ -10,6 +10,7 @@ const { AppDataSource } = require("../../../db/dataSource");
 module.exports = async (
   /** @type {any} */ bukidId,
   filters = {},
+  // @ts-ignore
   /** @type {any} */ userId,
 ) => {
   try {
@@ -24,7 +25,6 @@ module.exports = async (
     // Verify bukid exists
     const bukid = await bukidRepo.findOne({
       where: { id: bukidId },
-      relations: ["kabisilya"],
     });
 
     if (!bukid) {
@@ -46,6 +46,7 @@ module.exports = async (
     if (filters.location) {
       // @ts-ignore
       query.andWhere("pitak.location LIKE :location", {
+        // @ts-ignore
         location: `%${filters.location}%`,
       });
     }
@@ -54,6 +55,7 @@ module.exports = async (
     if (filters.minLuWang) {
       // @ts-ignore
       query.andWhere("pitak.totalLuwang >= :minLuWang", {
+        // @ts-ignore
         minLuWang: filters.minLuWang,
       });
     }
@@ -62,6 +64,7 @@ module.exports = async (
     if (filters.maxLuWang) {
       // @ts-ignore
       query.andWhere("pitak.totalLuwang <= :maxLuWang", {
+        // @ts-ignore
         maxLuWang: filters.maxLuWang,
       });
     }
@@ -79,6 +82,7 @@ module.exports = async (
     // Get assignment statistics for each pitak
     const pitaksWithStats = await Promise.all(
       pitaks.map(
+        // @ts-ignore
         async (
           /** @type {{ id: any; location: any; totalLuwang: string; status: any; createdAt: any; updatedAt: any; }} */ pitak,
         ) => {
@@ -149,6 +153,7 @@ module.exports = async (
     );
 
     // Calculate overall utilization
+    // @ts-ignore
     bukidStats.utilizationRate =
       bukidStats.totalLuWangCapacity > 0
         ? (bukidStats.totalLuWangAssigned / bukidStats.totalLuWangCapacity) *
@@ -163,7 +168,6 @@ module.exports = async (
           id: bukid.id,
           name: bukid.name,
           location: bukid.location,
-          kabisilya: bukid.kabisilya,
         },
         pitaks: pitaksWithStats,
         statistics: bukidStats,

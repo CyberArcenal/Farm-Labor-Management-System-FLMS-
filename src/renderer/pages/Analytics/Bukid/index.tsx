@@ -7,17 +7,11 @@ import {
     PieChart,
     Users,
     DollarSign,
-    MapPin,
-    Filter,
-    Download,
-    Calendar,
-    Search,
-    ArrowUpRight,
+    MapPin, Download,
+    Calendar, ArrowUpRight,
     ArrowDownRight,
     ChevronRight,
-    RefreshCw,
-    Eye,
-    Layers,
+    RefreshCw, Layers,
     Activity,
     GitCompareArrows,
     GitCompare
@@ -30,6 +24,7 @@ import dashboardAPI, {
     type BukidWorkerDistributionData
 } from '../../../apis/dashboard';
 import { formatCurrency, formatNumber, formatDate, formatPercentage } from '../../../utils/formatters';
+import { hideLoading, showLoading } from '../../../utils/notification';
 
 const BukidReportsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
@@ -71,6 +66,7 @@ const BukidReportsPage: React.FC = () => {
             console.error('Failed to fetch bukid reports:', err);
         } finally {
             setLoading(false);
+            hideLoading();
         }
     };
 
@@ -107,14 +103,7 @@ const BukidReportsPage: React.FC = () => {
     ];
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-96">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-3" style={{ borderColor: 'var(--primary-color)' }}></div>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading bukid reports...</p>
-                </div>
-            </div>
-        );
+        showLoading('Loading bukid reports data...');
     }
 
     if (error) {
@@ -398,14 +387,6 @@ const BukidReportsPage: React.FC = () => {
                                                 }}
                                             >
                                                 #{index + 1}
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                    {bukid.name}
-                                                </div>
-                                                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                    {bukid.kabisilya} • {bukid.metrics.pitaks} pitaks
-                                                </div>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -734,14 +715,6 @@ const BukidReportsPage: React.FC = () => {
                                         onClick={() => handleViewBukidDetails(bukid.bukidId)}
                                         style={{ borderBottom: '1px solid var(--border-color)' }}
                                     >
-                                        <td className="py-3 px-4">
-                                            <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                                                {bukid.name}
-                                            </div>
-                                            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                {bukid.kabisilya}
-                                            </div>
-                                        </td>
                                         <td className="py-3 px-4 text-sm" style={{ color: 'var(--text-primary)' }}>
                                             {bukid.metrics.pitaks}
                                         </td>

@@ -9,6 +9,7 @@ module.exports = async function createWorker(params = {}, queryRunner = null) {
   let shouldRelease = false;
   
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -19,7 +20,7 @@ module.exports = async function createWorker(params = {}, queryRunner = null) {
 
   try {
     // @ts-ignore
-    const { name, contact, email, address, status, hireDate, kabisilyaId, _userId } = params;
+    const { name, contact, email, address, status, hireDate, _userId } = params;
     
     if (!name) {
       return {
@@ -54,7 +55,6 @@ module.exports = async function createWorker(params = {}, queryRunner = null) {
       address: address || null,
       status: status || 'active',
       hireDate: hireDate ? new Date(hireDate) : new Date(),
-      kabisilya: kabisilyaId ? { id: kabisilyaId } : null,
       createdAt: new Date(),
       updatedAt: new Date()
     });

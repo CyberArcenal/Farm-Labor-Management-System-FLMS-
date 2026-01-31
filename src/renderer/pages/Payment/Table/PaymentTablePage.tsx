@@ -464,7 +464,7 @@ const PaymentTablePage: React.FC = () => {
             {/* Payment View Dialog */}
             {isViewDialogOpen && selectedPaymentId && (
                 <PaymentViewDialog
-                    id={selectedPaymentId}
+                    paymentId={selectedPaymentId}
                     onClose={closeViewDialog}
                     onEdit={openEditDialog}
                 />

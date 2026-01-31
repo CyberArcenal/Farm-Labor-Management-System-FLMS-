@@ -15,7 +15,6 @@ export interface BukidData {
   id?: number;
   name: string;
   location?: string | null;
-  kabisilyaId?: number | null;
   status?: string;
   notes?: string | null;
   createdAt?: string;
@@ -26,7 +25,6 @@ export interface BukidSummaryData {
   id: number;
   name: string;
   location: string | null;
-  kabisilya: string | null;
   pitakCount: number;
   totalLuwang: number;
   assignmentCount: number;
@@ -39,7 +37,6 @@ export interface BukidStatsData {
   total: number;
   active: number;
   inactive: number;
-  kabisilyaCount: number;
 }
 
 export interface PitakCountData {
@@ -55,12 +52,6 @@ export interface WorkerCountData {
   name: string;
   workerCount: number;
   assignmentCount: number;
-}
-
-export interface KabisilyaInfoData {
-  kabisilya: any | null;
-  workerCount: number;
-  bukidCount: number;
 }
 
 export interface SearchResultData {
@@ -104,7 +95,6 @@ export interface BukidPaginationResponse {
 }
 
 export interface BukidFilters {
-  kabisilyaId?: number;
   status?: string;
   page?: number;
   limit?: number;
@@ -187,28 +177,7 @@ class BukidAPI {
     }
   }
 
-  async getByKabisilya(
-    kabisilyaId: number,
-    filters: BukidFilters = {},
-  ): Promise<BukidResponse<BukidPaginationResponse>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.bukid) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.bukid({
-        method: "getBukidByKabisilya",
-        params: this.enrichParams({ kabisilyaId, filters }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to get bukid by kabisilya");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get bukid by kabisilya");
-    }
-  }
+  // REMOVED: getByKabisilya method
 
   async getByName(
     name: string,
@@ -483,77 +452,10 @@ class BukidAPI {
   }
 
   // 🔗 RELATIONSHIP OPERATIONS
-
-  async assignToKabisilya(
-    bukidId: number,
-    kabisilyaId: number,
-  ): Promise<BukidResponse<{ bukid: BukidData }>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.bukid) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.bukid({
-        method: "assignToKabisilya",
-        params: this.enrichParams({ bukidId, kabisilyaId }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(
-        response.message || "Failed to assign bukid to kabisilya",
-      );
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to assign bukid to kabisilya");
-    }
-  }
-
-  async removeFromKabisilya(
-    id: number,
-  ): Promise<BukidResponse<{ bukid: BukidData }>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.bukid) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.bukid({
-        method: "removeFromKabisilya",
-        params: this.enrichParams({ id }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(
-        response.message || "Failed to remove bukid from kabisilya",
-      );
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to remove bukid from kabisilya");
-    }
-  }
-
-  async getKabisilyaInfo(
-    id: number,
-  ): Promise<BukidResponse<KabisilyaInfoData>> {
-    try {
-      if (!window.backendAPI || !window.backendAPI.bukid) {
-        throw new Error("Electron API not available");
-      }
-
-      const response = await window.backendAPI.bukid({
-        method: "getKabisilyaInfo",
-        params: this.enrichParams({ id }),
-      });
-
-      if (response.status) {
-        return response;
-      }
-      throw new Error(response.message || "Failed to get kabisilya info");
-    } catch (error: any) {
-      throw new Error(error.message || "Failed to get kabisilya info");
-    }
-  }
+  
+  // REMOVED: assignToKabisilya method
+  // REMOVED: removeFromKabisilya method
+  // REMOVED: getKabisilyaInfo method
 
   // 📊 STATISTICS OPERATIONS
 
@@ -962,7 +864,6 @@ class BukidAPI {
     total: number;
     active: number;
     inactive: number;
-    byKabisilya: Record<number, number>;
     byLocation: Record<string, number>;
     recentGrowth: { date: string; count: number }[];
   }> {
@@ -972,15 +873,6 @@ class BukidAPI {
       const statsResponse = await this.getStats();
 
       const bukids = allResponse.data.bukids;
-
-      // Group by kabisilya
-      const byKabisilya: Record<number, number> = {};
-      bukids.forEach((b) => {
-        const kabId = b.kabisilyaId;
-        if (kabId) {
-          byKabisilya[kabId] = (byKabisilya[kabId] || 0) + 1;
-        }
-      });
 
       // Group by location
       const byLocation: Record<string, number> = {};
@@ -996,7 +888,6 @@ class BukidAPI {
         total: statsResponse.data.summary.total,
         active: statsResponse.data.summary.active,
         inactive: statsResponse.data.summary.inactive,
-        byKabisilya,
         byLocation,
         recentGrowth,
       };
@@ -1006,7 +897,6 @@ class BukidAPI {
         total: 0,
         active: 0,
         inactive: 0,
-        byKabisilya: {},
         byLocation: {},
         recentGrowth: [],
       };

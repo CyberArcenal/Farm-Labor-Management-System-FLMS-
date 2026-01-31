@@ -2,19 +2,24 @@
 //@ts-check
 
 // @ts-ignore
+// @ts-ignore
 const Worker = require("../../../entities/Worker");
+// @ts-ignore
 // @ts-ignore
 // @ts-ignore
 const UserActivity = require("../../../entities/UserActivity");
 const { AppDataSource } = require("../../db/dataSource");
 // @ts-ignore
+// @ts-ignore
 const Payment = require("../../../entities/Payment");
+// @ts-ignore
 // @ts-ignore
 const Debt = require("../../../entities/Debt");
 const Assignment = require("../../../entities/Assignment");
 
 module.exports = async function getWorkerAttendance(params = {}) {
   try {
+    // @ts-ignore
     // @ts-ignore
     const { workerId, month, year, _userId } = params;
 
@@ -71,6 +76,7 @@ module.exports = async function getWorkerAttendance(params = {}) {
     // Populate assignments
     // @ts-ignore
     assignments.forEach(assignment => {
+      // @ts-ignore
       const assignmentDate = new Date(assignment.assignmentDate);
       const dayIndex = assignmentDate.getDate() - 1;
       
@@ -80,7 +86,9 @@ module.exports = async function getWorkerAttendance(params = {}) {
           id: assignment.id,
           luwangCount: assignment.luwangCount,
           status: assignment.status,
+          // @ts-ignore
           pitak: assignment.pitak?.location,
+          // @ts-ignore
           bukid: assignment.pitak?.bukid?.name
         });
         // @ts-ignore

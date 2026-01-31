@@ -3,6 +3,7 @@
 
 const Pitak = require("../../../entities/Pitak");
 const Bukid = require("../../../entities/Bukid");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 
 /**
  * Bulk create pitaks
@@ -13,14 +14,23 @@ const Bukid = require("../../../entities/Bukid");
 module.exports = async (params, queryRunner) => {
   try {
     // @ts-ignore
-    // @ts-ignore
     const { pitaks, _userId } = params;
 
     if (!Array.isArray(pitaks) || pitaks.length === 0) {
       return {
         status: false,
         message: "Pitaks array is required and must not be empty",
-        data: null
+        data: null,
+      };
+    }
+
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      return {
+        status: false,
+        message: "No default session configured. Please set one in Settings.",
+        data: null,
       };
     }
 
@@ -33,23 +43,15 @@ module.exports = async (params, queryRunner) => {
       const pitak = pitaks[i];
       const errors = [];
 
-      // Required fields
       if (!pitak.bukidId) errors.push("bukidId is required");
 
-      // Validate bukid exists
       if (pitak.bukidId) {
-        const bukid = await bukidRepo.findOne({ 
-          where: { id: pitak.bukidId } 
-        });
+        const bukid = await bukidRepo.findOne({ where: { id: pitak.bukidId } });
         if (!bukid) errors.push(`Bukid with ID ${pitak.bukidId} not found`);
       }
 
       if (errors.length > 0) {
-        validationErrors.push({
-          index: i,
-          pitak,
-          errors
-        });
+        validationErrors.push({ index: i, pitak, errors });
       } else {
         validPitaks.push(pitak);
       }
@@ -60,7 +62,7 @@ module.exports = async (params, queryRunner) => {
         status: false,
         message: "All pitaks failed validation",
         data: { validationErrors },
-        meta: { totalFailed: validationErrors.length }
+        meta: { totalFailed: validationErrors.length },
       };
     }
 
@@ -71,55 +73,55 @@ module.exports = async (params, queryRunner) => {
 
     for (const pitakData of validPitaks) {
       try {
-        // Check for existing pitak in same location
         const existing = await pitakRepo.findOne({
           where: {
             // @ts-ignore
             bukidId: pitakData.bukidId,
-            location: pitakData.location || null
-          }
+            location: pitakData.location || null,
+          },
         });
 
         if (existing) {
           skippedPitaks.push({
             pitak: pitakData,
             reason: "Pitak already exists in this location",
-            existingPitakId: existing.id
+            existingPitakId: existing.id,
           });
           continue;
         }
 
-        // Create pitak
+        // ✅ Create pitak tied to session
         const newPitak = pitakRepo.create({
           // @ts-ignore
           bukidId: pitakData.bukidId,
           location: pitakData.location || null,
-          totalLuwang: pitakData.totalLuwang || 0.00,
-          status: pitakData.status || 'active'
+          totalLuwang: pitakData.totalLuwang || 0.0,
+          status: pitakData.status || "active",
+          session: { id: sessionId }, // 🔑 tie to default session
         });
 
         const savedPitak = await pitakRepo.save(newPitak);
         createdPitaks.push(savedPitak);
-
       } catch (error) {
         skippedPitaks.push({
           pitak: pitakData,
           // @ts-ignore
-          reason: `Error: ${error.message}`
+          reason: `Error: ${error.message}`,
         });
       }
     }
 
-    // Calculate totals
-    const totalLuWang = createdPitaks.reduce((sum, pitak) => 
+    const totalLuWang = createdPitaks.reduce(
       // @ts-ignore
-      sum + parseFloat(pitak.totalLuwang || 0), 0);
+      (sum, pitak) => sum + parseFloat(pitak.totalLuwang || 0),
+      0,
+    );
 
     return {
       status: true,
       message: "Bulk pitak creation completed",
       data: {
-        created: createdPitaks.map(p => ({
+        created: createdPitaks.map((p) => ({
           // @ts-ignore
           id: p.id,
           // @ts-ignore
@@ -129,27 +131,28 @@ module.exports = async (params, queryRunner) => {
           // @ts-ignore
           totalLuwang: parseFloat(p.totalLuwang),
           // @ts-ignore
-          status: p.status
+          status: p.status,
+          sessionId,
         })),
         skipped: skippedPitaks,
-        failed: validationErrors
+        failed: validationErrors,
       },
       meta: {
         totalProcessed: pitaks.length,
         totalCreated: createdPitaks.length,
         totalSkipped: skippedPitaks.length,
         totalFailed: validationErrors.length,
-        totalLuWangCreated: totalLuWang.toFixed(2)
-      }
+        totalLuWangCreated: totalLuWang.toFixed(2),
+        sessionId,
+      },
     };
-
   } catch (error) {
     console.error("Error in bulk pitak creation:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Bulk creation failed: ${error.message}`,
-      data: null
+      data: null,
     };
   }
 };

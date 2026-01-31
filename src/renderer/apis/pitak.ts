@@ -39,10 +39,6 @@ export interface PitakWithDetails extends PitakData {
     id: number;
     name: string;
     location?: string;
-    kabisilya?: {
-      id: number;
-      name: string;
-    };
   };
   assignments?: AssignmentSummary[];
   payments?: PaymentSummary[];
@@ -611,7 +607,7 @@ class PitakAPI {
     }
   }
 
-  async getHarvestedPitaks(
+  async getCompletedPitaks(
     filters: PitakFilters = {},
   ): Promise<PitakListResponse> {
     try {
@@ -620,7 +616,7 @@ class PitakAPI {
       }
 
       const response = await window.backendAPI.pitak({
-        method: "getHarvestedPitaks",
+        method: "getCompletedPitaks",
         params: this.enrichParams({ filters }),
       });
 

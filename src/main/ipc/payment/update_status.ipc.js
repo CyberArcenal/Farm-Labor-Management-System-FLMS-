@@ -8,8 +8,9 @@ const { AppDataSource } = require("../../db/dataSource");
 
 module.exports = async function updatePaymentStatus(params = {}, queryRunner = null) {
   let shouldRelease = false;
-  
+
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -20,13 +21,13 @@ module.exports = async function updatePaymentStatus(params = {}, queryRunner = n
 
   try {
     // @ts-ignore
-    const { paymentId, status, notes, _userId } = params;
-    
+    const { paymentId, status, notes, _userId, paymentMethod, referenceNumber } = params;
+
     if (!paymentId || !status) {
       return {
         status: false,
-        message: 'Payment ID and status are required',
-        data: null
+        message: "Payment ID and status are required",
+        data: null,
       };
     }
 
@@ -34,30 +35,29 @@ module.exports = async function updatePaymentStatus(params = {}, queryRunner = n
     const paymentRepository = queryRunner.manager.getRepository(Payment);
     const payment = await paymentRepository.findOne({
       where: { id: paymentId },
-      relations: ['worker']
+      relations: ["worker", "pitak", "session"],
     });
 
     if (!payment) {
       return {
         status: false,
-        message: 'Payment not found',
-        data: null
+        message: "Payment not found",
+        data: null,
       };
     }
 
-    // Validate status transition
     const validTransitions = {
-      'pending': ['processing', 'cancelled'],
-      'processing': ['completed', 'cancelled'],
-      'completed': ['cancelled'], // Rare but possible
-      'cancelled': [] // Cannot change from cancelled
+      pending: ["processing", "cancelled"],
+      processing: ["completed", "cancelled"],
+      completed: ["cancelled"], // rare, but allowed with strict validation
+      cancelled: [], // cannot change from cancelled
     };
 
     if (payment.status === status) {
       return {
         status: false,
         message: `Payment is already ${status}`,
-        data: null
+        data: null,
       };
     }
 
@@ -66,28 +66,36 @@ module.exports = async function updatePaymentStatus(params = {}, queryRunner = n
       return {
         status: false,
         message: `Cannot change status from ${payment.status} to ${status}`,
-        data: null
+        data: null,
       };
     }
 
     // Special validations
-    if (status === 'completed' && !payment.paymentDate) {
-      payment.paymentDate = new Date();
+    if (status === "completed") {
+      if (!payment.paymentDate) payment.paymentDate = new Date();
+      if (!paymentMethod || !referenceNumber) {
+        return {
+          status: false,
+          message: "Payment method and reference number are required to complete payment",
+          data: null,
+        };
+      }
+      payment.paymentMethod = paymentMethod;
+      payment.referenceNumber = referenceNumber;
     }
 
-    if (status === 'cancelled') {
-      // Check if payment can be cancelled
-      if (payment.status === 'completed') {
-        // May need additional validation for completed payments
-      }
+    if (status === "cancelled" && payment.status === "completed") {
+      // add stricter checks here if needed (e.g., ensure no downstream records)
     }
 
     const oldStatus = payment.status;
     payment.status = status;
     payment.updatedAt = new Date();
-    
+
     if (notes) {
-      payment.notes = payment.notes ? `${payment.notes}\n${notes}` : notes;
+      payment.notes =
+        (payment.notes ? payment.notes + "\n" : "") +
+        `[${new Date().toISOString()}] ${notes}`;
     }
 
     const updatedPayment = await paymentRepository.save(payment);
@@ -97,13 +105,17 @@ module.exports = async function updatePaymentStatus(params = {}, queryRunner = n
     const paymentHistoryRepository = queryRunner.manager.getRepository(PaymentHistory);
     const paymentHistory = paymentHistoryRepository.create({
       payment: updatedPayment,
-      actionType: 'status_change',
-      changedField: 'status',
+      actionType: "update",
+      changedField: "status",
       oldValue: oldStatus,
       newValue: status,
-      notes: notes || `Status changed from ${oldStatus} to ${status}`,
-      performedBy: _userId,
-      changeDate: new Date()
+      oldAmount: parseFloat(updatedPayment.netPay),
+      newAmount: parseFloat(updatedPayment.netPay),
+      notes: notes
+        ? `[${new Date().toISOString()}] ${notes}`
+        : `Status changed from ${oldStatus} to ${status}`,
+      performedBy: String(_userId),
+      changeDate: new Date(),
     });
 
     await paymentHistoryRepository.save(paymentHistory);
@@ -113,11 +125,13 @@ module.exports = async function updatePaymentStatus(params = {}, queryRunner = n
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
       user_id: _userId,
-      action: 'update_payment_status',
+      action: "update_payment_status",
+      entity: "Payment",
+      entity_id: updatedPayment.id,
       description: `Changed payment #${paymentId} status from ${oldStatus} to ${status}`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
-      created_at: new Date()
+      created_at: new Date(),
     });
     await activityRepo.save(activity);
 
@@ -128,20 +142,35 @@ module.exports = async function updatePaymentStatus(params = {}, queryRunner = n
 
     return {
       status: true,
-      message: 'Payment status updated successfully',
-      data: { payment: updatedPayment }
+      message: `Payment #${paymentId} status updated from ${oldStatus} to ${status}`,
+      data: {
+        id: updatedPayment.id,
+        oldStatus,
+        newStatus: updatedPayment.status,
+        worker: updatedPayment.worker
+          ? { id: updatedPayment.worker.id, name: updatedPayment.worker.name }
+          : null,
+        pitak: updatedPayment.pitak
+          ? { id: updatedPayment.pitak.id, name: updatedPayment.pitak.name }
+          : null,
+        session: updatedPayment.session ? { id: updatedPayment.session.id } : null,
+        netPay: updatedPayment.netPay,
+        paymentDate: updatedPayment.paymentDate,
+        paymentMethod: updatedPayment.paymentMethod,
+        referenceNumber: updatedPayment.referenceNumber,
+      },
     };
   } catch (error) {
     if (shouldRelease) {
       // @ts-ignore
       await queryRunner.rollbackTransaction();
     }
-    console.error('Error in updatePaymentStatus:', error);
+    console.error("Error in updatePaymentStatus:", error);
     return {
       status: false,
       // @ts-ignore
       message: `Failed to update payment status: ${error.message}`,
-      data: null
+      data: null,
     };
   } finally {
     if (shouldRelease) {

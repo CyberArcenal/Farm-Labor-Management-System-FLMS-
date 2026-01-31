@@ -21,7 +21,7 @@ module.exports = async function getWorkerById(params = {}) {
 
     const worker = await workerRepository.findOne({
       where: { id: parseInt(id) },
-      relations: ['kabisilya', 'debts', 'payments', 'assignments']
+      relations: ['debts', 'payments', 'assignments'] // removed kabisilya
     });
 
     if (!worker) {

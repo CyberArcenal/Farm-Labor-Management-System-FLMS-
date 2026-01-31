@@ -97,10 +97,12 @@ module.exports = async (
       // Check totalLuwang against bukid's existing pitaks
       const pitakRepo = AppDataSource.getRepository(Pitak);
       const bukidPitaks = await pitakRepo.find({
+        // @ts-ignore
         where: { bukidId },
         select: ["totalLuwang"],
       });
 
+      // @ts-ignore
       const totalBukidLuWang = bukidPitaks.reduce(
         (
           /** @type {number} */ sum,

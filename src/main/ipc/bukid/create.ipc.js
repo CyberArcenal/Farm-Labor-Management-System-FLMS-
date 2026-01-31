@@ -1,8 +1,9 @@
-// ipc/bukid/create.ipc.js
+// src/ipc/bukid/create.ipc.js
 //@ts-check
 
 const Bukid = require("../../../entities/Bukid");
 const UserActivity = require("../../../entities/UserActivity");
+const { farmSessionDefaultSessionId } = require("../../../utils/system");
 const { AppDataSource } = require("../../db/dataSource");
 
 module.exports = async function createBukid(params = {}, queryRunner = null) {
@@ -20,7 +21,7 @@ module.exports = async function createBukid(params = {}, queryRunner = null) {
 
   try {
     // @ts-ignore
-    const { name, location, kabisilyaId, _userId } = params;
+    const { name, location, _userId } = params;
 
     if (!name) {
       return {
@@ -30,14 +31,20 @@ module.exports = async function createBukid(params = {}, queryRunner = null) {
       };
     }
 
-    // ✅ Use repository instead of manager.findOne(Entity, {...})
+    // ✅ Always require default session
+    const sessionId = await farmSessionDefaultSessionId();
+    if (!sessionId || sessionId === 0) {
+      return {
+        status: false,
+        message: "No default session configured. Please set one in Settings.",
+        data: null,
+      };
+    }
+
     // @ts-ignore
     const bukidRepo = queryRunner.manager.getRepository(Bukid);
 
-    const existingBukid = await bukidRepo.findOne({
-      where: { name },
-    });
-
+    const existingBukid = await bukidRepo.findOne({ where: { name } });
     if (existingBukid) {
       return {
         status: false,
@@ -46,18 +53,18 @@ module.exports = async function createBukid(params = {}, queryRunner = null) {
       };
     }
 
-    // ✅ Create new bukid using repository
+    // ✅ Create new bukid tied to session
     const newBukid = bukidRepo.create({
       name,
       location: location || null,
-      kabisilya: kabisilyaId ? { id: kabisilyaId } : null,
+      session: { id: sessionId }, // 🔑 tie to default session
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     const savedBukid = await bukidRepo.save(newBukid);
 
-    // ✅ Log activity
+    // ✅ Log activity with session context
     // @ts-ignore
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     const activity = activityRepo.create({
@@ -65,6 +72,7 @@ module.exports = async function createBukid(params = {}, queryRunner = null) {
       action: "create_bukid",
       entity: "Bukid",
       entity_id: savedBukid.id,
+      session: { id: sessionId },
       description: `Created bukid: ${name}`,
       ip_address: "127.0.0.1",
       user_agent: "Kabisilya-Management-System",
@@ -84,7 +92,7 @@ module.exports = async function createBukid(params = {}, queryRunner = null) {
         id: savedBukid.id,
         name: savedBukid.name,
         location: savedBukid.location,
-        kabisilyaId: kabisilyaId || null,
+        sessionId,
         createdAt: savedBukid.createdAt,
         updatedAt: savedBukid.updatedAt,
       },

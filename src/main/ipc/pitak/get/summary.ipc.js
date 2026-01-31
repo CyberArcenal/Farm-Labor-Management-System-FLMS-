@@ -21,8 +21,6 @@ module.exports = async (
     const query = pitakRepo
       .createQueryBuilder("pitak")
       .leftJoinAndSelect("pitak.bukid", "bukid")
-      .leftJoin("bukid.kabisilya", "kabisilya")
-      .addSelect(["kabisilya.id", "kabisilya.name"]);
 
     // Apply filters
     if (bukidId) {
@@ -141,8 +139,6 @@ module.exports = async (
               id: pitak.bukid.id,
               // @ts-ignore
               name: pitak.bukid.name,
-              // @ts-ignore
-              kabisilya: pitak.bukid.kabisilya,
             }
           : null,
         assignments: {

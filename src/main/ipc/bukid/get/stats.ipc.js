@@ -17,7 +17,6 @@ module.exports = async function getBukidStats(params = {}) {
       .select('COUNT(bukid.id)', 'total')
       .addSelect('COUNT(CASE WHEN bukid.status = "active" THEN 1 END)', 'active')
       .addSelect('COUNT(CASE WHEN bukid.status = "inactive" THEN 1 END)', 'inactive')
-      .addSelect('COUNT(DISTINCT bukid.kabisilyaId)', 'kabisilyaCount')
       .getRawOne();
 
     // Get pitak distribution
@@ -36,7 +35,6 @@ module.exports = async function getBukidStats(params = {}) {
     const recentBukid = await bukidRepository.find({
       order: { updatedAt: 'DESC' },
       take: 5,
-      relations: ['kabisilya']
     });
 
     return {
@@ -47,7 +45,6 @@ module.exports = async function getBukidStats(params = {}) {
           totalBukid: parseInt(stats.total) || 0,
           activeBukid: parseInt(stats.active) || 0,
           inactiveBukid: parseInt(stats.inactive) || 0,
-          kabisilyaWithBukid: parseInt(stats.kabisilyaCount) || 0
         },
         pitakDistribution,
         recentBukid

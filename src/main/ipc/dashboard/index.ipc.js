@@ -7,7 +7,6 @@ const { AppDataSource } = require("../../db/dataSource");
 const workerAnalytics = require("./handlers/workerAnalytics");
 const financialAnalytics = require("./handlers/financialAnalytics");
 const assignmentAnalytics = require("./handlers/assignmentAnalytics");
-const kabisilyaAnalytics = require("./handlers/kabisilyaAnalytics");
 const realTimeDashboard = require("./handlers/realTimeDashboard");
 const mobileDashboard = require("./handlers/mobileDashboard");
 const bukidAnalytics = require("./handlers/bukidAnalytics");
@@ -25,7 +24,6 @@ class KabisilyaDashboardHandler {
     try {
       this.repositories = {
         worker: AppDataSource.getRepository("Worker"),
-        kabisilya: AppDataSource.getRepository("Kabisilya"),
         bukid: AppDataSource.getRepository("Bukid"),
         pitak: AppDataSource.getRepository("Pitak"),
         assignment: AppDataSource.getRepository("Assignment"),
@@ -171,13 +169,6 @@ class KabisilyaDashboardHandler {
             params,
           );
 
-        // 🌾 KABISILYA ANALYTICS
-        case "getKabisilyaOverview":
-          return await kabisilyaAnalytics.getKabisilyaOverview(
-            this.repositories,
-            params,
-          );
-
         case "getBukidSummary":
           // @ts-ignore
           return await kabisilyaAnalytics.getBukidSummary(
@@ -199,12 +190,6 @@ class KabisilyaDashboardHandler {
           return await kabisilyaAnalytics.getProductionByKabisilya(
             this.repositories,
             // @ts-ignore
-            params,
-          );
-
-        case "getLandUtilization":
-          return await kabisilyaAnalytics.getLandUtilization(
-            this.repositories,
             params,
           );
 
@@ -561,11 +546,11 @@ class KabisilyaDashboardHandler {
 const kabisilyaDashboardHandler = new KabisilyaDashboardHandler();
 
 ipcMain.handle(
-  "kabisilyaDashboard",
+  "dashboard",
   withErrorHandling(
     // @ts-ignore
     kabisilyaDashboardHandler.handleRequest.bind(kabisilyaDashboardHandler),
-    "IPC:kabisilyaDashboard",
+    "IPC:dashboard",
   ),
 );
 

@@ -1,4 +1,4 @@
-// components/KabisilyaDashboardPage.tsx
+// components/DashboardPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,12 +7,8 @@ import {
     DollarSign,
     Calendar,
     AlertTriangle,
-    CheckCircle,
-    Clock,
-    RefreshCw,
-    Plus,
-    Eye,
-    Package,
+    CheckCircle, RefreshCw,
+    Plus, Package,
     BarChart3,
     Activity,
     UserCheck,
@@ -24,25 +20,17 @@ import {
     Sun,
     ThermometerSun,
     Droplets,
-    Wind,
-    Cloud,
-    Thermometer,
-    Layers,
-    Shield,
-    Target,
-    Truck,
-    Home
+    Wind
 } from 'lucide-react';
 import dashboardAPI, {
     type WorkersOverviewData,
     type FinancialOverviewData,
     type AssignmentOverviewData,
-    type LiveDashboardData,
-    type KabisilyaOverviewData
+    type LiveDashboardData
 } from '../../apis/dashboard';
 import { formatCurrency, formatDate, formatPercentage } from '../../utils/formatters';
 
-const KabisilyaDashboardPage: React.FC = () => {
+const DashboardPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
@@ -50,7 +38,6 @@ const KabisilyaDashboardPage: React.FC = () => {
     const [financialData, setFinancialData] = useState<FinancialOverviewData | null>(null);
     const [assignmentsData, setAssignmentsData] = useState<AssignmentOverviewData | null>(null);
     const [liveData, setLiveData] = useState<LiveDashboardData | null>(null);
-    const [kabisilyaData, setKabisilyaData] = useState<KabisilyaOverviewData | null>(null);
     const navigate = useNavigate();
 
     const fetchDashboardData = async () => {
@@ -62,21 +49,18 @@ const KabisilyaDashboardPage: React.FC = () => {
                 workersRes,
                 financialRes,
                 assignmentsRes,
-                liveRes,
-                kabisilyaRes
+                liveRes
             ] = await Promise.all([
                 dashboardAPI.getWorkersOverview(),
                 dashboardAPI.getFinancialOverview(),
                 dashboardAPI.getAssignmentOverview(),
-                dashboardAPI.getLiveDashboard(),
-                dashboardAPI.getKabisilyaOverview()
+                dashboardAPI.getLiveDashboard()
             ]);
 
             if (workersRes.status) setWorkersData(workersRes.data);
             if (financialRes.status) setFinancialData(financialRes.data);
             if (assignmentsRes.status) setAssignmentsData(assignmentsRes.data);
             if (liveRes.status) setLiveData(liveRes.data);
-            if (kabisilyaRes.status) setKabisilyaData(kabisilyaRes.data);
 
         } catch (err: any) {
             setError(err.message);
@@ -162,11 +146,7 @@ const KabisilyaDashboardPage: React.FC = () => {
                 <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{error}</p>
                 <button
                     onClick={fetchDashboardData}
-                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 hover:shadow-md"
-                    style={{
-                        background: 'var(--primary-color)',
-                        color: 'var(--sidebar-text)'
-                    }}
+                    className="windows-btn windows-btn-primary px-4 py-2 text-sm font-medium"
                 >
                     <RefreshCw className="w-4 h-4 inline mr-1" />
                     Retry
@@ -180,19 +160,14 @@ const KabisilyaDashboardPage: React.FC = () => {
             {/* Dashboard Header */}
             <div className="flex justify-between items-center mb-2">
                 <div>
-                    <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Dashboard Overview</h1>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Real-time farm operations monitoring</p>
+                    <h1 className="text-2xl font-bold windows-title" style={{ color: 'var(--text-primary)' }}>Dashboard Overview</h1>
+                    <p className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Real-time farm operations monitoring</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
                         onClick={handleRefresh}
                         disabled={refreshing}
-                        className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center"
-                        style={{
-                            background: 'var(--card-secondary-bg)',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-color)'
-                        }}
+                        className="windows-btn windows-btn-secondary flex items-center"
                     >
                         <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                         {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -210,39 +185,33 @@ const KabisilyaDashboardPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Quick Stats Grid */}
+            {/* Quick Stats Grid - Windows Friendly Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Workers Card */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="windows-card p-5">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-3 rounded-lg" style={{ background: 'var(--accent-green-light)' }}>
                             <Users className="w-6 h-6" style={{ color: 'var(--accent-green)' }} />
                         </div>
                         <span className="px-3 py-1 rounded-full text-xs font-medium"
                             style={{
-                                background: workersData?.summary.activePercentage >= 70 ? 'var(--accent-green-light)' : 'var(--accent-yellow-light)',
-                                color: workersData?.summary.activePercentage >= 70 ? 'var(--accent-green)' : 'var(--accent-yellow)'
+                                background: workersData?.summary.activePercentage! || 0 >= 70 ? 'var(--accent-green-light)' : 'var(--accent-yellow-light)',
+                                color: workersData?.summary.activePercentage || 0 >= 70 ? 'var(--accent-green)' : 'var(--accent-yellow)'
                             }}
                         >
                             <UserCheck className="w-3 h-3 inline mr-1" />
                             {workersData?.summary.activePercentage || 0}% active
                         </span>
                     </div>
-                    <h3 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}
+                    <h3 className="text-3xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}
                         onClick={navigateToWorkers}
                     >
                         {workersData?.summary.total || 0}
                     </h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Total Workers</p>
+                    <p className="text-sm mb-4 windows-text" style={{ color: 'var(--text-secondary)' }}>Total Workers</p>
                     <button
                         onClick={navigateToWorkers}
-                        className="text-sm font-medium flex items-center hover:underline"
-                        style={{ color: 'var(--primary-color)' }}
+                        className="windows-btn windows-btn-secondary text-sm flex items-center"
                     >
                         Manage Workers
                         <ChevronRight className="w-4 h-4 ml-1" />
@@ -250,36 +219,30 @@ const KabisilyaDashboardPage: React.FC = () => {
                 </div>
 
                 {/* Active Assignments Card */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="windows-card p-5">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-3 rounded-lg" style={{ background: 'var(--accent-sky-light)' }}>
                             <Package className="w-6 h-6" style={{ color: 'var(--accent-sky)' }} />
                         </div>
                         <span className="px-3 py-1 rounded-full text-xs font-medium"
                             style={{
-                                background: assignmentsData?.summary.completionRate >= 80 ? 'var(--accent-green-light)' : 'var(--accent-yellow-light)',
-                                color: assignmentsData?.summary.completionRate >= 80 ? 'var(--accent-green)' : 'var(--accent-yellow)'
+                                background: assignmentsData?.summary.completionRate! || 0 >= 80 ? 'var(--accent-green-light)' : 'var(--accent-yellow-light)',
+                                color: assignmentsData?.summary.completionRate! || 0 >= 80 ? 'var(--accent-green)' : 'var(--accent-yellow)'
                             }}
                         >
                             <CheckCircle className="w-3 h-3 inline mr-1" />
                             {assignmentsData?.summary.completionRate || 0}%
                         </span>
                     </div>
-                    <h3 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}
+                    <h3 className="text-3xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}
                         onClick={navigateToAssignments}
                     >
                         {assignmentsData?.summary.activeAssignments || 0}
                     </h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Active Assignments</p>
+                    <p className="text-sm mb-4 windows-text" style={{ color: 'var(--text-secondary)' }}>Active Assignments</p>
                     <button
                         onClick={navigateToAssignments}
-                        className="text-sm font-medium flex items-center hover:underline"
-                        style={{ color: 'var(--primary-color)' }}
+                        className="windows-btn windows-btn-secondary text-sm flex items-center"
                     >
                         View All Assignments
                         <ChevronRight className="w-4 h-4 ml-1" />
@@ -287,36 +250,30 @@ const KabisilyaDashboardPage: React.FC = () => {
                 </div>
 
                 {/* Total Debt Card */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="windows-card p-5">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-3 rounded-lg" style={{ background: 'var(--accent-gold-light)' }}>
                             <DollarSign className="w-6 h-6" style={{ color: 'var(--accent-gold)' }} />
                         </div>
                         <span className="px-3 py-1 rounded-full text-xs font-medium"
                             style={{
-                                background: financialData?.debts.collectionRate >= 70 ? 'var(--accent-green-light)' : 'var(--accent-red-light)',
-                                color: financialData?.debts.collectionRate >= 70 ? 'var(--accent-green)' : 'var(--accent-red)'
+                                background: financialData?.debts.collectionRate || 0 >= 70 ? 'var(--accent-green-light)' : 'var(--accent-red-light)',
+                                color: financialData?.debts.collectionRate || 0 >= 70 ? 'var(--accent-green)' : 'var(--accent-red)'
                             }}
                         >
                             <Percent className="w-3 h-3 inline mr-1" />
                             {financialData?.debts.collectionRate || 0}% collected
                         </span>
                     </div>
-                    <h3 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}
+                    <h3 className="text-3xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}
                         onClick={navigateToDebts}
                     >
                         {formatCurrency(financialData?.debts.totalBalance || 0)}
                     </h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Outstanding Debt</p>
+                    <p className="text-sm mb-4 windows-text" style={{ color: 'var(--text-secondary)' }}>Outstanding Debt</p>
                     <button
                         onClick={navigateToDebts}
-                        className="text-sm font-medium flex items-center hover:underline"
-                        style={{ color: 'var(--primary-color)' }}
+                        className="windows-btn windows-btn-secondary text-sm flex items-center"
                     >
                         Manage Debts
                         <ChevronRight className="w-4 h-4 ml-1" />
@@ -324,12 +281,7 @@ const KabisilyaDashboardPage: React.FC = () => {
                 </div>
 
                 {/* This Month's Pay Card */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="windows-card p-5">
                     <div className="flex justify-between items-start mb-4">
                         <div className="p-3 rounded-lg" style={{ background: 'var(--accent-earth-light)' }}>
                             <TrendingUp className="w-6 h-6" style={{ color: 'var(--accent-earth)' }} />
@@ -343,16 +295,15 @@ const KabisilyaDashboardPage: React.FC = () => {
                             +{formatPercentage(financialData?.payments.growthRate || 0)}
                         </span>
                     </div>
-                    <h3 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}
+                    <h3 className="text-3xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}
                         onClick={navigateToPaymentHistory}
                     >
                         {formatCurrency(financialData?.payments.currentMonth.net || 0)}
                     </h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>This Month's Net Pay</p>
+                    <p className="text-sm mb-4 windows-text" style={{ color: 'var(--text-secondary)' }}>This Month's Net Pay</p>
                     <button
                         onClick={navigateToPaymentHistory}
-                        className="text-sm font-medium flex items-center hover:underline"
-                        style={{ color: 'var(--primary-color)' }}
+                        className="windows-btn windows-btn-secondary text-sm flex items-center"
                     >
                         Payment History
                         <ChevronRight className="w-4 h-4 ml-1" />
@@ -363,14 +314,9 @@ const KabisilyaDashboardPage: React.FC = () => {
             {/* Weather and Quick Actions Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Weather Widget */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="windows-card p-5">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <h3 className="text-lg font-semibold flex items-center gap-2 windows-title" style={{ color: 'var(--text-primary)' }}>
                             <ThermometerSun className="w-5 h-5" />
                             Weather Conditions
                         </h3>
@@ -385,10 +331,10 @@ const KabisilyaDashboardPage: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-4xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-4xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {weatherData.temperature}°C
                             </div>
-                            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            <div className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>
                                 {weatherData.condition}
                             </div>
                         </div>
@@ -396,15 +342,15 @@ const KabisilyaDashboardPage: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <Droplets className="w-5 h-5" style={{ color: 'var(--accent-sky)' }} />
                                 <div>
-                                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{weatherData.humidity}%</div>
-                                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Humidity</div>
+                                    <div className="text-sm font-medium windows-title" style={{ color: 'var(--text-primary)' }}>{weatherData.humidity}%</div>
+                                    <div className="text-xs windows-text" style={{ color: 'var(--text-secondary)' }}>Humidity</div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Wind className="w-5 h-5" style={{ color: 'var(--accent-sky)' }} />
                                 <div>
-                                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{weatherData.windSpeed} km/h</div>
-                                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Wind</div>
+                                    <div className="text-sm font-medium windows-title" style={{ color: 'var(--text-primary)' }}>{weatherData.windSpeed} km/h</div>
+                                    <div className="text-xs windows-text" style={{ color: 'var(--text-secondary)' }}>Wind</div>
                                 </div>
                             </div>
                         </div>
@@ -413,7 +359,7 @@ const KabisilyaDashboardPage: React.FC = () => {
 
                 {/* Quick Actions */}
                 <div className="lg:col-span-2">
-                    <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Quick Actions</h3>
+                    <h3 className="text-lg font-semibold mb-4 windows-title" style={{ color: 'var(--text-primary)' }}>Quick Actions</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {quickActions.map((action, index) => {
                             const Icon = action.icon;
@@ -430,7 +376,7 @@ const KabisilyaDashboardPage: React.FC = () => {
                                 <a
                                     key={index}
                                     href={action.path}
-                                    className="p-4 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-md flex flex-col items-center justify-center"
+                                    className="windows-btn windows-btn-secondary p-4 flex flex-col items-center justify-center hover:scale-105 transition-all duration-200"
                                     style={{
                                         background: colors.bg,
                                         border: `1px solid ${colors.border}20`,
@@ -438,7 +384,7 @@ const KabisilyaDashboardPage: React.FC = () => {
                                     }}
                                 >
                                     <Icon className="w-6 h-6 mb-2" />
-                                    <span className="text-sm font-medium text-center">{action.label}</span>
+                                    <span className="text-sm font-medium text-center windows-text">{action.label}</span>
                                 </a>
                             );
                         })}
@@ -449,14 +395,9 @@ const KabisilyaDashboardPage: React.FC = () => {
             {/* Today's Overview and Farm Status */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Today's Overview */}
-                <div className="lg:col-span-2 p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="lg:col-span-2 windows-card p-5">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <h3 className="text-lg font-semibold flex items-center gap-2 windows-title" style={{ color: 'var(--text-primary)' }}>
                             <Activity className="w-5 h-5" />
                             Today's Activity
                         </h3>
@@ -476,10 +417,10 @@ const KabisilyaDashboardPage: React.FC = () => {
                             }}
                         >
                             <Package className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--accent-sky)' }} />
-                            <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-2xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {liveData?.overview.assignments.today || 0}
                             </div>
-                            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Today's Assignments</div>
+                            <div className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Today's Assignments</div>
                         </div>
                         <div className="text-center p-4 rounded-lg"
                             style={{
@@ -487,10 +428,10 @@ const KabisilyaDashboardPage: React.FC = () => {
                             }}
                         >
                             <DollarSign className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--accent-green)' }} />
-                            <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-2xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {formatCurrency(liveData?.overview.financial.todayPayments || 0)}
                             </div>
-                            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Today's Payments</div>
+                            <div className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Today's Payments</div>
                         </div>
                         <div className="text-center p-4 rounded-lg"
                             style={{
@@ -498,10 +439,10 @@ const KabisilyaDashboardPage: React.FC = () => {
                             }}
                         >
                             <Users className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--accent-purple)' }} />
-                            <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-2xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {liveData?.overview.workers.totalActive || 0}
                             </div>
-                            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Active Workers</div>
+                            <div className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Active Workers</div>
                         </div>
                         <div className="text-center p-4 rounded-lg"
                             style={{
@@ -509,22 +450,17 @@ const KabisilyaDashboardPage: React.FC = () => {
                             }}
                         >
                             <MapPin className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--accent-earth)' }} />
-                            <div className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-2xl font-bold mb-1 windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {liveData?.overview.resources.activePitaks || 0}
                             </div>
-                            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Active Pitaks</div>
+                            <div className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Active Pitaks</div>
                         </div>
                     </div>
                 </div>
 
                 {/* Farm Status */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
-                    <h3 className="text-lg font-semibold flex items-center gap-2 mb-6" style={{ color: 'var(--text-primary)' }}>
+                <div className="windows-card p-5">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 mb-6 windows-title" style={{ color: 'var(--text-primary)' }}>
                         <Sprout className="w-5 h-5" />
                         Farm Status
                     </h3>
@@ -536,9 +472,9 @@ const KabisilyaDashboardPage: React.FC = () => {
                         >
                             <div className="flex items-center">
                                 <MapPin className="w-5 h-5 mr-3" style={{ color: 'var(--accent-green)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Active Pitaks</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Active Pitaks</span>
                             </div>
-                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            <span className="font-semibold windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {assignmentsData?.utilization.pitaks.active || 0}/{assignmentsData?.utilization.pitaks.total || 0}
                             </span>
                         </div>
@@ -549,23 +485,10 @@ const KabisilyaDashboardPage: React.FC = () => {
                         >
                             <div className="flex items-center">
                                 <Users className="w-5 h-5 mr-3" style={{ color: 'var(--accent-sky)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Worker Utilization</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Worker Utilization</span>
                             </div>
-                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                                {(assignmentsData?.utilization.workers.utilizationRate || 0 * 100).toFixed(1)}%
-                            </span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
-                        >
-                            <div className="flex items-center">
-                                <Layers className="w-5 h-5 mr-3" style={{ color: 'var(--accent-purple)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Active Kabisilyas</span>
-                            </div>
-                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                                {kabisilyaData?.overallMetrics.totalKabisilyas || 0}
+                            <span className="font-semibold windows-title" style={{ color: 'var(--text-primary)' }}>
+                                {((assignmentsData?.utilization.workers.utilizationRate || 0) * 100).toFixed(1)}%
                             </span>
                         </div>
                     </div>
@@ -575,90 +498,72 @@ const KabisilyaDashboardPage: React.FC = () => {
             {/* Financial Overview and Worker Performance */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Financial Overview */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="windows-card p-5">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <h3 className="text-lg font-semibold flex items-center gap-2 windows-title" style={{ color: 'var(--text-primary)' }}>
                             <BarChart3 className="w-5 h-5" />
                             Financial Overview
                         </h3>
                         <button
                             onClick={navigateToFinancialReports}
-                            className="text-sm font-medium hover:underline flex items-center"
-                            style={{ color: 'var(--primary-color)' }}
+                            className="windows-btn windows-btn-secondary text-sm flex items-center"
                         >
                             View Reports
                             <ChevronRight className="w-4 h-4 ml-1" />
                         </button>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <DollarSign className="w-5 h-5 mr-2" style={{ color: 'var(--accent-gold)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Total Debt</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Total Debt</span>
                             </div>
-                            <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-xl font-bold windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {formatCurrency(financialData?.debts.totalAmount || 0)}
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <Percent className="w-5 h-5 mr-2"
                                     style={{
-                                        color: financialData?.debts.collectionRate >= 70 ? 'var(--accent-green)' : 'var(--accent-red)'
+                                        color: financialData?.debts.collectionRate || 0 >= 70 ? 'var(--accent-green)' : 'var(--accent-red)'
                                     }}
                                 />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Collection Rate</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Collection Rate</span>
                             </div>
-                            <div className="text-xl font-bold"
+                            <div className="text-xl font-bold windows-title"
                                 style={{
-                                    color: financialData?.debts.collectionRate >= 70 ? 'var(--accent-green)' : 'var(--accent-red)'
+                                    color: financialData?.debts.collectionRate || 0 >= 70 ? 'var(--accent-green)' : 'var(--accent-red)'
                                 }}
                             >
                                 {financialData?.debts.collectionRate || 0}%
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <TrendingUp className="w-5 h-5 mr-2" style={{ color: 'var(--accent-sky)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Avg. Interest</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Avg. Interest</span>
                             </div>
-                            <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-xl font-bold windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {financialData?.debts.averageInterestRate || 0}%
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <Calendar className="w-5 h-5 mr-2" style={{ color: 'var(--accent-purple)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Due Dates</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Due Dates</span>
                             </div>
-                            <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-xl font-bold windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {financialData?.upcomingDueDates.length || 0}
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h4 className="font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Debt Status Breakdown</h4>
+                        <h4 className="font-medium mb-3 windows-title" style={{ color: 'var(--text-primary)' }}>Debt Status Breakdown</h4>
                         <div className="space-y-2">
                             {financialData?.debtStatusBreakdown.map((status, index) => (
                                 <div key={index} className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-50">
@@ -669,10 +574,10 @@ const KabisilyaDashboardPage: React.FC = () => {
                                                     status.status === 'overdue' ? 'var(--accent-red)' : 'var(--accent-gold)'
                                             }}
                                         ></div>
-                                        <span className="text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>{status.status}</span>
+                                        <span className="text-sm capitalize windows-text" style={{ color: 'var(--text-secondary)' }}>{status.status}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                                        <span className="font-semibold text-sm windows-title" style={{ color: 'var(--text-primary)' }}>
                                             {formatCurrency(status.totalBalance)}
                                         </span>
                                         <span className="px-2 py-1 rounded-full text-xs"
@@ -691,104 +596,86 @@ const KabisilyaDashboardPage: React.FC = () => {
                 </div>
 
                 {/* Worker Performance */}
-                <div className="p-5 rounded-xl transition-all duration-300 hover:shadow-lg"
-                    style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)'
-                    }}
-                >
+                <div className="windows-card p-5">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <h3 className="text-lg font-semibold flex items-center gap-2 windows-title" style={{ color: 'var(--text-primary)' }}>
                             <UserCheck className="w-5 h-5" />
                             Worker Performance
                         </h3>
                         <button
                             onClick={navigateToWorkers}
-                            className="text-sm font-medium hover:underline flex items-center"
-                            style={{ color: 'var(--primary-color)' }}
+                            className="windows-btn windows-btn-secondary text-sm flex items-center"
                         >
                             Manage Workers
                             <ChevronRight className="w-4 h-4 ml-1" />
                         </button>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <UserCheck className="w-5 h-5 mr-2" style={{ color: 'var(--accent-green)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Active Workers</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Active Workers</span>
                             </div>
-                            <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-xl font-bold windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {workersData?.summary.active || 0}
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <DollarSign className="w-5 h-5 mr-2" style={{ color: 'var(--accent-gold)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Avg. Debt</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Avg. Debt</span>
                             </div>
-                            <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-xl font-bold windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {formatCurrency(workersData?.financial.averageDebt || 0)}
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <CheckCircle className="w-5 h-5 mr-2"
                                     style={{
-                                        color: assignmentsData?.summary.completionRate >= 80 ? 'var(--accent-green)' : 'var(--accent-yellow)'
+                                        color: assignmentsData?.summary.completionRate || 0 >= 80 ? 'var(--accent-green)' : 'var(--accent-yellow)'
                                     }}
                                 />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Completion Rate</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Completion Rate</span>
                             </div>
-                            <div className="text-xl font-bold"
+                            <div className="text-xl font-bold windows-title"
                                 style={{
-                                    color: assignmentsData?.summary?.completionRate >= 80 ? 'var(--accent-green)' : 'var(--accent-yellow)'
+                                    color: assignmentsData?.summary.completionRate || 0 >= 80 ? 'var(--accent-green)' : 'var(--accent-yellow)'
                                 }}
                             >
                                 {assignmentsData?.summary.completionRate || 0}%
                             </div>
                         </div>
-                        <div className="p-4 rounded-lg"
-                            style={{
-                                background: 'var(--card-secondary-bg)'
-                            }}
+                        <div className="p-4 rounded-lg windows-card"
                         >
                             <div className="flex items-center mb-2">
                                 <Package className="w-5 h-5 mr-2" style={{ color: 'var(--accent-sky)' }} />
-                                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Avg. Assignments</span>
+                                <span className="text-sm windows-text" style={{ color: 'var(--text-secondary)' }}>Avg. Assignments</span>
                             </div>
-                            <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                            <div className="text-xl font-bold windows-title" style={{ color: 'var(--text-primary)' }}>
                                 {assignmentsData?.luwangMetrics.averagePerWorker.toFixed(1) || '0.0'}
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h4 className="font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Top Debtors</h4>
+                        <h4 className="font-medium mb-3 windows-title" style={{ color: 'var(--text-primary)' }}>Top Debtors</h4>
                         <div className="space-y-2">
                             {workersData?.financial.topDebtors.slice(0, 3).map((debtor, index) => (
                                 <div
                                     key={index}
-                                    className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                    className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer windows-card"
                                     onClick={() => navigate(`/workers/view/${debtor.id}`)}
                                 >
                                     <div>
-                                        <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{debtor.name}</div>
-                                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                        <div className="font-medium text-sm windows-title" style={{ color: 'var(--text-primary)' }}>{debtor.name}</div>
+                                        <div className="text-xs windows-text" style={{ color: 'var(--text-secondary)' }}>
                                             Balance: {formatCurrency(debtor.currentBalance)}
                                         </div>
                                     </div>
-                                    <div className="font-semibold text-sm" style={{ color: 'var(--accent-gold)' }}>
+                                    <div className="font-semibold text-sm windows-title" style={{ color: 'var(--accent-gold)' }}>
                                         {formatCurrency(debtor.totalDebt)}
                                     </div>
                                 </div>
@@ -801,4 +688,4 @@ const KabisilyaDashboardPage: React.FC = () => {
     );
 };
 
-export default KabisilyaDashboardPage;
+export default DashboardPage;

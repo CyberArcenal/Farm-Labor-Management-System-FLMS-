@@ -23,6 +23,7 @@ module.exports = async function importWorkersFromCSV(
   let shouldRelease = false;
 
   if (!queryRunner) {
+    // @ts-ignore
     queryRunner = AppDataSource.createQueryRunner();
     // @ts-ignore
     await queryRunner.connect();
@@ -53,7 +54,7 @@ module.exports = async function importWorkersFromCSV(
     }
 
     /**
-     * @type {{ name: any; contact: any; email: any; address: any; status: any; hireDate: any; kabisilyaId: any; totalDebt: any; totalPaid: any; currentBalance: any; }[]}
+     * @type {{ name: any; contact: any; email: any; address: any; status: any; hireDate: any; totalDebt: any; totalPaid: any; currentBalance: any; }[]}
      */
     const workers = [];
     /**
@@ -75,7 +76,7 @@ module.exports = async function importWorkersFromCSV(
         .on(
           "data",
           (
-            /** @type {{ name: any; Name: any; NAME: any; contact: any; Contact: any; CONTACT: any; phone: any; Phone: any; email: any; Email: any; EMAIL: any; address: any; Address: any; ADDRESS: any; status: any; Status: any; STATUS: any; hireDate: any; hire_date: any; HireDate: any; hiredate: any; kabisilyaId: any; kabisilya_id: any; KabisilyaId: any; totalDebt: any; total_debt: any; TotalDebt: any; totalPaid: any; total_paid: any; TotalPaid: any; currentBalance: any; current_balance: any; CurrentBalance: any; }} */ row,
+            /** @type {{ name: any; Name: any; NAME: any; contact: any; Contact: any; CONTACT: any; phone: any; Phone: any; email: any; Email: any; EMAIL: any; address: any; Address: any; ADDRESS: any; status: any; Status: any; STATUS: any; hireDate: any; hire_date: any; HireDate: any; hiredate: any;  totalDebt: any; total_debt: any; TotalDebt: any; totalPaid: any; total_paid: any; TotalPaid: any; currentBalance: any; current_balance: any; CurrentBalance: any; }} */ row,
           ) => {
             rowNumber++;
 
@@ -99,8 +100,6 @@ module.exports = async function importWorkersFromCSV(
                 ).toLowerCase(),
                 hireDate:
                   row.hireDate || row.hire_date || row.HireDate || row.hiredate,
-                kabisilyaId:
-                  row.kabisilyaId || row.kabisilya_id || row.KabisilyaId,
                 totalDebt:
                   row.totalDebt || row.total_debt || row.TotalDebt || 0,
                 totalPaid:
@@ -152,8 +151,6 @@ module.exports = async function importWorkersFromCSV(
                 workerData.currentBalance = parseFloat(
                   workerData.currentBalance,
                 );
-              if (workerData.kabisilyaId)
-                workerData.kabisilyaId = parseInt(workerData.kabisilyaId);
 
               workers.push(workerData);
             } catch (error) {
@@ -260,9 +257,6 @@ module.exports = async function importWorkersFromCSV(
           hireDate: workerData.hireDate
             ? new Date(workerData.hireDate)
             : currentDate,
-          kabisilya: workerData.kabisilyaId
-            ? { id: workerData.kabisilyaId }
-            : null,
           totalDebt: workerData.totalDebt || 0,
           totalPaid: workerData.totalPaid || 0,
           currentBalance: workerData.currentBalance || 0,
@@ -348,7 +342,6 @@ module.exports = async function importWorkersFromCSV(
             "address",
             "status",
             "hireDate",
-            "kabisilyaId",
             "totalDebt",
             "totalPaid",
             "currentBalance",
@@ -360,7 +353,6 @@ module.exports = async function importWorkersFromCSV(
             address: "Manila",
             status: "active",
             hireDate: "2024-01-15",
-            kabisilyaId: "1",
             totalDebt: "1000.00",
             totalPaid: "500.00",
             currentBalance: "500.00",

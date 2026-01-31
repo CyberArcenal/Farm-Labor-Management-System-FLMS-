@@ -11,10 +11,11 @@ import WorkerTableView from './components/WorkerTableView';
 import WorkerPagination from './components/WorkerPagination';
 import WorkerGridView from './components/WorkerGridView';
 import WorkerViewDialog from './Dialogs/WorkerViewDialog';
+import { dialogs } from '../../../utils/dialogs';
 
 const WorkerTablePage: React.FC = () => {
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-    
+
     const {
         workers,
         stats,
@@ -28,8 +29,6 @@ const WorkerTablePage: React.FC = () => {
         setSearchQuery,
         statusFilter,
         setStatusFilter,
-        kabisilyaFilter,
-        setKabisilyaFilter,
         viewMode,
         setViewMode,
         selectedWorkers,
@@ -316,8 +315,6 @@ const WorkerTablePage: React.FC = () => {
                                 setSearchQuery={setSearchQuery}
                                 statusFilter={statusFilter}
                                 setStatusFilter={setStatusFilter}
-                                kabisilyaFilter={kabisilyaFilter}
-                                setKabisilyaFilter={setKabisilyaFilter}
                                 viewMode={viewMode}
                                 setViewMode={setViewMode}
                                 handleRefresh={handleRefresh}
@@ -432,7 +429,12 @@ const WorkerTablePage: React.FC = () => {
                 <WorkerFormDialog
                     id={selectedWorkerId || undefined}
                     mode={dialogMode}
-                    onClose={closeFormDialog}
+                    onClose={async () => {
+                        if (!await dialogs.confirm({ title: "Close Form", message: "Are you sure you want to close the form? Any unsaved changes will be lost." })) return;
+
+                        closeFormDialog()
+                    }}
+
                     onSuccess={handleFormSuccess}
                 />
             )}
@@ -440,7 +442,7 @@ const WorkerTablePage: React.FC = () => {
             {/* Worker View Dialog */}
             {isViewDialogOpen && selectedWorkerId && (
                 <WorkerViewDialog
-                    id={selectedWorkerId}
+                    workerId={selectedWorkerId}
                     onClose={closeViewDialog}
                     onEdit={openEditDialog}
                 />

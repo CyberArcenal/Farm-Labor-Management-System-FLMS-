@@ -1,4 +1,4 @@
-// ipc/worker/get/active.ipc.js (Optimized)
+// ipc/worker/get/active.ipc.js (Optimized, no kabisilya)
 //@ts-check
 
 const Worker = require("../../../../entities/Worker");
@@ -16,23 +16,16 @@ module.exports = async function getActiveWorkers(params = {}) {
       // @ts-ignore
       sortOrder = 'ASC',
       // @ts-ignore
-      includeKabisilya = true,
-      // @ts-ignore
       includeStats = false,
+      // @ts-ignore
       // @ts-ignore
       _userId 
     } = params;
 
     const workerRepository = AppDataSource.getRepository(Worker);
 
-    const relations = [];
-    if (includeKabisilya) {
-      relations.push('kabisilya');
-    }
-
     const [workers, total] = await workerRepository.findAndCount({
       where: { status: 'active' },
-      relations,
       order: { [sortBy]: sortOrder },
       skip: (page - 1) * limit,
       take: limit
@@ -40,45 +33,32 @@ module.exports = async function getActiveWorkers(params = {}) {
 
     // Calculate additional stats if requested
     /**
-       * @type {{ byKabisilya: any; totalWorkers?: any; totalActive?: any; totalBalance?: any; totalDebt?: any; averageBalance?: number; averageDebt?: number; } | null}
+       * @type {{ totalWorkers?: any; totalActive?: any; totalBalance?: any; totalDebt?: any; averageBalance?: number; averageDebt?: number; } | null}
        */
     let stats = null;
     if (includeStats) {
       stats = {
         totalWorkers: total,
         totalActive: total,
-        totalBalance: workers.reduce((/** @type {number} */ sum, /** @type {{ currentBalance: any; }} */ worker) => 
-          sum + parseFloat(worker.currentBalance || 0), 0
-        ),
-        totalDebt: workers.reduce((/** @type {number} */ sum, /** @type {{ totalDebt: any; }} */ worker) => 
-          sum + parseFloat(worker.totalDebt || 0), 0
-        ),
-        byKabisilya: {},
-        averageBalance: total > 0 ? 
-          workers.reduce((/** @type {number} */ sum, /** @type {{ currentBalance: any; }} */ worker) => sum + parseFloat(worker.currentBalance || 0), 0) / total : 0,
-        averageDebt: total > 0 ? 
-          workers.reduce((/** @type {number} */ sum, /** @type {{ totalDebt: any; }} */ worker) => sum + parseFloat(worker.totalDebt || 0), 0) / total : 0
-      };
-
-      // Group by kabisilya
-      workers.forEach((/** @type {{ kabisilya: { name: string; }; currentBalance: any; totalDebt: any; }} */ worker) => {
-        const kabisilyaName = worker.kabisilya?.name || 'Unassigned';
-        // @ts-ignore
-        if (!stats.byKabisilya[kabisilyaName]) {
+        totalBalance: workers.reduce(
           // @ts-ignore
-          stats.byKabisilya[kabisilyaName] = {
-            count: 0,
-            totalBalance: 0,
-            totalDebt: 0
-          };
-        }
-        // @ts-ignore
-        stats.byKabisilya[kabisilyaName].count++;
-        // @ts-ignore
-        stats.byKabisilya[kabisilyaName].totalBalance += parseFloat(worker.currentBalance || 0);
-        // @ts-ignore
-        stats.byKabisilya[kabisilyaName].totalDebt += parseFloat(worker.totalDebt || 0);
-      });
+          (sum, worker) => sum + parseFloat(worker.currentBalance || 0), 
+          0
+        ),
+        totalDebt: workers.reduce(
+          // @ts-ignore
+          (sum, worker) => sum + parseFloat(worker.totalDebt || 0), 
+          0
+        ),
+        averageBalance: total > 0 
+          // @ts-ignore
+          ? workers.reduce((sum, worker) => sum + parseFloat(worker.currentBalance || 0), 0) / total 
+          : 0,
+        averageDebt: total > 0 
+          // @ts-ignore
+          ? workers.reduce((sum, worker) => sum + parseFloat(worker.totalDebt || 0), 0) / total 
+          : 0
+      };
     }
 
     return {

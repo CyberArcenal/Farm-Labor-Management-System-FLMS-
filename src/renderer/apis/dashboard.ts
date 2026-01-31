@@ -1,4 +1,4 @@
-// dashboardAPI.ts - API for Kabisilya Dashboard Management
+// dashboardAPI.ts - API for Farm Dashboard Management
 
 export interface DashboardResponse<T = any> {
   status: boolean;
@@ -30,10 +30,6 @@ export interface BukidDetailsData {
     id: any;
     name: any;
     location?: any;
-    kabisilya?: {
-      id: any;
-      name: any;
-    };
     createdAt: any;
     updatedAt: any;
   };
@@ -153,7 +149,6 @@ export interface CompareBukidsData {
   bukids: Array<{
     bukidId: any;
     name: any;
-    kabisilya: any;
     metrics: {
       pitaks: number;
       totalAssignments: number;
@@ -195,7 +190,6 @@ export interface PitakProductivityOverviewData {
     status: any;
     totalLuwang: number;
     bukidName: any;
-    kabisilyaName: any;
     metrics: {
       completedLuwang: number;
       activeLuwang: number;
@@ -230,7 +224,6 @@ export interface PitakProductivityDetailsData {
     status: any;
     totalLuwang: number;
     bukid: any;
-    kabisilya: any;
     createdAt: any;
     updatedAt: any;
   };
@@ -415,7 +408,6 @@ export interface ComparePitaksProductivityData {
       location: any;
       status: any;
       bukid: any;
-      kabisilya: any;
     };
     productivity: Record<string, any>;
     efficiency: Record<string, any>;
@@ -946,260 +938,6 @@ export interface PitakUtilizationData {
   recommendations: string[];
 }
 
-// Kabisilya Analytics Interfaces
-export interface KabisilyaOverviewData {
-  kabisilyas: Array<{
-    id: any;
-    name: any;
-    workers: {
-      total: number;
-      active: number;
-      inactive: number;
-      activePercentage: number;
-    };
-    bukids: {
-      total: number;
-    };
-    financial: {
-      totalDebt: number;
-      averageDebt: number;
-      totalPaid: number;
-      averagePaid: number;
-    };
-    createdAt: any;
-    lastUpdated: any;
-  }>;
-  overallMetrics: {
-    totalKabisilyas: number;
-    totalWorkers: number;
-    totalActiveWorkers: number;
-    totalBukids: number;
-    totalDebt: number;
-    totalPaid: number;
-    workerActivityRate: number;
-    averageWorkersPerKabisilya: number;
-    averageBukidsPerKabisilya: number;
-    averageDebtPerKabisilya: number;
-    averageDebtPerWorker: number;
-  };
-  rankings: {
-    byWorkers: Array<{
-      name: any;
-      workerCount: number;
-      activeWorkers: number;
-    }>;
-    byDebt: Array<{
-      name: any;
-      totalDebt: number;
-      averageDebt: number;
-    }>;
-  };
-  mostActive: any[];
-  highestDebt: any[];
-  lastUpdated: Date;
-}
-
-export interface BukidSummaryData {
-  bukidSummary: Array<{
-    bukidId: any;
-    bukidName: any;
-    kabisilyaName: any;
-    totalPitaks: number;
-    activePitaks: number;
-    totalLuwang: number;
-    assignedLuwang: number;
-    completedLuwang: number;
-    utilizationRate: number;
-  }>;
-  overallMetrics: {
-    totalBukids: number;
-    totalPitaks: number;
-    activePitaks: number;
-    totalLuwang: number;
-    assignedLuwang: number;
-    completedLuwang: number;
-    overallUtilization: number;
-    averageUtilization: number;
-  };
-  categories: {
-    highUtilization: {
-      count: number;
-      percentage: number;
-      bukids: any[];
-    };
-    mediumUtilization: {
-      count: number;
-      percentage: number;
-      bukids: any[];
-    };
-    lowUtilization: {
-      count: number;
-      percentage: number;
-      bukids: any[];
-    };
-  };
-  mostUtilized: any[];
-  needsAttention: any[];
-  recommendations: string[];
-}
-
-export interface PitakSummaryData {
-  pitakSummary: Array<{
-    pitakId: any;
-    location: any;
-    bukidName: any;
-    kabisilyaName: any;
-    totalLuwang: number;
-    assignedLuwang: number;
-    completedLuwang: number;
-    utilizationRate: number;
-    status: any;
-  }>;
-  overallMetrics: {
-    totalPitaks: number;
-    activePitaks: number;
-    totalLuwang: number;
-    assignedLuwang: number;
-    completedLuwang: number;
-    overallUtilization: number;
-    averageUtilization: number;
-    pitakActivityRate: number;
-  };
-  categories: {
-    highUtilization: {
-      count: number;
-      percentage: number;
-      pitaks: any[];
-    };
-    mediumUtilization: {
-      count: number;
-      percentage: number;
-      pitaks: any[];
-    };
-    lowUtilization: {
-      count: number;
-      percentage: number;
-      pitaks: any[];
-    };
-  };
-  mostUtilized: any[];
-  needsAttention: any[];
-  recommendations: string[];
-}
-
-export interface ProductionByKabisilyaData {
-  productionData: Array<{
-    kabisilyaId: any;
-    kabisilyaName: any;
-    totalLuwang: number;
-    completedLuwang: number;
-    productionRate: number;
-    totalAssignments: number;
-    completedAssignments: number;
-  }>;
-  overallMetrics: {
-    totalKabisilyas: number;
-    totalLuwang: number;
-    completedLuwang: number;
-    overallProductionRate: number;
-    averageProductionPerKabisilya: number;
-  };
-  rankings: {
-    byProduction: any[];
-    byEfficiency: any[];
-  };
-  trends: Array<{
-    date: any;
-    totalLuwang: number;
-    completedLuwang: number;
-    productionRate: number;
-  }>;
-}
-
-export interface LandUtilizationData {
-  landUtilization: Array<{
-    bukidId: any;
-    bukidName: any;
-    kabisilyaName: any;
-    totalPitaks: number;
-    activePitaks: number;
-    capacity: {
-      totalLuwang: number;
-      assignedLuwang: number;
-      completedLuwang: number;
-    };
-    utilization: {
-      capacityUtilization: number;
-      completionUtilization: number;
-      overallUtilization: number;
-    };
-  }>;
-  overallMetrics: {
-    totalBukids: number;
-    totalPitaks: number;
-    activePitaks: number;
-    totalLuwangCapacity: number;
-    totalAssignedLuwang: number;
-    totalCompletedLuwang: number;
-    remainingCapacity: number;
-    overallCapacityUtilization: number;
-    overallCompletionRate: number;
-    averageCapacityUtilization: number;
-    averageCompletionUtilization: number;
-    averageOverallUtilization: number;
-    pitakActivityRate: number;
-  };
-  categories: {
-    highlyUtilized: {
-      count: number;
-      percentage: number;
-      bukids: any[];
-    };
-    wellUtilized: {
-      count: number;
-      percentage: number;
-      bukids: any[];
-    };
-    underutilized: {
-      count: number;
-      percentage: number;
-      bukids: any[];
-    };
-    severelyUnderutilized: {
-      count: number;
-      percentage: number;
-      bukids: any[];
-    };
-  };
-  rankings: {
-    byUtilization: Array<{
-      bukidName: any;
-      overallUtilization: number;
-      capacityUtilization: number;
-      kabisilyaName: any;
-    }>;
-    byCapacity: Array<{
-      bukidName: any;
-      totalLuwang: number;
-      assignedLuwang: number;
-      kabisilyaName: any;
-    }>;
-  };
-  byKabisilya: Array<{
-    kabisilyaName: any;
-    bukidCount: number;
-    capacityUtilization: number;
-    completionUtilization: number;
-    overallUtilization: number;
-    totalLuwangCapacity: number;
-    assignedLuwang: number;
-    completedLuwang: number;
-  }>;
-  needsAttention: any[];
-  mostUtilized: any[];
-  recommendations: string[];
-}
-
 // Real-Time Dashboard Interfaces
 export interface LiveDashboardData {
   timestamp: string;
@@ -1448,7 +1186,6 @@ export interface WorkerQuickViewData {
   workerInfo: {
     name: any;
     status: any;
-    kabisilya: any;
     totalAssignments: number;
     totalLuwang: number;
     totalDebt: number;
@@ -1503,11 +1240,11 @@ export interface DashboardPayload {
 class DashboardAPI {
   private async callBackend(method: string, params: any = {}): Promise<DashboardResponse<any>> {
     try {
-      if (!window.backendAPI || !window.backendAPI.kabisilyaDashboard) {
+      if (!window.backendAPI || !window.backendAPI.dashboard) {
         throw new Error("Electron API not available");
       }
 
-      const response = await window.backendAPI.kabisilyaDashboard({
+      const response = await window.backendAPI.dashboard({
         method,
         params,
       });
@@ -1582,27 +1319,6 @@ class DashboardAPI {
 
   async getPitakUtilization(params: any = {}): Promise<DashboardResponse<PitakUtilizationData>> {
     return this.callBackend("getPitakUtilization", params);
-  }
-
-  // Kabisilya Analytics Methods
-  async getKabisilyaOverview(params: any = {}): Promise<DashboardResponse<KabisilyaOverviewData>> {
-    return this.callBackend("getKabisilyaOverview", params);
-  }
-
-  async getBukidSummary(params: any = {}): Promise<DashboardResponse<BukidSummaryData>> {
-    return this.callBackend("getBukidSummary", params);
-  }
-
-  async getPitakSummary(params: any = {}): Promise<DashboardResponse<PitakSummaryData>> {
-    return this.callBackend("getPitakSummary", params);
-  }
-
-  async getProductionByKabisilya(params: any = {}): Promise<DashboardResponse<ProductionByKabisilyaData>> {
-    return this.callBackend("getProductionByKabisilya", params);
-  }
-
-  async getLandUtilization(params: any = {}): Promise<DashboardResponse<LandUtilizationData>> {
-    return this.callBackend("getLandUtilization", params);
   }
 
   // ==================== BUKID ANALYTICS METHODS ====================
