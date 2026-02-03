@@ -1,6 +1,6 @@
 // components/AuditTrail/AuditTrailTablePage.tsx
 import React, { useState } from "react";
-import { History, Download, AlertCircle, Filter } from "lucide-react";
+import { History, Download, AlertCircle, Filter, BarChart2, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuditTrailData } from "./hooks/useAuditTrailData";
 import AuditTrailViewDialog from "./Dialogs/AuditTrailViewDialog";
 import { useAuditTrailActions } from "./hooks/useAuditTrailActions";
@@ -13,6 +13,7 @@ import AuditTrailPagination from "./components/AuditTrailPagination";
 
 const AuditTrailTablePage: React.FC = () => {
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showStats, setShowStats] = useState(false); // Add show/hide stats state
 
   const {
     auditTrails,
@@ -248,6 +249,25 @@ const AuditTrailTablePage: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap gap-3">
+              {/* Stats Toggle Button */}
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {showStats ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Hide Stats
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Show Stats
+                  </>
+                )}
+              </button>
+
               <button
                 onClick={handleExportCSV}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
@@ -270,10 +290,12 @@ const AuditTrailTablePage: React.FC = () => {
         {/* Main Content Area */}
         <div className="flex-1">
           <div className="h-full p-6">
-            {/* Stats Cards */}
-            <div className="mb-6">
-              <AuditTrailStats stats={stats} />
-            </div>
+            {/* Stats Cards - Conditionally Rendered */}
+            {showStats && (
+              <div className="mb-6">
+                <AuditTrailStats stats={stats} />
+              </div>
+            )}
 
             {/* Filters */}
             <div className="mb-6">
@@ -354,14 +376,7 @@ const AuditTrailTablePage: React.FC = () => {
               </div>
             ) : !loading && auditTrails.length > 0 ? (
               <>
-                <div
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6"
-                  style={{
-                    maxHeight:
-                      viewMode === "table" ? "calc(100vh - 450px)" : "auto",
-                    overflowY: viewMode === "table" ? "auto" : "visible",
-                  }}
-                >
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                   {viewMode === "table" ? (
                     <AuditTrailTableView
                       auditTrails={auditTrails}

@@ -1,57 +1,61 @@
 // src/ipc/debt/get/by_worker.ipc
 //@ts-check
+const Debt = require("../../../../entities/Debt");
 const { AppDataSource } = require("../../../db/dataSource");
 
+/**
+ * Get debts by worker with optional filters
+ * @param {number} workerId
+ * @param {{ status?: string; date_from?: string|Date; date_to?: string|Date; only_active?: boolean }} filters
+ * @param {number} [userId]
+ */
 // @ts-ignore
-module.exports = async (/** @type {any} */ workerId, filters = {}, /** @type {any} */ userId) => {
+module.exports = async (workerId, filters = {}, userId) => {
   try {
-    const debtRepository = AppDataSource.getRepository("Debt");
-    
-    const query = debtRepository.createQueryBuilder("debt")
+    const debtRepository = AppDataSource.getRepository(Debt);
+
+    const qb = debtRepository
+      .createQueryBuilder("debt")
       .leftJoinAndSelect("debt.worker", "worker")
       .leftJoinAndSelect("debt.history", "history")
-      .where("debt.worker_id = :workerId", { workerId })
+      .where("debt.worker = :workerId", { workerId })
       .orderBy("debt.dateIncurred", "DESC");
 
-    // Apply additional filters
-    // @ts-ignore
+    // Apply filters
     if (filters.status) {
-      // @ts-ignore
-      query.andWhere("debt.status = :status", { status: filters.status });
+      qb.andWhere("debt.status = :status", { status: filters.status });
     }
 
-    // @ts-ignore
     if (filters.date_from && filters.date_to) {
-      query.andWhere("debt.dateIncurred BETWEEN :date_from AND :date_to", {
-        // @ts-ignore
-        date_from: filters.date_from,
-        // @ts-ignore
-        date_to: filters.date_to
+      const dateFrom = new Date(filters.date_from);
+      const dateTo = new Date(filters.date_to);
+      qb.andWhere("debt.dateIncurred BETWEEN :dateFrom AND :dateTo", {
+        dateFrom,
+        dateTo,
       });
     }
 
-    // @ts-ignore
-    if (filters.only_active === true) {
-      query.andWhere("debt.balance > 0");
+    if (filters.only_active) {
+      qb.andWhere("debt.balance > 0");
     }
 
-    const debts = await query.getMany();
+    const debts = await qb.getMany();
 
-    // Calculate totals
+    // Totals
     const totals = {
-      totalDebt: debts.reduce((/** @type {number} */ sum, /** @type {{ amount: string; }} */ debt) => sum + parseFloat(debt.amount), 0),
-      totalBalance: debts.reduce((/** @type {number} */ sum, /** @type {{ balance: string; }} */ debt) => sum + parseFloat(debt.balance), 0),
-      totalPaid: debts.reduce((/** @type {number} */ sum, /** @type {{ totalPaid: string; }} */ debt) => sum + parseFloat(debt.totalPaid), 0),
-      count: debts.length
+      // @ts-ignore
+      totalDebt: debts.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0),
+      // @ts-ignore
+      totalBalance: debts.reduce((sum, d) => sum + parseFloat(d.balance || 0), 0),
+      // @ts-ignore
+      totalPaid: debts.reduce((sum, d) => sum + parseFloat(d.totalPaid || 0), 0),
+      count: debts.length,
     };
 
     return {
       status: true,
       message: "Worker debts retrieved successfully",
-      data: {
-        debts,
-        totals
-      }
+      data: { debts, totals },
     };
   } catch (error) {
     console.error("Error getting debts by worker:", error);
@@ -59,7 +63,7 @@ module.exports = async (/** @type {any} */ workerId, filters = {}, /** @type {an
       status: false,
       // @ts-ignore
       message: error.message,
-      data: null
+      data: null,
     };
   }
 };

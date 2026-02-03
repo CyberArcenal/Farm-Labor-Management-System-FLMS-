@@ -1,6 +1,13 @@
 // components/User/UserTablePage.tsx
 import React, { useState } from "react";
-import { Users, UserPlus, Download } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  Download,
+  ChevronUp,
+  ChevronDown,
+  BarChart2,
+} from "lucide-react";
 import { useUserData } from "./hooks/useUserData";
 import { showError, showSuccess, showToast } from "../../../utils/notification";
 import userAPI from "../../../apis/user";
@@ -53,7 +60,7 @@ const UserTablePage: React.FC = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-
+  const [showStats, setShowStats] = useState(false);
   const {
     handleDeleteUser,
     handleBulkDelete,
@@ -284,6 +291,23 @@ const UserTablePage: React.FC = () => {
 
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => setShowStats(!showStats)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {showStats ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Hide Stats
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Show Stats
+                  </>
+                )}
+              </button>
+              <button
                 onClick={handleExportCSV}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               >
@@ -303,12 +327,14 @@ const UserTablePage: React.FC = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto p-6">
+        <div className="flex-1">
+          <div className="h-full">
             {/* Stats Cards */}
-            <div className="mb-6">
-              <UserStats stats={stats} />
-            </div>
+            {showStats && (
+              <div className="mb-6">
+                <UserStats stats={stats} />
+              </div>
+            )}
 
             {/* Filters */}
             <div className="mb-6">
@@ -378,14 +404,7 @@ const UserTablePage: React.FC = () => {
               </div>
             ) : !loading && users.length > 0 ? (
               <>
-                <div
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6"
-                  style={{
-                    maxHeight:
-                      viewMode === "table" ? "calc(100vh - 450px)" : "auto",
-                    overflowY: viewMode === "table" ? "auto" : "visible",
-                  }}
-                >
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                   {viewMode === "table" ? (
                     <UserTableView
                       users={users}

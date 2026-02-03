@@ -43,15 +43,15 @@ const CircleForm: React.FC<CircleFormProps> = ({
         <div className="relative">
           <input
             type="number"
-            min="1"
-            max="1000"
-            step="1"
+            min="0.1"
+            max="2000"
+            step="0.01"
             value={inputs.radius || ""}
-            onChange={(e) => handleRadiusChange(parseInt(e.target.value) || 0)}
+            onChange={(e) => handleRadiusChange(parseFloat(e.target.value) || 0)}
             className={`w-full px-3 py-2 pl-10 rounded text-sm border ${
               errors.radius ? "border-red-500" : "border-gray-300"
             } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
-            placeholder="Enter radius in buhol"
+            placeholder="Enter radius in buhol (e.g., 12.5)"
           />
           <Hash className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
         </div>
@@ -67,13 +67,13 @@ const CircleForm: React.FC<CircleFormProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <div className="text-gray-600">Radius in Buhol:</div>
-                  <div className="font-semibold">{inputs.radius} buhol</div>
+                  <div className="font-semibold">{inputs.radius.toFixed(2)} buhol</div>
                 </div>
                 <div>
                   <div className="text-gray-600">In Tali:</div>
                   <div className="font-semibold">
                     {TraditionalMeasurement.buholToTali(inputs.radius).toFixed(
-                      1,
+                      3,
                     )}{" "}
                     tali
                   </div>
@@ -81,7 +81,7 @@ const CircleForm: React.FC<CircleFormProps> = ({
                 <div className="col-span-2">
                   <div className="text-gray-600">In Meters:</div>
                   <div className="font-semibold">
-                    {TraditionalMeasurement.buholToMeters(inputs.radius)} meters
+                    {TraditionalMeasurement.buholToMeters(inputs.radius).toFixed(2)} meters
                   </div>
                 </div>
               </div>
@@ -128,7 +128,7 @@ const CircleForm: React.FC<CircleFormProps> = ({
                   y="70"
                   className="text-xs fill-red-700"
                 >
-                  Radius: {inputs.radius} buhol
+                  Radius: {inputs.radius.toFixed(2)} buhol
                 </text>
               )}
             </svg>
@@ -145,15 +145,15 @@ const CircleForm: React.FC<CircleFormProps> = ({
             </div>
             <div className="text-yellow-700 space-y-1">
               <div>
-                Radius: {inputs.radius} buhol × 50 ={" "}
-                {TraditionalMeasurement.buholToMeters(inputs.radius)}m
+                Radius: {inputs.radius.toFixed(2)} buhol × 50 ={" "}
+                {TraditionalMeasurement.buholToMeters(inputs.radius).toFixed(2)}m
               </div>
               <div className="flex items-center gap-1">
                 <Pi className="w-3 h-3" />π (Pi) ≈ 3.14159
               </div>
               <div className="font-mono mt-1 p-1 bg-white rounded border">
                 Area = π × r² = 3.14159 × (
-                {TraditionalMeasurement.buholToMeters(inputs.radius)})² =
+                {TraditionalMeasurement.buholToMeters(inputs.radius).toFixed(2)})² =
                 {(
                   Math.PI *
                   Math.pow(

@@ -29,7 +29,7 @@ export function taliToBuhol(tali: number): number {
  */
 export function sqmToLuwang(areaSqm: number): number {
   const taliSquare = TALI_TO_METERS * TALI_TO_METERS; // 500m × 500m = 250,000 sqm
-  return areaSqm / taliSquare; // fraction of luwang
+  return areaSqm / taliSquare; // Ito ang tamang conversion
 }
 
 /**

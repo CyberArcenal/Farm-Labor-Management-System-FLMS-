@@ -6,7 +6,12 @@ export interface PaymentData {
   grossPay: number;
   manualDeduction: number;
   netPay: number;
-  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'partially_paid';
+  status:
+    | "pending"
+    | "processing"
+    | "completed"
+    | "cancelled"
+    | "partially_paid";
   paymentDate: string | null;
   paymentMethod: string | null;
   referenceNumber: string | null;
@@ -294,7 +299,8 @@ class PaymentAPI {
       const user = kabAuthStore.getUser();
       if (user && user.id) {
         // Ensure we return a number
-        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        const userId =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
         return isNaN(userId) ? null : userId;
       }
       return null;
@@ -311,7 +317,7 @@ class PaymentAPI {
   }
 
   // 🔎 Read-only methods
-  
+
   async getAllPayments(params?: {
     page?: number;
     limit?: number;
@@ -338,7 +344,9 @@ class PaymentAPI {
     }
   }
 
-  async getPaymentById(paymentId: number): Promise<PaymentResponse<{ payment: PaymentData }>> {
+  async getPaymentById(
+    paymentId: number,
+  ): Promise<PaymentResponse<{ payment: PaymentData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -358,13 +366,16 @@ class PaymentAPI {
     }
   }
 
-  async getPaymentsByWorker(workerId: number, params?: {
-    status?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<PaymentResponse<PaymentPaginationData>> {
+  async getPaymentsByWorker(
+    workerId: number,
+    params?: {
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<PaymentResponse<PaymentPaginationData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -384,13 +395,16 @@ class PaymentAPI {
     }
   }
 
-  async getPaymentsByPitak(pitakId: number, params?: {
-    status?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<PaymentResponse<PaymentPaginationData>> {
+  async getPaymentsByPitak(
+    pitakId: number,
+    params?: {
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<PaymentResponse<PaymentPaginationData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -410,12 +424,15 @@ class PaymentAPI {
     }
   }
 
-  async getPaymentsByStatus(status: string, params?: {
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<PaymentResponse<PaymentPaginationData>> {
+  async getPaymentsByStatus(
+    status: string,
+    params?: {
+      startDate?: string;
+      endDate?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<PaymentResponse<PaymentPaginationData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -435,13 +452,17 @@ class PaymentAPI {
     }
   }
 
-  async getPaymentsByDateRange(startDate: string, endDate: string, params?: {
-    status?: string;
-    workerId?: number;
-    pitakId?: number;
-    page?: number;
-    limit?: number;
-  }): Promise<PaymentResponse<PaymentPaginationData>> {
+  async getPaymentsByDateRange(
+    startDate: string,
+    endDate: string,
+    params?: {
+      status?: string;
+      workerId?: number;
+      pitakId?: number;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<PaymentResponse<PaymentPaginationData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -455,17 +476,21 @@ class PaymentAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get payments by date range");
+      throw new Error(
+        response.message || "Failed to get payments by date range",
+      );
     } catch (error: any) {
       throw new Error(error.message || "Failed to get payments by date range");
     }
   }
 
-  async getPaymentWithDetails(paymentId: number): Promise<PaymentResponse<{
-    payment: PaymentData;
-    history: PaymentHistoryData[];
-    debtPayments: DebtHistoryData[];
-  }>> {
+  async getPaymentWithDetails(paymentId: number): Promise<
+    PaymentResponse<{
+      payment: PaymentData;
+      history: PaymentHistoryData[];
+      debtPayments: DebtHistoryData[];
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -558,6 +583,8 @@ class PaymentAPI {
 
   async searchPayments(params: {
     query?: string;
+    sortBy?: string;
+    sortOrder?: string;
     status?: string;
     startDate?: string;
     endDate?: string;
@@ -609,40 +636,45 @@ class PaymentAPI {
     }
   }
 
-  async getPaymentHistory(paymentId: number, params?: {
-    actionType?: string;
-    startDate?: string;
-    endDate?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<PaymentResponse<{
-    history: Array<{
-      id: number;
-      timestamp: string;
-      action: string;
-      field: string;
-      changes: {
-        oldValue: string | null;
-        newValue: string | null;
-        oldAmount: number | null;
-        newAmount: number | null;
+  async getPaymentHistory(
+    paymentId: number,
+    params?: {
+      actionType?: string;
+      startDate?: string;
+      endDate?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<
+    PaymentResponse<{
+      history: Array<{
+        id: number;
+        timestamp: string;
+        action: string;
+        field: string;
+        changes: {
+          oldValue: string | null;
+          newValue: string | null;
+          oldAmount: number | null;
+          newAmount: number | null;
+        };
+        performedBy: string | null;
+        notes: string | null;
+      }>;
+      summary: {
+        totalRecords: number;
+        activitySummary: Array<{ actionType: string; count: number }>;
+        firstChange: string | null;
+        lastChange: string | null;
       };
-      performedBy: string | null;
-      notes: string | null;
-    }>;
-    summary: {
-      totalRecords: number;
-      activitySummary: Array<{ actionType: string; count: number }>;
-      firstChange: string | null;
-      lastChange: string | null;
-    };
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
-  }>> {
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -665,22 +697,24 @@ class PaymentAPI {
   async getPaymentPeriods(params?: {
     year?: number;
     workerId?: number;
-  }): Promise<PaymentResponse<{
-    periods: PaymentPeriodData[];
-    years: Array<{
-      year: number;
-      paymentCount: number;
-      totalAmount: string;
-      averagePayment: string;
-    }>;
-    currentPeriod: PaymentPeriodData | null;
-    summary: {
-      totalPeriods: number;
-      totalYears: number;
-      earliestYear: number | null;
-      latestYear: number | null;
-    };
-  }>> {
+  }): Promise<
+    PaymentResponse<{
+      periods: PaymentPeriodData[];
+      years: Array<{
+        year: number;
+        paymentCount: number;
+        totalAmount: string;
+        averagePayment: string;
+      }>;
+      currentPeriod: PaymentPeriodData | null;
+      summary: {
+        totalPeriods: number;
+        totalYears: number;
+        earliestYear: number | null;
+        latestYear: number | null;
+      };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -700,10 +734,15 @@ class PaymentAPI {
     }
   }
 
-  async getWorkerPaymentSummary(workerId: number, params?: {
-    year?: number;
-    month?: number;
-  }): Promise<PaymentResponse<WorkerPaymentSummaryData>> {
+  async getWorkerPaymentSummary(
+    workerId: number,
+    params?: {
+      year?: number;
+      month?: number;
+      startDate?: string;
+      endDate?: string;
+    },
+  ): Promise<PaymentResponse<WorkerPaymentSummaryData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -717,22 +756,26 @@ class PaymentAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to get worker payment summary");
+      throw new Error(
+        response.message || "Failed to get worker payment summary",
+      );
     } catch (error: any) {
       throw new Error(error.message || "Failed to get worker payment summary");
     }
   }
 
-  async generatePaymentBreakdown(paymentId: number): Promise<PaymentResponse<{
-    breakdown: {
-      summary: Record<string, string>;
-      deductions: Record<string, number>;
-      activeDebtsCount: number;
-      calculationSteps: string[];
-    };
-    detailed: PaymentBreakdownData;
-    raw: any;
-  }>> {
+  async generatePaymentBreakdown(paymentId: number): Promise<
+    PaymentResponse<{
+      breakdown: {
+        summary: Record<string, string>;
+        deductions: Record<string, number>;
+        activeDebtsCount: number;
+        calculationSteps: string[];
+      };
+      detailed: PaymentBreakdownData;
+      raw: any;
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -746,20 +789,24 @@ class PaymentAPI {
       if (response.status) {
         return response;
       }
-      throw new Error(response.message || "Failed to generate payment breakdown");
+      throw new Error(
+        response.message || "Failed to generate payment breakdown",
+      );
     } catch (error: any) {
       throw new Error(error.message || "Failed to generate payment breakdown");
     }
   }
 
   async generatePaymentReport(params: {
-    format?: 'pdf' | 'csv' | 'json';
+    format?: "pdf" | "csv" | "json";
     startDate?: string;
     endDate?: string;
     workerId?: number;
     status?: string;
     reportType?: string;
-  }): Promise<PaymentResponse<CSVExportData | PDFExportData | PaymentReportData>> {
+  }): Promise<
+    PaymentResponse<CSVExportData | PDFExportData | PaymentReportData>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -804,7 +851,9 @@ class PaymentAPI {
     }
   }
 
-  async exportPaymentSlip(paymentId: number): Promise<PaymentResponse<PDFExportData>> {
+  async exportPaymentSlip(
+    paymentId: number,
+  ): Promise<PaymentResponse<PDFExportData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -855,14 +904,17 @@ class PaymentAPI {
     }
   }
 
-  async updatePayment(paymentId: number, params: {
-    grossPay?: number;
-    manualDeduction?: number;
-    otherDeductions?: number;
-    notes?: string;
-    periodStart?: string;
-    periodEnd?: string;
-  }): Promise<PaymentResponse<{ payment: PaymentData }>> {
+  async updatePayment(
+    paymentId: number,
+    params: {
+      grossPay?: number;
+      manualDeduction?: number;
+      otherDeductions?: number;
+      notes?: string;
+      periodStart?: string;
+      periodEnd?: string;
+    },
+  ): Promise<PaymentResponse<{ payment: PaymentData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -882,13 +934,15 @@ class PaymentAPI {
     }
   }
 
-  async deletePayment(paymentId: number): Promise<PaymentResponse<{
-    deletedPayment: {
-      id: number;
-      workerName?: string;
-      amount: number;
-    };
-  }>> {
+  async deletePayment(paymentId: number): Promise<
+    PaymentResponse<{
+      deletedPayment: {
+        id: number;
+        workerName?: string;
+        amount: number;
+      };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -908,10 +962,13 @@ class PaymentAPI {
     }
   }
 
-  async updatePaymentStatus(paymentId: number, params: {
-    status: string;
-    notes?: string;
-  }): Promise<PaymentResponse<{ payment: PaymentData }>> {
+  async updatePaymentStatus(
+    paymentId: number,
+    params: {
+      status: string;
+      notes?: string;
+    },
+  ): Promise<PaymentResponse<{ payment: PaymentData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -931,7 +988,10 @@ class PaymentAPI {
     }
   }
 
-  async addPaymentNote(paymentId: number, note: string): Promise<PaymentResponse<{ payment: PaymentData }>> {
+  async addPaymentNote(
+    paymentId: number,
+    note: string,
+  ): Promise<PaymentResponse<{ payment: PaymentData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -951,11 +1011,14 @@ class PaymentAPI {
     }
   }
 
-  async processPayment(paymentId: number, params?: {
-    paymentDate?: string;
-    paymentMethod?: string;
-    referenceNumber?: string;
-  }): Promise<PaymentResponse<{ payment: PaymentData }>> {
+  async processPayment(
+    paymentId: number,
+    params?: {
+      paymentDate?: string;
+      paymentMethod?: string;
+      referenceNumber?: string;
+    },
+  ): Promise<PaymentResponse<{ payment: PaymentData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -975,7 +1038,10 @@ class PaymentAPI {
     }
   }
 
-  async cancelPayment(paymentId: number, reason?: string): Promise<PaymentResponse<{ payment: PaymentData }>> {
+  async cancelPayment(
+    paymentId: number,
+    reason?: string,
+  ): Promise<PaymentResponse<{ payment: PaymentData }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -995,17 +1061,22 @@ class PaymentAPI {
     }
   }
 
-  async applyDebtDeduction(paymentId: number, params: {
-    debtId?: number;
-    deductionAmount: number;
-  }): Promise<PaymentResponse<{
-    payment: PaymentData;
-    summary: {
-      debtAmount: number;
-      totalDebtDeductions: number;
-      newNetPay: number;
-    };
-  }>> {
+  async applyDebtDeduction(
+    paymentId: number,
+    params: {
+      debtId?: number;
+      deductionAmount: number;
+    },
+  ): Promise<
+    PaymentResponse<{
+      payment: PaymentData;
+      summary: {
+        debtAmount: number;
+        totalDebtDeductions: number;
+        newNetPay: number;
+      };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1025,18 +1096,23 @@ class PaymentAPI {
     }
   }
 
-  async updateDeductions(paymentId: number, params: {
-    manualDeduction?: number;
-    otherDeductions?: number;
-    deductionBreakdown?: any;
-  }): Promise<PaymentResponse<{
-    payment: PaymentData;
-    summary: {
-      grossPay: number;
-      totalDeductions: number;
-      netPay: number;
-    };
-  }>> {
+  async updateDeductions(
+    paymentId: number,
+    params: {
+      manualDeduction?: number;
+      otherDeductions?: number;
+      deductionBreakdown?: any;
+    },
+  ): Promise<
+    PaymentResponse<{
+      payment: PaymentData;
+      summary: {
+        grossPay: number;
+        totalDeductions: number;
+        netPay: number;
+      };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1056,11 +1132,16 @@ class PaymentAPI {
     }
   }
 
-  async assignPaymentToWorker(paymentId: number, workerId: number): Promise<PaymentResponse<{
-    payment: PaymentData;
-    oldWorker: { id: number; name: string } | null;
-    newWorker: { id: number; name: string };
-  }>> {
+  async assignPaymentToWorker(
+    paymentId: number,
+    workerId: number,
+  ): Promise<
+    PaymentResponse<{
+      payment: PaymentData;
+      oldWorker: { id: number; name: string } | null;
+      newWorker: { id: number; name: string };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1080,11 +1161,16 @@ class PaymentAPI {
     }
   }
 
-  async assignPaymentToPitak(paymentId: number, pitakId?: number): Promise<PaymentResponse<{
-    payment: PaymentData;
-    oldPitak: { id: number } | null;
-    newPitak: { id: number } | null;
-  }>> {
+  async assignPaymentToPitak(
+    paymentId: number,
+    pitakId?: number,
+  ): Promise<
+    PaymentResponse<{
+      payment: PaymentData;
+      oldPitak: { id: number } | null;
+      newPitak: { id: number } | null;
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1104,15 +1190,20 @@ class PaymentAPI {
     }
   }
 
-  async linkDebtPayment(paymentId: number, debtHistoryId: number): Promise<PaymentResponse<{
-    payment: PaymentData;
-    debtHistory: DebtHistoryData;
-    summary: {
-      debtAmount: number;
-      totalDebtDeductions: number;
-      newNetPay: number;
-    };
-  }>> {
+  async linkDebtPayment(
+    paymentId: number,
+    debtHistoryId: number,
+  ): Promise<
+    PaymentResponse<{
+      payment: PaymentData;
+      debtHistory: DebtHistoryData;
+      summary: {
+        debtAmount: number;
+        totalDebtDeductions: number;
+        newNetPay: number;
+      };
+    }>
+  > {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1132,16 +1223,18 @@ class PaymentAPI {
     }
   }
 
-  async bulkCreatePayments(payments: Array<{
-    workerId: number;
-    pitakId?: number;
-    grossPay: number;
-    periodStart?: string;
-    periodEnd?: string;
-    manualDeduction?: number;
-    otherDeductions?: number;
-    notes?: string;
-  }>): Promise<PaymentResponse<BulkOperationResult>> {
+  async bulkCreatePayments(
+    payments: Array<{
+      workerId: number;
+      pitakId?: number;
+      grossPay: number;
+      periodStart?: string;
+      periodEnd?: string;
+      manualDeduction?: number;
+      otherDeductions?: number;
+      notes?: string;
+    }>,
+  ): Promise<PaymentResponse<BulkOperationResult>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1161,14 +1254,16 @@ class PaymentAPI {
     }
   }
 
-  async bulkUpdatePayments(updates: Array<{
-    paymentId: number;
-    grossPay?: number;
-    manualDeduction?: number;
-    otherDeductions?: number;
-    notes?: string;
-    status?: string;
-  }>): Promise<PaymentResponse<BulkOperationResult>> {
+  async bulkUpdatePayments(
+    updates: Array<{
+      paymentId: number;
+      grossPay?: number;
+      manualDeduction?: number;
+      otherDeductions?: number;
+      notes?: string;
+      status?: string;
+    }>,
+  ): Promise<PaymentResponse<BulkOperationResult>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1188,10 +1283,13 @@ class PaymentAPI {
     }
   }
 
-  async bulkProcessPayments(paymentIds: number[], params?: {
-    paymentDate?: string;
-    paymentMethod?: string;
-  }): Promise<PaymentResponse<BulkOperationResult>> {
+  async bulkProcessPayments(
+    paymentIds: number[],
+    params?: {
+      paymentDate?: string;
+      paymentMethod?: string;
+    },
+  ): Promise<PaymentResponse<BulkOperationResult>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1211,7 +1309,9 @@ class PaymentAPI {
     }
   }
 
-  async importPaymentsFromCSV(filePath: string): Promise<PaymentResponse<BulkOperationResult>> {
+  async importPaymentsFromCSV(
+    filePath: string,
+  ): Promise<PaymentResponse<BulkOperationResult>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1253,9 +1353,15 @@ class PaymentAPI {
     }
   }
 
-  async getWorkerRecentPayments(workerId: number, limit: number = 5): Promise<PaymentData[]> {
+  async getWorkerRecentPayments(
+    workerId: number,
+    limit: number = 5,
+  ): Promise<PaymentData[]> {
     try {
-      const response = await this.getPaymentsByWorker(workerId, { limit, page: 1 });
+      const response = await this.getPaymentsByWorker(workerId, {
+        limit,
+        page: 1,
+      });
       return response.data.payments;
     } catch (error) {
       console.error("Error getting worker recent payments:", error);
@@ -1288,7 +1394,9 @@ class PaymentAPI {
     }
   }
 
-  async validatePaymentData(payment: Partial<PaymentData>): Promise<ValidationResponse> {
+  async validatePaymentData(
+    payment: Partial<PaymentData>,
+  ): Promise<ValidationResponse> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -1321,7 +1429,9 @@ class PaymentAPI {
   async generatePaymentPDF(paymentId: number): Promise<Blob> {
     try {
       const response = await this.exportPaymentSlip(paymentId);
-      return new Blob([response.data.content], { type: response.data.contentType });
+      return new Blob([response.data.content], {
+        type: response.data.contentType,
+      });
     } catch (error) {
       console.error("Error generating payment PDF:", error);
       throw error;

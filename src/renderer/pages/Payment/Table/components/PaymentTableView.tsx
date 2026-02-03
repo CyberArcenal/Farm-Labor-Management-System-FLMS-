@@ -89,9 +89,9 @@ const PaymentTableView: React.FC<PaymentTableViewProps> = ({
                                     )}
                                 </button>
                             </th>
-                            <th className="p-4 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            {/* <th className="p-4 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                                 Deductions
-                            </th>
+                            </th> */}
                             <th className="p-4 text-left text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                                 Method
                             </th>

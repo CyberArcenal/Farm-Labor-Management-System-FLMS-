@@ -74,11 +74,11 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
       const sideC = field === "sideC" ? value : inputs.sideC || 0;
 
       if (!error && sideA > 0 && sideB > 0 && sideC > 0) {
-        // Check triangle inequality
+        // Check triangle inequality with tolerance for floating point
         if (
-          sideA >= sideB + sideC ||
-          sideB >= sideA + sideC ||
-          sideC >= sideA + sideB
+          sideA >= sideB + sideC - 0.01 ||
+          sideB >= sideA + sideC - 0.01 ||
+          sideC >= sideA + sideB - 0.01
         ) {
           onCalculate({ areaSqm: 0, totalLuwang: 0 });
         } else {
@@ -95,9 +95,9 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
     }
   };
 
-  // Validate triangle sides
+  // Validate triangle sides with tolerance for decimals
   const validateTriangleSides = (a: number, b: number, c: number): string => {
-    if (a >= b + c || b >= a + c || c >= a + b) {
+    if (a >= b + c - 0.01 || b >= a + c - 0.01 || c >= a + b - 0.01) {
       return "Invalid triangle: One side cannot be greater than or equal to sum of other two sides";
     }
     return "";
@@ -134,17 +134,17 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
               <div className="relative">
                 <input
                   type="number"
-                  min="1"
-                  max="1000"
-                  step="1"
+                  min="0.1"
+                  max="2000"
+                  step="0.01"
                   value={inputs.base || ""}
                   onChange={(e) =>
-                    handleInputChange("base", parseInt(e.target.value) || 0)
+                    handleInputChange("base", parseFloat(e.target.value) || 0)
                   }
                   className={`w-full px-3 py-2 pl-10 rounded text-sm border ${
                     errors.base ? "border-red-500" : "border-gray-300"
                   } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
-                  placeholder="Base in buhol"
+                  placeholder="Base in buhol (e.g., 20.5)"
                 />
                 <Hash className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               </div>
@@ -159,17 +159,17 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
               <div className="relative">
                 <input
                   type="number"
-                  min="1"
-                  max="1000"
-                  step="1"
+                  min="0.1"
+                  max="2000"
+                  step="0.01"
                   value={inputs.height || ""}
                   onChange={(e) =>
-                    handleInputChange("height", parseInt(e.target.value) || 0)
+                    handleInputChange("height", parseFloat(e.target.value) || 0)
                   }
                   className={`w-full px-3 py-2 pl-10 rounded text-sm border ${
                     errors.height ? "border-red-500" : "border-gray-300"
                   } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
-                  placeholder="Height in buhol"
+                  placeholder="Height in buhol (e.g., 15.25)"
                 />
                 <Hash className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
               </div>
@@ -188,17 +188,17 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
                 </div>
                 <div className="text-yellow-700 space-y-1">
                   <div>
-                    Base: {inputs.base} buhol × 50 ={" "}
-                    {TraditionalMeasurement.buholToMeters(inputs.base)}m
+                    Base: {inputs.base.toFixed(2)} buhol × 50 ={" "}
+                    {TraditionalMeasurement.buholToMeters(inputs.base).toFixed(2)}m
                   </div>
                   <div>
-                    Height: {inputs.height} buhol × 50 ={" "}
-                    {TraditionalMeasurement.buholToMeters(inputs.height)}m
+                    Height: {inputs.height.toFixed(2)} buhol × 50 ={" "}
+                    {TraditionalMeasurement.buholToMeters(inputs.height).toFixed(2)}m
                   </div>
                   <div className="font-mono mt-1 p-1 bg-white rounded border">
                     Area = (Base × Height) ÷ 2 = (
-                    {TraditionalMeasurement.buholToMeters(inputs.base)} ×{" "}
-                    {TraditionalMeasurement.buholToMeters(inputs.height)}) ÷ 2 =
+                    {TraditionalMeasurement.buholToMeters(inputs.base).toFixed(2)} ×{" "}
+                    {TraditionalMeasurement.buholToMeters(inputs.height).toFixed(2)}) ÷ 2 =
                     {(
                       (TraditionalMeasurement.buholToMeters(inputs.base) *
                         TraditionalMeasurement.buholToMeters(inputs.height)) /
@@ -226,17 +226,17 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
                 <div className="relative">
                   <input
                     type="number"
-                    min="1"
-                    max="1000"
-                    step="1"
+                    min="0.1"
+                    max="2000"
+                    step="0.01"
                     value={inputs[side] || ""}
                     onChange={(e) =>
-                      handleInputChange(side, parseInt(e.target.value) || 0)
+                      handleInputChange(side, parseFloat(e.target.value) || 0)
                     }
                     className={`w-full px-3 py-2 pl-10 rounded text-sm border ${
                       errors[side] ? "border-red-500" : "border-gray-300"
                     } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
-                    placeholder={`Side ${String.fromCharCode(65 + index)}`}
+                    placeholder={`Side ${String.fromCharCode(65 + index)} (e.g., 12.5)`}
                   />
                   <Hash className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
                 </div>
@@ -275,16 +275,16 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
                     </div>
                     <div className="text-yellow-700 space-y-1">
                       <div>
-                        a = {inputs.sideA} buhol × 50 ={" "}
-                        {TraditionalMeasurement.buholToMeters(inputs.sideA)}m
+                        a = {inputs.sideA.toFixed(2)} buhol × 50 ={" "}
+                        {TraditionalMeasurement.buholToMeters(inputs.sideA).toFixed(2)}m
                       </div>
                       <div>
-                        b = {inputs.sideB} buhol × 50 ={" "}
-                        {TraditionalMeasurement.buholToMeters(inputs.sideB)}m
+                        b = {inputs.sideB.toFixed(2)} buhol × 50 ={" "}
+                        {TraditionalMeasurement.buholToMeters(inputs.sideB).toFixed(2)}m
                       </div>
                       <div>
-                        c = {inputs.sideC} buhol × 50 ={" "}
-                        {TraditionalMeasurement.buholToMeters(inputs.sideC)}m
+                        c = {inputs.sideC.toFixed(2)} buhol × 50 ={" "}
+                        {TraditionalMeasurement.buholToMeters(inputs.sideC).toFixed(2)}m
                       </div>
                       <div>
                         s = (a + b + c) ÷ 2 ={" "}
@@ -332,10 +332,10 @@ const TriangleForm: React.FC<TriangleFormProps> = ({
                 inputs.height > 0 && (
                   <>
                     <text x="75" y="115" className="text-xs fill-blue-700">
-                      Base
+                      Base: {inputs.base.toFixed(2)} buhol
                     </text>
                     <text x="140" y="60" className="text-xs fill-blue-700">
-                      Height
+                      Height: {inputs.height.toFixed(2)} buhol
                     </text>
                   </>
                 )}

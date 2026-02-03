@@ -1,47 +1,51 @@
 // src/ipc/debt/get/overdue.ipc
 //@ts-check
+const Debt = require("../../../../entities/Debt");
 const { AppDataSource } = require("../../../db/dataSource");
 
-// @ts-ignore
+/**
+ * Get overdue debts with optional filters
+ * @param {{ workerId?: number }} filters
+ * @param {number} [userId]
+ */
 module.exports = async (filters = {}, userId) => {
   try {
-    const debtRepository = AppDataSource.getRepository("Debt");
+    const debtRepository = AppDataSource.getRepository(Debt);
     const today = new Date();
-    
-    const query = debtRepository.createQueryBuilder("debt")
+
+    const qb = debtRepository
+      .createQueryBuilder("debt")
       .leftJoinAndSelect("debt.worker", "worker")
       .where("debt.balance > 0")
       .andWhere("debt.dueDate < :today", { today })
-      .andWhere("debt.status NOT IN (:...statuses)", { 
-        statuses: ["paid", "cancelled"] 
+      .andWhere("debt.status NOT IN (:...statuses)", {
+        statuses: ["paid", "cancelled"],
       })
       .orderBy("debt.dueDate", "ASC");
 
-    // Apply additional filters
-    // @ts-ignore
-    if (filters.worker_id) {
-      // @ts-ignore
-      query.andWhere("debt.worker_id = :worker_id", { worker_id: filters.worker_id });
+    // Filter by worker
+    if (filters.workerId) {
+      qb.andWhere("debt.worker = :workerId", { workerId: filters.workerId });
     }
 
-    const debts = await query.getMany();
+    const debts = await qb.getMany();
 
-    // Calculate overdue days for each debt
-    // @ts-ignore
-    const debtsWithOverdueDays = debts.map(debt => {
+    // Calculate overdue days
+    const debtsWithOverdueDays = debts.map((debt) => {
+      // @ts-ignore
       const dueDate = new Date(debt.dueDate);
       // @ts-ignore
       const overdueDays = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
       return {
         ...debt,
-        overdueDays: overdueDays > 0 ? overdueDays : 0
+        overdueDays: overdueDays > 0 ? overdueDays : 0,
       };
     });
 
     return {
       status: true,
       message: "Overdue debts retrieved successfully",
-      data: debtsWithOverdueDays
+      data: debtsWithOverdueDays,
     };
   } catch (error) {
     console.error("Error getting overdue debts:", error);
@@ -49,7 +53,7 @@ module.exports = async (filters = {}, userId) => {
       status: false,
       // @ts-ignore
       message: error.message,
-      data: null
+      data: null,
     };
   }
 };

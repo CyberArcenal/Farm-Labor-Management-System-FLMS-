@@ -1,6 +1,14 @@
 // components/Worker/WorkerTablePage.tsx
 import React, { useState } from "react";
-import { Users, Plus, Download, AlertCircle } from "lucide-react";
+import {
+  Users,
+  Plus,
+  Download,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  BarChart2,
+} from "lucide-react";
 import WorkerStats from "./components/WorkerStats";
 import { useWorkerData } from "./hooks/useWorkerData";
 import WorkerFormDialog from "./Dialogs/WorkerFormDialog";
@@ -46,7 +54,7 @@ const WorkerTablePage: React.FC = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-
+  const [showStats, setShowStats] = useState(false);
   const {
     handleDeleteWorker,
     handleBulkDelete,
@@ -293,6 +301,23 @@ const WorkerTablePage: React.FC = () => {
 
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => setShowStats(!showStats)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {showStats ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Hide Stats
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Show Stats
+                  </>
+                )}
+              </button>
+              <button
                 onClick={handleImportCSV}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               >
@@ -319,12 +344,14 @@ const WorkerTablePage: React.FC = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1">
           <div className="h-full p-6">
             {/* Stats Cards */}
-            <div className="mb-6">
-              <WorkerStats stats={stats} />
-            </div>
+            {showStats && (
+              <div className="mb-6">
+                <WorkerStats stats={stats} />
+              </div>
+            )}
 
             {/* Filters */}
             <div className="mb-6">
@@ -393,14 +420,7 @@ const WorkerTablePage: React.FC = () => {
               </div>
             ) : !loading && workers.length > 0 ? (
               <>
-                <div
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6"
-                  style={{
-                    maxHeight:
-                      viewMode === "table" ? "calc(100vh - 450px)" : "auto",
-                    overflowY: viewMode === "table" ? "auto" : "visible",
-                  }}
-                >
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                   {viewMode === "table" ? (
                     <WorkerTableView
                       workers={workers}

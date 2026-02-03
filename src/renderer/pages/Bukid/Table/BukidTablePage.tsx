@@ -1,6 +1,15 @@
 // components/Bukid/BukidTablePage.tsx (corrected version)
 import React, { useState } from "react";
-import { Home, Plus, Download, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  Home,
+  Plus,
+  Download,
+  AlertCircle,
+  RefreshCw,
+  BarChart2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import BukidStats from "./components/BukidStats";
 import BukidFilters from "./components/BukidFilters";
 import BukidBulkActions from "./components/BukidBulkActions";
@@ -17,8 +26,8 @@ import PlaceholderDialog from "../Dialogs/Placeholder";
 import { dialogs } from "../../../utils/dialogs";
 import ViewNoteDialog from "../Dialogs/ViewNote";
 import ViewPlotsDialog from "../Dialogs/ViewPlots";
-import AddPlotDialog from "../Dialogs/AddPlot";
 import PitakViewDialog from "../../Pitak/Dialogs/View";
+import PitakFormDialog from "../../Pitak/Dialogs/Form";
 
 const BukidTablePage: React.FC = () => {
   const {
@@ -47,6 +56,8 @@ const BukidTablePage: React.FC = () => {
     sortOrder,
     setSortOrder,
   } = useBukidData();
+
+  const [showStats, setShowStats] = useState(false); // Add show/hide stats state
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -461,6 +472,25 @@ const BukidTablePage: React.FC = () => {
             </div>
 
             <div className="flex flex-wrap gap-3">
+              {/* Stats Toggle Button */}
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {showStats ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Hide Stats
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Show Stats
+                  </>
+                )}
+              </button>
+
               <button
                 onClick={handleExportCSV}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
@@ -485,12 +515,14 @@ const BukidTablePage: React.FC = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto p-6">
-            {/* Stats Cards */}
-            <div className="mb-6">
-              <BukidStats stats={stats} summary={summary} />
-            </div>
+        <div className="flex-1">
+          <div className="h-full p-6">
+            {/* Stats Cards - Conditionally Rendered */}
+            {showStats && (
+              <div className="mb-6">
+                <BukidStats stats={stats} summary={summary} />
+              </div>
+            )}
 
             {/* Filters */}
             <div className="mb-6">
@@ -553,14 +585,7 @@ const BukidTablePage: React.FC = () => {
               </div>
             ) : !loading && bukids.length > 0 ? (
               <>
-                <div
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6"
-                  style={{
-                    maxHeight:
-                      viewMode === "table" ? "calc(100vh - 450px)" : "auto",
-                    overflowY: viewMode === "table" ? "auto" : "visible",
-                  }}
-                >
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                   {viewMode === "table" ? (
                     <BukidTableView
                       bukids={bukids}
@@ -726,12 +751,21 @@ const BukidTablePage: React.FC = () => {
       )}
 
       {isAddPlotDialogOpen && selectedBukidId && (
-        <AddPlotDialog
+        // <AddPlotDialog
+        //   bukidId={selectedBukidId}
+        //   bukidName={selectedBukidName}
+        //   onClose={closeAddPlotDialog}
+        //   onSuccess={handleAddPlotSuccess}
+        //   existingPlots={[]} // Pwede mong i-pass ang existing plots kung meron
+        // />
+
+        <PitakFormDialog
           bukidId={selectedBukidId}
-          bukidName={selectedBukidName}
-          onClose={closeAddPlotDialog}
-          onSuccess={handleAddPlotSuccess}
-          existingPlots={[]} // Pwede mong i-pass ang existing plots kung meron
+          mode={dialogMode}
+          onClose={closeFormDialog}
+          onSuccess={() => {
+            handleAddPlotSuccess;
+          }}
         />
       )}
 

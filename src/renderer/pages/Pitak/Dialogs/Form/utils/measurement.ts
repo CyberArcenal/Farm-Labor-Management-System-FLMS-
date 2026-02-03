@@ -12,22 +12,24 @@ export const MEASUREMENT_CONSTANTS = {
 // Traditional measurement types
 export type LayoutType = 'square' | 'rectangle' | 'triangle' | 'circle' | '';
 export type TriangleMode = 'base_height' | 'three_sides';
-export type MeasurementMethod = 
+export type MeasurementMethod =
   | 'square_tali'
   | 'rectangle_tali'
   | 'triangle_base_height_buhol'
   | 'triangle_heron_buhol'
-  | 'circle_buhol';
+  | 'circle_buhol'
+  | '';
 
 // Buhol-based inputs interface
 export interface BuholInputs {
   [key: string]: number;
 }
 
-// Calculation results WITHOUT hectare
+// Calculation results WITH hectare
 export interface CalculationResult {
   areaSqm: number;
   totalLuwang: number;
+  totalHectare?: number;
   convertedMeasurements?: {
     buhol: Record<string, number>;
     meters: Record<string, number>;
@@ -35,46 +37,38 @@ export interface CalculationResult {
   };
 }
 
-// Traditional conversion functions WITHOUT hectare
+// Traditional conversion functions WITH hectare
 export class TraditionalMeasurement {
-  // Static constants for easy access
   static readonly BUHOL_TO_METERS = MEASUREMENT_CONSTANTS.BUHOL_TO_METERS;
   static readonly TALI_TO_BUHOL = MEASUREMENT_CONSTANTS.TALI_TO_BUHOL;
   static readonly TALI_TO_METERS = MEASUREMENT_CONSTANTS.TALI_TO_METERS;
   static readonly LUWANG_TO_SQM = MEASUREMENT_CONSTANTS.LUWANG_TO_SQM;
   static readonly LUWANG_PER_HECTARE = MEASUREMENT_CONSTANTS.LUWANG_PER_HECTARE;
 
-  // Convert buhol to meters
   static buholToMeters(buhol: number): number {
     return pitakUtils.buholToMeters(buhol);
   }
 
-  // Convert meters to buhol
   static metersToBuhol(meters: number): number {
     return meters / this.BUHOL_TO_METERS;
   }
 
-  // Convert buhol to tali
   static buholToTali(buhol: number): number {
     return buhol / this.TALI_TO_BUHOL;
   }
 
-  // Convert tali to buhol
   static taliToBuhol(tali: number): number {
     return pitakUtils.taliToBuhol(tali);
   }
 
-  // Convert sqm to luwang using pitakUtils
   static sqmToLuwang(sqm: number): number {
     return pitakUtils.sqmToLuwang(sqm);
   }
 
-  // Convert luwang to sqm
   static luwangToSqm(luwang: number): number {
     return luwang * this.LUWANG_TO_SQM;
   }
 
-  // Calculate area based on layout type using pitakUtils
   static calculateArea(
     layoutType: LayoutType,
     inputs: BuholInputs,
@@ -88,13 +82,11 @@ export class TraditionalMeasurement {
         areaSqm = result.areaSqm;
         break;
       }
-
       case 'rectangle': {
         const result = pitakUtils.calculateRectangle(inputs.length || 0, inputs.width || 0);
         areaSqm = result.areaSqm;
         break;
       }
-
       case 'triangle': {
         if (method === 'base_height') {
           const result = pitakUtils.calculateTriangleBaseHeight(inputs.base || 0, inputs.height || 0);
@@ -105,26 +97,21 @@ export class TraditionalMeasurement {
         }
         break;
       }
-
       case 'circle': {
         const result = pitakUtils.calculateCircle(inputs.radius || 0);
         areaSqm = result.areaSqm;
         break;
       }
-
       default:
         areaSqm = 0;
     }
 
     const totalLuwang = this.sqmToLuwang(areaSqm);
+    const totalHectare = totalLuwang / this.LUWANG_PER_HECTARE;
 
-    return {
-      areaSqm,
-      totalLuwang,
-    };
+    return { areaSqm, totalLuwang, totalHectare };
   }
 
-  // Get measurement method string
   static getMeasurementMethod(
     layoutType: LayoutType,
     method?: TriangleMode
@@ -135,33 +122,31 @@ export class TraditionalMeasurement {
       case 'rectangle':
         return 'rectangle_tali';
       case 'triangle':
-        return method === 'base_height' 
-          ? 'triangle_base_height_buhol' 
+        return method === 'base_height'
+          ? 'triangle_base_height_buhol'
           : 'triangle_heron_buhol';
       case 'circle':
         return 'circle_buhol';
       default:
-        return 'square_tali';
+        return '';
     }
   }
 
-  // Format buhol input for display WITHOUT hectare
   static formatBuholInput(value: number): string {
     const tali = Math.floor(value / this.TALI_TO_BUHOL);
     const remainingBuhol = value % this.TALI_TO_BUHOL;
-    
+
     if (tali === 0) return `${remainingBuhol} buhol`;
     if (remainingBuhol === 0) return `${tali} tali`;
     return `${tali} tali ${remainingBuhol} buhol`;
   }
 
-  // Get conversion explanation WITHOUT hectare
   static getConversionExplanation(
     layoutType: LayoutType,
     inputs: BuholInputs
   ): string[] {
     const explanations: string[] = [];
-    
+
     explanations.push('Traditional Measurement System:');
     explanations.push('• 1 buhol = 50 meters');
     explanations.push('• 1 tali = 10 buhol = 500 meters');

@@ -1,5 +1,14 @@
 import React, { useState } from "react";
-import { MapPin, Plus, Download, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  MapPin,
+  Plus,
+  Download,
+  AlertCircle,
+  RefreshCw,
+  BarChart2,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import PitakStats from "./components/PitakStats";
 import PitakFilters from "./components/PitakFilters";
 import PitakBulkActions from "./components/PitakBulkActions";
@@ -16,11 +25,11 @@ import { usePitakActions } from "./hooks/usePitakActions";
 import ViewMultipleAssignmentsDialog from "../../Assignment/View/Dialogs/ViewMultipleAssignmentsDialog";
 import AssignmentHistoryDialog from "../../Assignment/View/Dialogs/CreateAssignmentHistoryDialog";
 import ViewSingleAssignmentDialog from "../../Assignment/View/Dialogs/ViewSingleAssignmentDialog";
-import PitakFormDialog from "../Dialogs/Form/Form";
+// import PitakFormDialog from "../Dialogs/Form/Form";
 import PitakViewDialog from "../Dialogs/View";
 import ViewAssignedWorkersDialog from "../../Assignment/View/Dialogs/ViewAssignedWorkersDialog";
-import { dialogs } from "../../../utils/dialogs";
 import PaymentViewDialog from "../../Payment/Table/Dialogs/PaymentViewDialog";
+import PitakFormDialog from "../Dialogs/Form";
 
 const PitakTablePage: React.FC = () => {
   const {
@@ -114,7 +123,7 @@ const PitakTablePage: React.FC = () => {
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(
     null,
   );
-
+  const [showStats, setShowStats] = useState(false);
   // Loading skeleton similar to Kabisilya and Assignment
   const renderLoadingSkeleton = () => {
     if (viewMode === "table") {
@@ -341,6 +350,23 @@ const PitakTablePage: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => setShowStats(!showStats)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {showStats ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Hide Stats
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Show Stats
+                  </>
+                )}
+              </button>
+              <button
                 onClick={() => setShowExportDialog(true)}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               >
@@ -360,9 +386,11 @@ const PitakTablePage: React.FC = () => {
         <div className="flex-1">
           <div className="h-full p-6">
             {/* Stats */}
-            <div className="mb-6">
-              <PitakStats stats={stats} />
-            </div>
+            {showStats && (
+              <div className="mb-6">
+                <PitakStats stats={stats} />
+              </div>
+            )}
 
             {/* Filters */}
             <div className="mb-6">
@@ -423,14 +451,7 @@ const PitakTablePage: React.FC = () => {
             ) : !loading && pitaks.length > 0 ? (
               <>
                 {viewMode === "table" ? (
-                  <div
-                    className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6"
-                    style={{
-                      maxHeight:
-                        viewMode === "table" ? "calc(100vh - 450px)" : "auto",
-                      overflowY: viewMode === "table" ? "auto" : "visible",
-                    }}
-                  >
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                     <PitakTableView
                       pitaks={pitaks}
                       selectedPitaks={selectedPitaks}

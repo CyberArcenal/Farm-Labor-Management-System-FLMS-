@@ -1,4 +1,4 @@
-// Complete Refactored PitakFormDialog.tsx with Traditional Measurement System (NO HECTARE)
+// Complete Refactored PitakFormDialog.tsx with Traditional Measurement System
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -15,129 +15,96 @@ import {
   LandPlot,
   Ruler,
   Grid3x3,
-  SquareIcon,
-  RectangleHorizontal,
-  Triangle,
-  CircleIcon,
+  Settings,
   Calculator,
-  AreaChart,
 } from "lucide-react";
 
 // Import Traditional Measurement Components and Utilities
-import { TraditionalMeasurement, type TriangleMode } from "./utils/measurement";
 import { useMeasurementValidation } from "./hooks/useMeasurementValidation";
-import { useAuditLogger } from "./hooks/useAuditLogger";
+import ResultsDisplay from "./components/ResultDisplay";
 
-// Modular Form Components
-import SquareForm from "./components/forms/SquareForm";
-import RectangleForm from "./components/forms/RectangleForm";
-import TriangleForm from "./components/forms/TriangleForm";
-import CircleForm from "./components/forms/CircleForm";
+// Types and APIs
 import type { PitakData } from "../../../../apis/pitak";
 import type { BukidData } from "../../../../apis/bukid";
 import bukidAPI from "../../../../apis/bukid";
 import pitakAPI from "../../../../apis/pitak";
 import { showError, showSuccess } from "../../../../utils/notification";
 import BukidSelect from "../../../../components/Selects/Bukid";
-import ResultsDisplay from "./components/ResultDisplay";
+import AdvancedGeometryForm from "./components/AdvancedGeometryForm";
+import ManualInputForm from "./components/ManualInputForm";
+import MeasurementModeToggle from "./components/MeasurementModeToggle";
+import { dialogs } from "../../../../utils/dialogs";
 
 interface PitakFormDialogProps {
   id?: number;
+  bukidId?: number;
   mode: "add" | "edit";
   onClose: () => void;
   onSuccess?: (pitak: PitakData) => void;
 }
 
-// Updated FormData interface WITHOUT hectare
+// Form data interface
 interface FormData {
   bukidId: number | null;
   location: string;
   totalLuwang: number;
+  areaSqm: number;
   status: "active" | "inactive" | "completed";
   notes: string;
 
-  // Traditional Measurement Fields WITHOUT hectare
+  // Mode and advanced fields
+  useAdvancedMode: boolean;
   layoutType: "square" | "rectangle" | "triangle" | "circle" | "";
   buholInputs: Record<string, number>;
   triangleMode?: "base_height" | "three_sides";
   measurementMethod: string;
-  areaSqm: number;
 }
 
-// Calculation results WITHOUT hectare
+// Calculation results
 interface CalculationResults {
   areaSqm: number;
   totalLuwang: number;
+  hectare?: number;
 }
-
-// Layout type options with icons
-const layoutOptions = [
-  {
-    value: "square" as const,
-    label: "Square",
-    icon: SquareIcon,
-    description: "Equal sides",
-  },
-  {
-    value: "rectangle" as const,
-    label: "Rectangle",
-    icon: RectangleHorizontal,
-    description: "Length × Width",
-  },
-  {
-    value: "triangle" as const,
-    label: "Triangle",
-    icon: Triangle,
-    description: "Base × Height / 2 or 3 Sides",
-  },
-  {
-    value: "circle" as const,
-    label: "Circle",
-    icon: CircleIcon,
-    description: "π × Radius²",
-  },
-];
 
 const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
   id,
+  bukidId,
   mode,
   onClose,
   onSuccess,
 }) => {
+  // State management
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    bukidId: null,
+    bukidId: bukidId ? bukidId : null,
     location: "",
     totalLuwang: 0,
+    areaSqm: 0,
     status: "active",
     notes: "",
 
-    // Traditional Measurement Fields WITHOUT hectare
+    // Mode and advanced fields
+    useAdvancedMode: false,
     layoutType: "",
     buholInputs: {},
     triangleMode: "base_height",
     measurementMethod: "",
-    areaSqm: 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [bukids, setBukids] = useState<BukidData[]>([]);
   const [pitak, setPitak] = useState<PitakData | null>(null);
-  const [capacityInfo, setCapacityInfo] = useState<{
-    remaining: number;
-    utilization: number;
-  } | null>(null);
   const [calculationResults, setCalculationResults] =
     useState<CalculationResults>({
       areaSqm: 0,
       totalLuwang: 0,
     });
 
-  // Initialize custom hooks
+  // Initialize hooks
   const { validateShapeInputs, clearError, clearAllErrors } =
     useMeasurementValidation();
-  const { logMeasurement, logFormSubmission } = useAuditLogger();
 
   // Fetch initial data
   useEffect(() => {
@@ -158,76 +125,18 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
 
           if (response.status) {
             const pitakData = response.data;
+            console.log(pitakData);
             setPitak(pitakData);
 
-            // Parse existing sideLengths if it exists
-            let buholInputs = {};
-            let triangleMode: "base_height" | "three_sides" = "base_height";
-            let measurementMethod = "";
+            // Parse existing data
+            const formData = await parseExistingPitakData(pitakData);
+            setFormData(formData);
 
-            if (pitakData.sideLengths) {
-              try {
-                const sideLengthsData =
-                  typeof pitakData.sideLengths === "string"
-                    ? JSON.parse(pitakData.sideLengths)
-                    : pitakData.sideLengths;
-
-                // Extract traditional measurement data
-                if (sideLengthsData.buholInputs) {
-                  buholInputs = sideLengthsData.buholInputs;
-                } else if (sideLengthsData.sideLengths) {
-                  // Convert existing modern measurements to traditional
-                  const layoutType = pitakData.layoutType || "square";
-                  buholInputs = convertToBuholInputs(
-                    layoutType,
-                    sideLengthsData.sideLengths,
-                  );
-                }
-
-                if (sideLengthsData.measurementMethod) {
-                  measurementMethod = sideLengthsData.measurementMethod;
-                }
-
-                if (sideLengthsData.triangleMode) {
-                  triangleMode = sideLengthsData.triangleMode;
-                }
-              } catch (e) {
-                console.error("Error parsing sideLengths:", e);
-              }
-            }
-
-            setFormData({
-              bukidId: pitakData.bukidId,
-              location: pitakData.location || "",
-              totalLuwang: pitakData.totalLuwang,
-              status: pitakData.status,
-              notes: pitakData.notes || "",
-              layoutType: (pitakData.layoutType as any) || "",
-              buholInputs,
-              triangleMode,
-              measurementMethod,
+            // Set initial calculation results
+            setCalculationResults({
               areaSqm: pitakData.areaSqm || 0,
+              totalLuwang: pitakData.totalLuwang,
             });
-
-            // Calculate initial results if we have inputs
-            if (Object.keys(buholInputs).length > 0 && pitakData.layoutType) {
-              const results = TraditionalMeasurement.calculateArea(
-                pitakData.layoutType as any,
-                buholInputs,
-                triangleMode,
-              );
-              setCalculationResults(results);
-            }
-
-            // Fetch capacity info
-            if (pitakData.stats) {
-              setCapacityInfo({
-                remaining:
-                  pitakData.totalLuwang -
-                  (pitakData.stats.assignments.totalLuWangAssigned || 0),
-                utilization: pitakData.stats.utilizationRate || 0,
-              });
-            }
           } else {
             showError("Pitak not found");
             onClose();
@@ -244,62 +153,58 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
     fetchData();
   }, [id, mode, onClose]);
 
-  // Helper function to convert existing modern measurements to traditional
-  const convertToBuholInputs = (layoutType: string, sideLengths: any) => {
-    const buholInputs: Record<string, number> = {};
+  // Helper: Parse existing pitak data
+  const parseExistingPitakData = async (
+    pitakData: PitakData,
+  ): Promise<FormData> => {
+    let buholInputs = {};
+    let triangleMode: "base_height" | "three_sides" = "base_height";
+    let measurementMethod = "";
+    let useAdvancedMode = false;
+    let layoutType: "square" | "rectangle" | "triangle" | "circle" | "" = "";
 
-    switch (layoutType) {
-      case "square":
-        if (sideLengths.side) {
-          buholInputs.side = TraditionalMeasurement.metersToBuhol(
-            sideLengths.side,
-          );
+    // Check if advanced mode was used
+    if (pitakData.sideLengths) {
+      try {
+        const sideLengthsData =
+          typeof pitakData.sideLengths === "string"
+            ? JSON.parse(pitakData.sideLengths)
+            : pitakData.sideLengths;
+
+        if (sideLengthsData.buholInputs || sideLengthsData.measurementMethod) {
+          useAdvancedMode = true;
+          layoutType = (pitakData.layoutType as any) || "";
+
+          if (sideLengthsData.buholInputs) {
+            buholInputs = sideLengthsData.buholInputs;
+          }
+
+          if (sideLengthsData.measurementMethod) {
+            measurementMethod = sideLengthsData.measurementMethod;
+          }
+
+          if (sideLengthsData.triangleMode) {
+            triangleMode = sideLengthsData.triangleMode;
+          }
         }
-        break;
-      case "rectangle":
-        if (sideLengths.length && sideLengths.width) {
-          buholInputs.length = TraditionalMeasurement.metersToBuhol(
-            sideLengths.length,
-          );
-          buholInputs.width = TraditionalMeasurement.metersToBuhol(
-            sideLengths.width,
-          );
-        }
-        break;
-      case "triangle":
-        if (sideLengths.base && sideLengths.height) {
-          buholInputs.base = TraditionalMeasurement.metersToBuhol(
-            sideLengths.base,
-          );
-          buholInputs.height = TraditionalMeasurement.metersToBuhol(
-            sideLengths.height,
-          );
-        } else if (
-          sideLengths.sideA &&
-          sideLengths.sideB &&
-          sideLengths.sideC
-        ) {
-          buholInputs.sideA = TraditionalMeasurement.metersToBuhol(
-            sideLengths.sideA,
-          );
-          buholInputs.sideB = TraditionalMeasurement.metersToBuhol(
-            sideLengths.sideB,
-          );
-          buholInputs.sideC = TraditionalMeasurement.metersToBuhol(
-            sideLengths.sideC,
-          );
-        }
-        break;
-      case "circle":
-        if (sideLengths.radius) {
-          buholInputs.radius = TraditionalMeasurement.metersToBuhol(
-            sideLengths.radius,
-          );
-        }
-        break;
+      } catch (e) {
+        console.error("Error parsing sideLengths:", e);
+      }
     }
 
-    return buholInputs;
+    return {
+      bukidId: pitakData.bukid.id,
+      location: pitakData.location || "",
+      totalLuwang: pitakData.totalLuwang,
+      areaSqm: pitakData.areaSqm || 0,
+      status: pitakData.status,
+      notes: pitakData.notes || "",
+      useAdvancedMode,
+      layoutType,
+      buholInputs,
+      triangleMode,
+      measurementMethod,
+    };
   };
 
   // Handle form input changes
@@ -314,221 +219,87 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
       clearError(field);
     }
 
-    // If layoutType changes, reset buholInputs and measurementMethod
-    if (field === "layoutType") {
-      setFormData((prev) => ({
-        ...prev,
-        buholInputs: {},
-        measurementMethod: "",
-        areaSqm: 0,
-        totalLuwang: 0,
-      }));
-      setCalculationResults({
-        areaSqm: 0,
-        totalLuwang: 0,
-      });
-      clearAllErrors();
+    // Handle mode-specific resets
+    switch (field) {
+      case "useAdvancedMode":
+        if (value === false) {
+          // Switching to simple mode - clear advanced fields
+          setFormData((prev) => ({
+            ...prev,
+            layoutType: "",
+            buholInputs: {},
+            measurementMethod: "",
+          }));
+        }
+        clearAllErrors();
+        break;
+
+      case "layoutType":
+        // Reset inputs when layout type changes
+        setFormData((prev) => ({
+          ...prev,
+          buholInputs: {},
+          measurementMethod: "",
+        }));
+        setCalculationResults({ areaSqm: 0, totalLuwang: 0 });
+        clearAllErrors();
+        break;
     }
   };
 
-  // Handle buhol input changes
-
-  const handleBuholInputChange = (field: string, value: number) => {
-    // Ensure integer values
-    const intValue = Math.max(0, Math.floor(value));
-
-    const updatedInputs = {
-      ...formData.buholInputs,
-      [field]: intValue,
-    };
+  // Handle manual totalLuwang input (Simple Mode)
+  const handleManualLuwangChange = (totalLuwang: number) => {
+    const areaSqm = totalLuwang * 250000; // 1 luwang = 250,000 sqm
 
     setFormData((prev) => ({
       ...prev,
-      buholInputs: updatedInputs,
+      totalLuwang,
+      areaSqm,
     }));
 
-    // Clear error for this field
-    if (errors[field]) {
-      clearError(field);
-    }
-
-    // Validate inputs
-    const validationErrors = validateShapeInputs(
-      formData.layoutType,
-      updatedInputs,
-      formData.triangleMode,
-    );
-
-    // Update errors
-    const newErrors = { ...errors };
-    Object.keys(validationErrors).forEach((key) => {
-      if (validationErrors[key]) {
-        newErrors[key] = validationErrors[key];
-      } else {
-        delete newErrors[key];
-      }
+    setCalculationResults({
+      areaSqm,
+      totalLuwang,
     });
-    setErrors(newErrors);
 
-    // Calculate if layout type is set and no validation errors
-    if (formData.layoutType && Object.keys(validationErrors).length === 0) {
-      try {
-        const results = TraditionalMeasurement.calculateArea(
-          formData.layoutType,
-          updatedInputs,
-          formData.triangleMode,
-        );
-
-        handleCalculation(results);
-      } catch (error) {
-        console.error("Calculation error:", error);
-      }
-    } else {
-      // Reset calculation results if invalid
-      setCalculationResults({
-        areaSqm: 0,
-        totalLuwang: 0,
-      });
+    if (errors.totalLuwang) {
+      clearError("totalLuwang");
     }
   };
 
-  // Update the handleCalculation function:
-  const handleCalculation = (results: CalculationResults) => {
+  // Handle advanced mode calculation results
+  const handleAdvancedCalculation = (results: CalculationResults) => {
     setCalculationResults(results);
 
-    // Update form data with calculated values
     setFormData((prev) => ({
       ...prev,
       areaSqm: results.areaSqm,
       totalLuwang: results.totalLuwang,
-      measurementMethod: TraditionalMeasurement.getMeasurementMethod(
-        prev.layoutType,
-        prev.triangleMode,
-      ),
+      measurementMethod:
+        results.totalLuwang > 0 ? "traditional_calculation" : "",
     }));
-
-    // Log the measurement
-    logMeasurement(
-      formData.layoutType,
-      formData.buholInputs,
-      results,
-      TraditionalMeasurement.getMeasurementMethod(
-        formData.layoutType,
-        formData.triangleMode,
-      ),
-    );
-  };
-
-  // Handle triangle mode change
-  const handleTriangleModeChange = (mode: "base_height" | "three_sides") => {
-    setFormData((prev) => ({
-      ...prev,
-      triangleMode: mode,
-      buholInputs: {},
-    }));
-    setCalculationResults({
-      areaSqm: 0,
-      totalLuwang: 0,
-    });
-    clearAllErrors();
-  };
-
-  // Render the appropriate geometry form component
-  const renderGeometryForm = () => {
-    switch (formData.layoutType) {
-      case "square":
-        return (
-          <SquareForm
-            inputs={formData.buholInputs}
-            errors={errors}
-            onChange={handleBuholInputChange}
-            onCalculate={handleCalculation}
-          />
-        );
-      case "rectangle":
-        return (
-          <RectangleForm
-            inputs={formData.buholInputs}
-            errors={errors}
-            onChange={handleBuholInputChange}
-            onCalculate={handleCalculation}
-          />
-        );
-      case "triangle":
-        return (
-          <div className="space-y-4">
-            {/* Triangle Mode Toggle */}
-            <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                type="button"
-                onClick={() => handleTriangleModeChange("base_height")}
-                className={`flex-1 py-2 text-sm font-medium ${
-                  formData.triangleMode === "base_height"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-50 text-gray-700"
-                }`}
-              >
-                Base + Height
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTriangleModeChange("three_sides")}
-                className={`flex-1 py-2 text-sm font-medium ${
-                  formData.triangleMode === "three_sides"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-50 text-gray-700"
-                }`}
-              >
-                3 Sides (Heron's)
-              </button>
-            </div>
-
-            {/* We'll use the updated TriangleForm with proper props */}
-            {/* Note: We need to update TriangleForm to accept triangleMode prop */}
-            <TriangleForm
-              inputs={formData.buholInputs}
-              errors={errors}
-              onChange={handleBuholInputChange}
-              onCalculate={handleCalculation}
-              triangleMode={formData.triangleMode as TriangleMode}
-              onTriangleModeChange={handleTriangleModeChange}
-            />
-          </div>
-        );
-      case "circle":
-        return (
-          <CircleForm
-            inputs={formData.buholInputs}
-            errors={errors}
-            onChange={handleBuholInputChange}
-            onCalculate={handleCalculation}
-          />
-        );
-      default:
-        return (
-          <div className="text-center py-8 text-gray-500">
-            <AreaChart className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p className="text-sm">Select a plot shape to configure</p>
-          </div>
-        );
-    }
   };
 
   // Validate form
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    // Required fields
     if (!formData.bukidId) {
       newErrors.bukidId = "Please select a farm (bukid)";
     }
 
-    if (formData.layoutType && !formData.measurementMethod) {
-      newErrors.measurementMethod =
-        "Please enter valid dimensions to calculate area";
+    if (formData.totalLuwang <= 0) {
+      newErrors.totalLuwang = "Total Luwang must be greater than 0";
     }
 
-    // Validate traditional measurement inputs
-    if (formData.layoutType) {
+    // Advanced mode validations
+    if (formData.useAdvancedMode) {
+      if (!formData.layoutType) {
+        newErrors.layoutType = "Please select a plot shape";
+      }
+
+      // Validate shape inputs
       const shapeErrors = validateShapeInputs(
         formData.layoutType,
         formData.buholInputs,
@@ -537,6 +308,7 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
       Object.assign(newErrors, shapeErrors);
     }
 
+    // Length validations
     if (formData.location.length > 255) {
       newErrors.location = "Location must be less than 255 characters";
     }
@@ -549,7 +321,7 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Update the submit handler WITHOUT hectare
+  // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -561,52 +333,44 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
     try {
       setSubmitting(true);
 
-      // Prepare audit data WITHOUT hectare
-      const auditData = logFormSubmission(formData, {
-        layoutType: formData.layoutType,
-        buholInputs: formData.buholInputs,
-        results: calculationResults,
-        method: formData.measurementMethod,
-      });
+      // Prepare sideLengths JSON for advanced mode
+      let sideLengthsJson = null;
+      if (formData.useAdvancedMode) {
+        sideLengthsJson = JSON.stringify({
+          buholInputs: formData.buholInputs,
+          measurementMethod: formData.measurementMethod,
+          triangleMode: formData.triangleMode,
+          useAdvancedMode: true,
+        });
+      }
 
-      // Prepare sideLengths JSON including traditional measurements WITHOUT hectare
-      const sideLengthsJson = JSON.stringify({
-        buholInputs: formData.buholInputs,
-        measurementMethod: formData.measurementMethod,
-        triangleMode: formData.triangleMode,
-        auditId: auditData.timestamp,
-        conversionFactors: {
-          buholToMeters: TraditionalMeasurement.BUHOL_TO_METERS,
-          taliToBuhol: TraditionalMeasurement.TALI_TO_BUHOL,
-          luwangToSqm: TraditionalMeasurement.LUWANG_TO_SQM,
-        },
-      });
-
-      // Prepare data for API WITHOUT hectare
+      // Prepare API data
       const pitakData: any = {
         bukidId: formData.bukidId!,
         location: formData.location.trim() || null,
         totalLuwang: parseFloat(formData.totalLuwang.toFixed(2)),
-        status: formData.status,
-        layoutType: formData.layoutType,
-        sideLengths: sideLengthsJson,
         areaSqm: parseFloat(formData.areaSqm.toFixed(2)),
-        measurementMethod: formData.measurementMethod,
-        traditionalSystemUsed: true,
+        status: formData.status,
       };
+
+      // Add advanced mode fields if used
+      if (formData.useAdvancedMode) {
+        pitakData.layoutType = formData.layoutType;
+        pitakData.sideLengths = sideLengthsJson;
+        pitakData.measurementMethod = formData.measurementMethod;
+        pitakData.traditionalSystemUsed = true;
+      }
 
       // Add notes if available
       if (formData.notes.trim()) {
         pitakData.notes = formData.notes.trim();
       }
 
+      // Call API
       let response;
-
       if (mode === "add") {
-        // Create new pitak with validation
         response = await pitakAPI.validateAndCreate(pitakData);
       } else if (mode === "edit" && id) {
-        // Update existing pitak with validation
         response = await pitakAPI.validateAndUpdate(id, pitakData);
       }
 
@@ -665,7 +429,7 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={async () => {if(!await dialogs.confirm({title: 'Close Form', message: 'Are you sure do you want to close this form?.'}))return;onClose();}}
             className="w-7 h-7 rounded flex items-center justify-center hover:bg-gray-200 transition-colors"
             title="Close"
           >
@@ -684,7 +448,7 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
             </div>
           ) : (
             <>
-              {/* Summary Stats WITHOUT hectare */}
+              {/* Summary Stats */}
               <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="flex items-center gap-3">
@@ -703,12 +467,9 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                       <Grid3x3 className="w-5 h-5 text-yellow-600" />
                     </div>
                     <div>
-                      <div className="text-xs text-gray-600">Plot Shape</div>
+                      <div className="text-xs text-gray-600">Plot Mode</div>
                       <div className="text-sm font-semibold text-gray-900">
-                        {formData.layoutType
-                          ? formData.layoutType.charAt(0).toUpperCase() +
-                            formData.layoutType.slice(1)
-                          : "Not set"}
+                        {formData.useAdvancedMode ? "Advanced" : "Manual"}
                       </div>
                     </div>
                   </div>
@@ -719,8 +480,8 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                     <div>
                       <div className="text-xs text-gray-600">Area</div>
                       <div className="text-sm font-semibold text-gray-900">
-                        {calculationResults.areaSqm > 0
-                          ? `${calculationResults.areaSqm.toFixed(2)} m²`
+                        {formData.areaSqm > 0
+                          ? `${formData.areaSqm.toFixed(2)} m²`
                           : "0 m²"}
                       </div>
                     </div>
@@ -732,7 +493,7 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                     <div>
                       <div className="text-xs text-gray-600">LuWang</div>
                       <div className="text-sm font-semibold text-gray-900">
-                        {calculationResults.totalLuwang.toFixed(2)} LuWang
+                        {formData.totalLuwang.toFixed(2)} LuWang
                       </div>
                     </div>
                   </div>
@@ -757,34 +518,57 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                             Select Farm (Bukid){" "}
                             <span className="text-red-500">*</span>
                           </label>
-                          <div className="relative">
-                            <BukidSelect
-                              value={formData.bukidId}
-                              onChange={async (bukidId: number | null) => {
-                                if (bukidId) {
-                                  const response =
-                                    await bukidAPI.getById(bukidId);
-                                  if (response.data.bukid.id) {
-                                    handleChange(
-                                      "bukidId",
-                                      response.data.bukid.id,
-                                    );
+
+                          {bukidId ? (
+                            // Kapag may bukidId, ipakita lang ang naka-select na bukid
+                            <div className="p-2 bg-gray-100 rounded border border-gray-300 text-sm text-gray-800">
+                              Selected Farm ID: {bukidId}
+                            </div>
+                          ) : (
+                            // Kapag wala pa, ipakita ang BukidSelect
+                            <div className="relative">
+                              <BukidSelect
+                                value={mode === "edit" ? formData.bukidId : 0}
+                                disabled={mode === "edit"}
+                                onChange={async (bukidId: number | null) => {
+                                  if (bukidId) {
+                                    try {
+                                      const response =
+                                        await bukidAPI.getById(bukidId);
+                                      if (response.data?.bukid?.id) {
+                                        handleChange(
+                                          "bukidId",
+                                          response.data.bukid.id,
+                                        );
+                                      }
+                                    } catch (err) {
+                                      console.error(
+                                        "Failed to fetch bukid:",
+                                        err,
+                                      );
+                                    }
                                   }
-                                }
-                              }}
-                              placeholder="Search or select a farm..."
-                            />
-                            {errors.bukidId && (
-                              <p className="mt-1 text-xs flex items-center gap-1 text-red-600">
-                                <AlertCircle className="w-3 h-3" />
-                                {errors.bukidId}
-                              </p>
-                            )}
-                          </div>
+                                }}
+                                placeholder="Search or select a farm..."
+                              />
+                              {errors.bukidId && (
+                                <p className="mt-1 text-xs flex items-center gap-1 text-red-600">
+                                  <AlertCircle className="w-3 h-3" />
+                                  {errors.bukidId}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {selectedBukid && (
-                          <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                          <div
+                            className={`bg-blue-50 p-3 rounded border border-blue-200 ${
+                              mode === "edit" || bukidId
+                                ? "opacity-50 cursor-not-allowed"
+                                : "cursor-pointer"
+                            }`}
+                          >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
@@ -821,8 +605,13 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                               <button
                                 type="button"
                                 onClick={() => handleChange("bukidId", null)}
-                                className="p-1 rounded hover:bg-white transition-colors text-gray-500"
+                                className={`p-1 rounded hover:bg-white transition-colors text-gray-500 ${
+                                  mode === "edit" || bukidId
+                                    ? "cursor-not-allowed"
+                                    : "cursor-pointer"
+                                }`}
                                 title="Remove"
+                                disabled={mode === "edit" || !!bukidId}
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -832,89 +621,65 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                       </div>
                     </div>
 
-                    {/* Traditional Plot Geometry Configuration WITHOUT hectare */}
+                    {/* Measurement Mode Section */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
-                        <AreaChart className="w-4 h-4 text-gray-500" />
+                        <Settings className="w-4 h-4 text-gray-500" />
                         <h4 className="text-sm font-semibold text-gray-900">
-                          Traditional Plot Measurement
+                          Measurement Mode
                         </h4>
                       </div>
-                      <div className="space-y-4">
-                        {/* Layout Type Selection */}
-                        <div>
-                          <label className="block text-xs font-medium mb-2 text-gray-700">
-                            Plot Shape <span className="text-red-500">*</span>
-                          </label>
-                          <div className="grid grid-cols-4 gap-2">
-                            {layoutOptions.map((option) => {
-                              const Icon = option.icon;
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onClick={() =>
-                                    handleChange("layoutType", option.value)
-                                  }
-                                  className={`p-3 rounded border flex flex-col items-center justify-center gap-1 ${
-                                    formData.layoutType === option.value
-                                      ? "ring-2 ring-green-500 ring-offset-1 bg-green-50"
-                                      : "border-gray-300 hover:border-green-500"
-                                  } transition-all`}
-                                >
-                                  <Icon
-                                    className={`w-4 h-4 ${formData.layoutType === option.value ? "text-green-600" : "text-gray-400"}`}
-                                  />
-                                  <span
-                                    className={`text-xs font-medium ${
-                                      formData.layoutType === option.value
-                                        ? "text-green-700"
-                                        : "text-gray-600"
-                                    }`}
-                                  >
-                                    {option.label}
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    {option.description}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
 
-                        {/* Traditional Measurement System Info WITHOUT hectare */}
-                        <div className="p-3 bg-yellow-50 rounded border border-yellow-200">
-                          <div className="text-xs">
-                            <div className="font-medium text-yellow-800 mb-1">
-                              Traditional Measurement System
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="p-1 bg-white rounded border">
-                                <div className="text-gray-600">1 buhol =</div>
-                                <div className="font-semibold">50 meters</div>
-                              </div>
-                              <div className="p-1 bg-white rounded border">
-                                <div className="text-gray-600">1 tali =</div>
-                                <div className="font-semibold">10 buhol</div>
-                              </div>
-                              <div className="p-1 bg-white rounded border">
-                                <div className="text-gray-600">1 luwang =</div>
-                                <div className="font-semibold">500 m²</div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      {/* Mode Toggle */}
+                      <MeasurementModeToggle
+                        useAdvancedMode={formData.useAdvancedMode}
+                        onChange={(mode) =>
+                          handleChange("useAdvancedMode", mode)
+                        }
+                      />
 
-                        {/* Geometry Form Component */}
-                        {renderGeometryForm()}
-                      </div>
+                      {/* Manual Input Mode */}
+                      {!formData.useAdvancedMode && (
+                        <ManualInputForm
+                          totalLuwang={formData.totalLuwang}
+                          error={errors.totalLuwang}
+                          onChange={handleManualLuwangChange}
+                        />
+                      )}
+
+                      {/* Advanced Geometry Mode */}
+                      {formData.useAdvancedMode && (
+                        <AdvancedGeometryForm
+                          layoutType={formData.layoutType}
+                          buholInputs={formData.buholInputs}
+                          triangleMode={formData.triangleMode}
+                          errors={errors}
+                          onLayoutTypeChange={(type) =>
+                            handleChange("layoutType", type)
+                          }
+                          onBuholInputChange={(field, value) => {
+                            const updatedInputs = {
+                              ...formData.buholInputs,
+                              [field]: value,
+                            };
+                            setFormData((prev) => ({
+                              ...prev,
+                              buholInputs: updatedInputs,
+                            }));
+                            if (errors[field]) clearError(field);
+                          }}
+                          onTriangleModeChange={(mode) =>
+                            handleChange("triangleMode", mode)
+                          }
+                          onCalculation={handleAdvancedCalculation}
+                        />
+                      )}
                     </div>
                   </div>
 
                   {/* Right Column */}
                   <div className="space-y-6">
-                    {/* Calculation Results WITHOUT hectare */}
+                    {/* Calculation Results */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <Calculator className="w-4 h-4 text-gray-500" />
@@ -991,17 +756,29 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                                 >
                                   {status === "active" && (
                                     <CheckCircle
-                                      className={`w-4 h-4 ${formData.status === status ? "text-green-600" : "text-gray-400"}`}
+                                      className={`w-4 h-4 ${
+                                        formData.status === status
+                                          ? "text-green-600"
+                                          : "text-gray-400"
+                                      }`}
                                     />
                                   )}
                                   {status === "inactive" && (
                                     <XCircle
-                                      className={`w-4 h-4 ${formData.status === status ? "text-gray-600" : "text-gray-400"}`}
+                                      className={`w-4 h-4 ${
+                                        formData.status === status
+                                          ? "text-gray-600"
+                                          : "text-gray-400"
+                                      }`}
                                     />
                                   )}
                                   {status === "completed" && (
                                     <Calendar
-                                      className={`w-4 h-4 ${formData.status === status ? "text-yellow-600" : "text-gray-400"}`}
+                                      className={`w-4 h-4 ${
+                                        formData.status === status
+                                          ? "text-yellow-600"
+                                          : "text-gray-400"
+                                      }`}
                                     />
                                   )}
                                   <span
@@ -1067,11 +844,11 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
                             errors.notes ? "border-red-500" : "border-gray-300"
                           } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
                           placeholder="Enter any additional notes about this pitak... 
-• Soil type and quality
-• Special conditions or requirements
-• Landmarks for easy identification
-• Previous crop history
-• Any equipment requirements"
+                          • Soil type and quality
+                          • Special conditions or requirements
+                          • Landmarks for easy identification
+                          • Previous crop history
+                          • Any equipment requirements"
                           rows={4}
                         />
                         {errors.notes && (
@@ -1117,7 +894,7 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={async () => {if(!await dialogs.confirm({title: 'Close Form', message: 'Are you sure do you want to close this form?.'}))return;onClose();}}
                 className="px-3 py-1.5 rounded text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
                 disabled={submitting}
               >
@@ -1126,10 +903,7 @@ const PitakFormDialog: React.FC<PitakFormDialogProps> = ({
               <button
                 type="submit"
                 onClick={handleSubmit}
-                disabled={
-                  submitting ||
-                  (formData.layoutType !== "" && !calculationResults.areaSqm)
-                }
+                disabled={submitting || formData.totalLuwang <= 0}
                 className="px-3 py-1.5 rounded text-sm font-medium bg-green-600 hover:bg-green-700 text-white flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (

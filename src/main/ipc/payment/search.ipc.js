@@ -1,96 +1,106 @@
-// ipc/payment/search.ipc.js
+// src/ipc/payment/search.ipc.js
 //@ts-check
 
 const Payment = require("../../../entities/Payment");
-// @ts-ignore
-const Worker = require("../../../entities/Worker");
 const { AppDataSource } = require("../../db/dataSource");
 
+/**
+ * Search payments with filters and pagination
+ * @param {Object} params
+ * @param {string} [params.query]
+ * @param {string} [params.status]
+ * @param {"ASC"|"DESC"} [params.sortOrder]
+ * @param {string} [params.sortBy]
+ * @param {string|Date} [params.startDate]
+ * @param {string|Date} [params.endDate]
+ * @param {string} [params.workerName]
+ * @param {number} [params.limit=50]
+ * @param {number} [params.page=1]
+ */
 module.exports = async function searchPayments(params = {}) {
   try {
-    const { 
-      // @ts-ignore
-      query, 
-      // @ts-ignore
-      status, 
-      // @ts-ignore
-      startDate, 
-      // @ts-ignore
+    const {
+      query,
+      status,
+      sortOrder = "DESC",
+      sortBy = "payment.createdAt",
+      startDate,
       endDate,
-      // @ts-ignore
       workerName,
-      // @ts-ignore
-      limit = 50, 
-      // @ts-ignore
-      page = 1 
+      limit = 50,
+      page = 1,
     } = params;
-    
-    const paymentRepository = AppDataSource.getRepository(Payment);
-    const queryBuilder = paymentRepository.createQueryBuilder('payment')
-      .leftJoinAndSelect('payment.worker', 'worker')
-      .leftJoinAndSelect('payment.pitak', 'pitak');
 
-    // Apply search filters
+    const paymentRepository = AppDataSource.getRepository(Payment);
+    const qb = paymentRepository
+      .createQueryBuilder("payment")
+      .leftJoinAndSelect("payment.worker", "worker")
+      .leftJoinAndSelect("payment.pitak", "pitak");
+
+    // Filters
     if (query) {
-      queryBuilder.andWhere(
-        '(payment.referenceNumber LIKE :query OR worker.name LIKE :query OR payment.notes LIKE :query)',
+      qb.andWhere(
+        "(payment.referenceNumber LIKE :query OR worker.name LIKE :query OR payment.notes LIKE :query)",
         { query: `%${query}%` }
       );
     }
 
     if (workerName) {
-      queryBuilder.andWhere('worker.name LIKE :workerName', { 
-        workerName: `%${workerName}%` 
+      qb.andWhere("worker.name LIKE :workerName", {
+        workerName: `%${workerName}%`,
       });
     }
 
     if (status) {
-      queryBuilder.andWhere('payment.status = :status', { status });
+      qb.andWhere("payment.status = :status", { status });
     }
 
     if (startDate) {
-      queryBuilder.andWhere('payment.createdAt >= :startDate', { 
-        startDate: new Date(startDate) 
-      });
+      const sd = new Date(startDate);
+      if (!isNaN(sd.getTime())) {
+        qb.andWhere("payment.createdAt >= :startDate", { startDate: sd });
+      }
     }
 
     if (endDate) {
-      queryBuilder.andWhere('payment.createdAt <= :endDate', { 
-        endDate: new Date(endDate) 
-      });
+      const ed = new Date(endDate);
+      if (!isNaN(ed.getTime())) {
+        qb.andWhere("payment.createdAt <= :endDate", { endDate: ed });
+      }
     }
 
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    const total = await queryBuilder.getCount();
+    // Pagination
+    const safeLimit = Math.max(1, parseInt(limit, 10));
+    const safePage = Math.max(1, parseInt(page, 10));
+    const skip = (safePage - 1) * safeLimit;
 
-    // Get paginated results
-    const payments = await queryBuilder
-      .orderBy('payment.createdAt', 'DESC')
+    const total = await qb.getCount();
+
+    const payments = await qb
+      .orderBy(sortBy, sortOrder.toUpperCase() === "ASC" ? "ASC" : "DESC")
       .skip(skip)
-      .take(limit)
+      .take(safeLimit)
       .getMany();
 
     return {
       status: true,
-      message: 'Payments searched successfully',
+      message: "Payments searched successfully",
       data: {
         payments,
         pagination: {
-          page,
-          limit,
+          page: safePage,
+          limit: safeLimit,
           total,
-          totalPages: Math.ceil(total / limit)
-        }
-      }
+          totalPages: Math.ceil(total / safeLimit),
+        },
+      },
     };
   } catch (error) {
-    console.error('Error in searchPayments:', error);
+    console.error("Error in searchPayments:", error);
     return {
       status: false,
-      // @ts-ignore
-      message: `Failed to search payments: ${error.message}`,
-      data: null
+      message: `Failed to search payments: ${error?.message}`,
+      data: null,
     };
   }
 };

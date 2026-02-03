@@ -490,7 +490,7 @@ const PaymentTableRow: React.FC<PaymentTableRowProps> = ({
             </span>
           </div>
         </td>
-        <td className="p-4">
+        {/* <td className="p-4">
           <div className="flex flex-col gap-1">
             <div className="text-sm" style={{ color: "var(--text-secondary)" }}>
               Debt: {formatCurrency(payment.totalDebtDeduction)}
@@ -513,7 +513,7 @@ const PaymentTableRow: React.FC<PaymentTableRowProps> = ({
               )}
             </div>
           </div>
-        </td>
+        </td> */}
         <td className="p-4">
           {getPaymentMethodBadge(payment.paymentMethod)}
           {payment.referenceNumber && (

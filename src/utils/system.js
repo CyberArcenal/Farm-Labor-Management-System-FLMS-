@@ -534,7 +534,7 @@ async function farmAuditCriticalEvents() {
  */
 async function farmRatePerLuwang() {
   // @ts-ignore
-  const value = await getValue("rate_per_luwang", SettingType.FARM_PAYMENT, "200.00");
+  const value = await getValue("rate_per_luwang", SettingType.FARM_PAYMENT, "230.00");
   // @ts-ignore
   const rate = parseFloat(value);
 

@@ -1,6 +1,6 @@
 // components/Session/SessionTablePage.tsx
 import React, { useState } from "react";
-import { Calendar, Plus, Download, AlertCircle, Filter } from "lucide-react";
+import { Calendar, Plus, Download, AlertCircle, Filter, BarChart2, ChevronUp, ChevronDown } from "lucide-react";
 import { useSessionData } from "./hooks/useSessionData";
 import SessionFormDialog from "./Dialogs/SessionFormDialog";
 import { useSessionActions } from "./hooks/useSessionActions";
@@ -52,7 +52,7 @@ const SessionTablePage: React.FC = () => {
     null,
   );
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
-
+  const [showStats, setShowStats] = useState(false);
   const {
     handleDeleteSession,
     handleBulkDelete,
@@ -322,6 +322,23 @@ const SessionTablePage: React.FC = () => {
 
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => setShowStats(!showStats)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {showStats ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Hide Stats
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Show Stats
+                  </>
+                )}
+              </button>
+              <button
                 onClick={handleExportCSV}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               >
@@ -341,12 +358,14 @@ const SessionTablePage: React.FC = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto p-6">
+        <div className="flex-1">
+          <div className="h-full p-6">
             {/* Stats Cards */}
-            <div className="mb-6">
-              <SessionStats stats={stats} />
-            </div>
+            {showStats && (
+              <div className="mb-6">
+                <SessionStats stats={stats} />
+              </div>
+            )}
 
             {/* Filters */}
             <div className="mb-6">
@@ -354,7 +373,11 @@ const SessionTablePage: React.FC = () => {
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 statusFilter={statusFilter}
-                setStatusFilter={(status) => {setStatusFilter(status as "all" | "active" | "closed" | "archived")}}
+                setStatusFilter={(status) => {
+                  setStatusFilter(
+                    status as "all" | "active" | "closed" | "archived",
+                  );
+                }}
                 yearFilter={yearFilter}
                 setYearFilter={setYearFilter}
                 seasonTypeFilter={seasonTypeFilter}
@@ -424,14 +447,7 @@ const SessionTablePage: React.FC = () => {
               </div>
             ) : !loading && sessions.length > 0 ? (
               <>
-                <div
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6"
-                  style={{
-                    maxHeight:
-                      viewMode === "table" ? "calc(100vh - 450px)" : "auto",
-                    overflowY: viewMode === "table" ? "auto" : "visible",
-                  }}
-                >
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                   {viewMode === "table" ? (
                     <SessionTableView
                       sessions={sessions}

@@ -1,9 +1,15 @@
 // pitakAPI.ts - Complete API for Pitak Management
 import { kabAuthStore } from "../lib/kabAuthStore";
+import type { BukidData } from "./bukid";
 
 export interface PitakData {
+  notes: string;
   id: number;
-  bukidId: number;
+  bukid: {
+    id: number;
+    name: string;
+    location?: string;
+  };
   location?: string | null;
   totalLuwang: number;
   // 🆕 New fields for geometry and area
@@ -41,11 +47,6 @@ export interface PaymentSummary {
 
 export interface PitakWithDetails extends PitakData {
   notes: string;
-  bukid?: {
-    id: number;
-    name: string;
-    location?: string;
-  };
   assignments?: AssignmentSummary[];
   payments?: PaymentSummary[];
   stats?: {
@@ -1603,7 +1604,7 @@ class PitakAPI {
         const currentPitak = await this.getPitakById(id);
         const duplicateCheck = await this.checkDuplicatePitak(
           {
-            bukidId: currentPitak.data.bukidId,
+            bukidId: currentPitak.data.bukid.id,
             location: updates.location,
           },
           id,

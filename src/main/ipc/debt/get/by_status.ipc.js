@@ -1,40 +1,45 @@
 // src/ipc/debt/get/by_status.ipc
 //@ts-check
+const Debt = require("../../../../entities/Debt");
 const { AppDataSource } = require("../../../db/dataSource");
 
-// @ts-ignore
+/**
+ * Get debts by status with optional filters
+ * @param {string} status
+ * @param {{ workerId?: number; date_from?: string|Date; date_to?: string|Date }} filters
+ * @param {number} [userId]
+ */
 module.exports = async (status, filters = {}, userId) => {
   try {
-    const debtRepository = AppDataSource.getRepository("Debt");
-    
-    const query = debtRepository.createQueryBuilder("debt")
+    const debtRepository = AppDataSource.getRepository(Debt);
+
+    const qb = debtRepository
+      .createQueryBuilder("debt")
       .leftJoinAndSelect("debt.worker", "worker")
       .where("debt.status = :status", { status })
       .orderBy("debt.dateIncurred", "DESC");
 
-    // Apply additional filters
-    // @ts-ignore
-    if (filters.worker_id) {
-      // @ts-ignore
-      query.andWhere("debt.worker_id = :worker_id", { worker_id: filters.worker_id });
+    // Filter by worker
+    if (filters.workerId) {
+      qb.andWhere("debt.worker = :workerId", { workerId: filters.workerId });
     }
 
-    // @ts-ignore
+    // Filter by date range
     if (filters.date_from && filters.date_to) {
-      query.andWhere("debt.dateIncurred BETWEEN :date_from AND :date_to", {
-        // @ts-ignore
-        date_from: filters.date_from,
-        // @ts-ignore
-        date_to: filters.date_to
+      const dateFrom = new Date(filters.date_from);
+      const dateTo = new Date(filters.date_to);
+      qb.andWhere("debt.dateIncurred BETWEEN :dateFrom AND :dateTo", {
+        dateFrom,
+        dateTo,
       });
     }
 
-    const debts = await query.getMany();
+    const debts = await qb.getMany();
 
     return {
       status: true,
       message: `Debts with status '${status}' retrieved successfully`,
-      data: debts
+      data: debts,
     };
   } catch (error) {
     console.error("Error getting debts by status:", error);
@@ -42,7 +47,7 @@ module.exports = async (status, filters = {}, userId) => {
       status: false,
       // @ts-ignore
       message: error.message,
-      data: null
+      data: null,
     };
   }
 };

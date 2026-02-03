@@ -338,7 +338,7 @@ const UpdateLuWangCountDialog: React.FC<UpdateLuWangCountDialogProps> = ({
                     {formatDecimal(initialLuWang)}
                   </span>
                   <span className="text-sm text-gray-500">
-                    ({initialLuWang.toFixed(4)} raw)
+                    ({initialLuWang.toFixed(2)} raw)
                   </span>
                 </div>
 

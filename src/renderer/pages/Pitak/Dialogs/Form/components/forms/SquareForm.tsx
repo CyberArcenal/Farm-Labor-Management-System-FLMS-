@@ -45,15 +45,15 @@ const SquareForm: React.FC<SquareFormProps> = ({
         <div className="relative">
           <input
             type="number"
-            min="1"
-            max="1000"
-            step="1"
+            min="0.1"
+            max="2000"
+            step="0.01"
             value={inputs.side || ""}
-            onChange={(e) => handleSideChange(parseInt(e.target.value) || 0)}
+            onChange={(e) => handleSideChange(parseFloat(e.target.value) || 0)}
             className={`w-full px-3 py-2 pl-10 rounded text-sm border ${
               errors.side ? "border-red-500" : "border-gray-300"
             } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
-            placeholder="Enter side length in buhol"
+            placeholder="Enter side length in buhol (e.g., 15.5)"
           />
           <Hash className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
         </div>
@@ -69,19 +69,19 @@ const SquareForm: React.FC<SquareFormProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <div className="text-gray-600">In Buhol:</div>
-                  <div className="font-semibold">{inputs.side} buhol</div>
+                  <div className="font-semibold">{inputs.side.toFixed(2)} buhol</div>
                 </div>
                 <div>
                   <div className="text-gray-600">In Tali:</div>
                   <div className="font-semibold">
-                    {TraditionalMeasurement.buholToTali(inputs.side).toFixed(1)}{" "}
+                    {TraditionalMeasurement.buholToTali(inputs.side).toFixed(3)}{" "}
                     tali
                   </div>
                 </div>
                 <div className="col-span-2">
                   <div className="text-gray-600">In Meters:</div>
                   <div className="font-semibold">
-                    {TraditionalMeasurement.buholToMeters(inputs.side)} meters
+                    {TraditionalMeasurement.buholToMeters(inputs.side).toFixed(2)} meters
                   </div>
                 </div>
               </div>
@@ -110,9 +110,9 @@ const SquareForm: React.FC<SquareFormProps> = ({
                 <div className="font-bold">Square</div>
                 {inputs.side > 0 && (
                   <>
-                    <div>{inputs.side} buhol</div>
+                    <div>{inputs.side.toFixed(2)} buhol</div>
                     <div>
-                      = {TraditionalMeasurement.buholToMeters(inputs.side)}m
+                      = {TraditionalMeasurement.buholToMeters(inputs.side).toFixed(2)}m
                     </div>
                   </>
                 )}
@@ -140,11 +140,11 @@ const SquareForm: React.FC<SquareFormProps> = ({
               <div className="font-mono mt-1 p-1 bg-white rounded border">
                 {inputs.side > 0 ? (
                   <>
-                    ({inputs.side} × 50) × ({inputs.side} × 50) =
-                    {TraditionalMeasurement.buholToMeters(inputs.side)} ×{" "}
-                    {TraditionalMeasurement.buholToMeters(inputs.side)} =
-                    {TraditionalMeasurement.buholToMeters(inputs.side) *
-                      TraditionalMeasurement.buholToMeters(inputs.side)}{" "}
+                    ({inputs.side.toFixed(2)} × 50) × ({inputs.side.toFixed(2)} × 50) =
+                    {TraditionalMeasurement.buholToMeters(inputs.side).toFixed(2)} ×{" "}
+                    {TraditionalMeasurement.buholToMeters(inputs.side).toFixed(2)} =
+                    {(TraditionalMeasurement.buholToMeters(inputs.side) *
+                      TraditionalMeasurement.buholToMeters(inputs.side)).toFixed(2)}{" "}
                     sqm
                   </>
                 ) : (

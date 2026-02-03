@@ -9,20 +9,35 @@ export const useMeasurementValidation = () => {
     fieldName: string,
     required = true
   ): string => {
-    if (required && (!value || value <= 0)) {
-      return `${fieldName} must be greater than 0 buhol`;
+    // Check if value is provided
+    if (required && (value === undefined || value === null || isNaN(value))) {
+      return `${fieldName} is required`;
     }
     
+    // Check for negative values
     if (value < 0) {
       return `${fieldName} cannot be negative`;
     }
     
-    if (!Number.isInteger(value)) {
-      return `${fieldName} must be a whole number (buhol)`;
+    // Check for zero value when required
+    if (required && value <= 0) {
+      return `${fieldName} must be greater than 0 buhol`;
     }
     
-    if (value > 1000) {
-      return `${fieldName} cannot exceed 1000 buhol (100 tali)`;
+    // Allow decimals, so remove the integer check
+    // if (!Number.isInteger(value)) {
+    //   return `${fieldName} must be a whole number (buhol)`;
+    // }
+    
+    // Increased max value to accommodate decimals
+    if (value > 2000) {
+      return `${fieldName} cannot exceed 2000 buhol`;
+    }
+    
+    // Validate precision (allow up to 2 decimal places)
+    const decimalPlaces = (value.toString().split('.')[1] || '').length;
+    if (decimalPlaces > 2) {
+      return `${fieldName} cannot have more than 2 decimal places`;
     }
     
     return '';

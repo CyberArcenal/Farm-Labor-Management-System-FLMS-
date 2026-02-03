@@ -1,6 +1,14 @@
 // components/Debt/DebtTablePage.tsx
 import React, { useState } from "react";
-import { DollarSign, Plus, Download, AlertCircle } from "lucide-react";
+import {
+  DollarSign,
+  Plus,
+  Download,
+  AlertCircle,
+  BarChart2,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import { useDebtData } from "./hooks/useDebtData";
 import DebtFormDialog from "./Dialogs/DebtFormDialog";
 import { useDebtActions } from "./hooks/useDebtActions";
@@ -17,6 +25,7 @@ const DebtTablePage: React.FC = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedDebtId, setSelectedDebtId] = useState<number | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
+  const [showStats, setShowStats] = useState(false); // Add show/hide stats state
 
   const {
     debts,
@@ -300,6 +309,23 @@ const DebtTablePage: React.FC = () => {
 
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => setShowStats(!showStats)}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" />
+                {showStats ? (
+                  <>
+                    <ChevronUp className="w-4 h-4 mr-1" />
+                    Hide Stats
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4 mr-1" />
+                    Show Stats
+                  </>
+                )}
+              </button>
+              <button
                 onClick={handleExportCSV}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md flex items-center border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               >
@@ -319,12 +345,14 @@ const DebtTablePage: React.FC = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto p-6">
+        <div className="flex-1">
+          <div className="h-full p-6">
             {/* Stats Cards */}
-            <div className="mb-6">
-              <DebtStats stats={stats} />
-            </div>
+            {showStats && (
+              <div className="mb-6">
+                <DebtStats stats={stats} />
+              </div>
+            )}
 
             {/* Filters */}
             <div className="mb-6">
@@ -398,14 +426,7 @@ const DebtTablePage: React.FC = () => {
               </div>
             ) : !loading && debts.length > 0 ? (
               <>
-                <div
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6"
-                  style={{
-                    maxHeight:
-                      viewMode === "table" ? "calc(100vh - 450px)" : "auto",
-                    overflowY: viewMode === "table" ? "auto" : "visible",
-                  }}
-                >
+                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
                   {viewMode === "table" ? (
                     <DebtTableView
                       debts={debts}

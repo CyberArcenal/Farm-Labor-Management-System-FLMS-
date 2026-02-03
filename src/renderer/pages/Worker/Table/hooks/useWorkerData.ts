@@ -34,7 +34,7 @@ export const useWorkerData = () => {
   const [sortBy, setSortBy] = useState<string>("name");
   const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const parseResponse = (data: WorkerApiShape) => {
     if (Array.isArray(data)) {

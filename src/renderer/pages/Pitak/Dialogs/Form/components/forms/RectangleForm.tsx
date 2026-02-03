@@ -53,17 +53,17 @@ const RectangleForm: React.FC<RectangleFormProps> = ({
           <div className="relative">
             <input
               type="number"
-              min="1"
-              max="1000"
-              step="1"
+              min="0.1"
+              max="2000"
+              step="0.01"
               value={inputs.length || ""}
               onChange={(e) =>
-                handleInputChange("length", parseInt(e.target.value) || 0)
+                handleInputChange("length", parseFloat(e.target.value) || 0)
               }
               className={`w-full px-3 py-2 pl-10 rounded text-sm border ${
                 errors.length ? "border-red-500" : "border-gray-300"
               } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
-              placeholder="Length in buhol"
+              placeholder="Length in buhol (e.g., 25.75)"
             />
             <Hash className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           </div>
@@ -80,17 +80,17 @@ const RectangleForm: React.FC<RectangleFormProps> = ({
           <div className="relative">
             <input
               type="number"
-              min="1"
-              max="1000"
-              step="1"
+              min="0.1"
+              max="2000"
+              step="0.01"
               value={inputs.width || ""}
               onChange={(e) =>
-                handleInputChange("width", parseInt(e.target.value) || 0)
+                handleInputChange("width", parseFloat(e.target.value) || 0)
               }
               className={`w-full px-3 py-2 pl-10 rounded text-sm border ${
                 errors.width ? "border-red-500" : "border-gray-300"
               } focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none`}
-              placeholder="Width in buhol"
+              placeholder="Width in buhol (e.g., 15.25)"
             />
             <Hash className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
           </div>
@@ -109,15 +109,15 @@ const RectangleForm: React.FC<RectangleFormProps> = ({
               <div>
                 <div className="text-gray-600 mb-1">Length:</div>
                 <div className="space-y-1">
-                  <div>{inputs.length || 0} buhol</div>
+                  <div>{inputs.length?.toFixed(2) || "0.00"} buhol</div>
                   <div>
                     {TraditionalMeasurement.buholToTali(
                       inputs.length || 0,
-                    ).toFixed(1)}{" "}
+                    ).toFixed(3)}{" "}
                     tali
                   </div>
                   <div>
-                    {TraditionalMeasurement.buholToMeters(inputs.length || 0)}{" "}
+                    {TraditionalMeasurement.buholToMeters(inputs.length || 0).toFixed(2)}{" "}
                     meters
                   </div>
                 </div>
@@ -125,15 +125,15 @@ const RectangleForm: React.FC<RectangleFormProps> = ({
               <div>
                 <div className="text-gray-600 mb-1">Width:</div>
                 <div className="space-y-1">
-                  <div>{inputs.width || 0} buhol</div>
+                  <div>{inputs.width?.toFixed(2) || "0.00"} buhol</div>
                   <div>
                     {TraditionalMeasurement.buholToTali(
                       inputs.width || 0,
-                    ).toFixed(1)}{" "}
+                    ).toFixed(3)}{" "}
                     tali
                   </div>
                   <div>
-                    {TraditionalMeasurement.buholToMeters(inputs.width || 0)}{" "}
+                    {TraditionalMeasurement.buholToMeters(inputs.width || 0).toFixed(2)}{" "}
                     meters
                   </div>
                 </div>
@@ -167,7 +167,7 @@ const RectangleForm: React.FC<RectangleFormProps> = ({
                   {inputs.length > 0 && inputs.width > 0 && (
                     <>
                       <div>
-                        {inputs.length} × {inputs.width} buhol
+                        {inputs.length.toFixed(2)} × {inputs.width.toFixed(2)} buhol
                       </div>
                     </>
                   )}
@@ -177,13 +177,13 @@ const RectangleForm: React.FC<RectangleFormProps> = ({
 
             {inputs.length > 0 && (
               <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
-                Length: {inputs.length} buhol
+                Length: {inputs.length.toFixed(2)} buhol
               </div>
             )}
 
             {inputs.width > 0 && (
               <div className="absolute -right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
-                Width: {inputs.width} buhol
+                Width: {inputs.width.toFixed(2)} buhol
               </div>
             )}
           </div>
@@ -197,16 +197,16 @@ const RectangleForm: React.FC<RectangleFormProps> = ({
             <div className="font-medium text-yellow-800 mb-1">Calculation:</div>
             <div className="text-yellow-700 space-y-1">
               <div>
-                Length: {inputs.length} buhol × 50 ={" "}
-                {TraditionalMeasurement.buholToMeters(inputs.length)}m
+                Length: {inputs.length.toFixed(2)} buhol × 50 ={" "}
+                {TraditionalMeasurement.buholToMeters(inputs.length).toFixed(2)}m
               </div>
               <div>
-                Width: {inputs.width} buhol × 50 ={" "}
-                {TraditionalMeasurement.buholToMeters(inputs.width)}m
+                Width: {inputs.width.toFixed(2)} buhol × 50 ={" "}
+                {TraditionalMeasurement.buholToMeters(inputs.width).toFixed(2)}m
               </div>
               <div className="font-mono mt-1 p-1 bg-white rounded border">
-                Area = {TraditionalMeasurement.buholToMeters(inputs.length)} ×{" "}
-                {TraditionalMeasurement.buholToMeters(inputs.width)} =
+                Area = {TraditionalMeasurement.buholToMeters(inputs.length).toFixed(2)} ×{" "}
+                {TraditionalMeasurement.buholToMeters(inputs.width).toFixed(2)} =
                 {(
                   TraditionalMeasurement.buholToMeters(inputs.length) *
                   TraditionalMeasurement.buholToMeters(inputs.width)

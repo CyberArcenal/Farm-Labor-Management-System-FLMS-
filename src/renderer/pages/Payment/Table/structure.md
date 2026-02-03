@@ -5,9 +5,7 @@ components/Payment/
 │   ├── PaymentFilters.tsx
 │   ├── PaymentBulkActions.tsx
 │   ├── PaymentTableView.tsx
-│   ├── PaymentGridView.tsx
 │   ├── PaymentTableRow.tsx (with dropdown)
-│   ├── PaymentGridCard.tsx
 │   ├── PaymentActionsDropdown.tsx
 │   └── PaymentPagination.tsx
 ├── Dialogs/
