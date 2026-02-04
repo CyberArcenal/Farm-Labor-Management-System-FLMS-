@@ -7,7 +7,24 @@ const { AppDataSource } = require("../../../db/dataSource");
 module.exports = async function getPaymentsByWorker(params = {}) {
   try {
     // @ts-ignore
-    let { workerId, status, startDate, endDate, limit = 50, page = 1, pitakId } = params;
+    let {
+      // @ts-ignore
+      workerId,
+      // @ts-ignore
+      status,
+      // @ts-ignore
+      statuses,
+      // @ts-ignore
+      startDate,
+      // @ts-ignore
+      endDate,
+      // @ts-ignore
+      limit = 50,
+      // @ts-ignore
+      page = 1,
+      // @ts-ignore
+      pitakId,
+    } = params;
 
     if (!workerId) {
       return {
@@ -38,6 +55,10 @@ module.exports = async function getPaymentsByWorker(params = {}) {
     // Apply filters
     if (status) {
       queryBuilder.andWhere("payment.status = :status", { status });
+    }
+
+    if (statuses && statuses.length > 0) {
+      queryBuilder.andWhere("payment.status IN (:...statuses)", { statuses });
     }
 
     if (startDate) {
@@ -83,8 +104,14 @@ module.exports = async function getPaymentsByWorker(params = {}) {
       .where("worker.id = :workerId", { workerId });
 
     if (status) summaryQB.andWhere("payment.status = :status", { status });
-    if (startDate) summaryQB.andWhere("payment.createdAt >= :startDate", { startDate: new Date(startDate) });
-    if (endDate) summaryQB.andWhere("payment.createdAt <= :endDate", { endDate: new Date(endDate) });
+    if (startDate)
+      summaryQB.andWhere("payment.createdAt >= :startDate", {
+        startDate: new Date(startDate),
+      });
+    if (endDate)
+      summaryQB.andWhere("payment.createdAt <= :endDate", {
+        endDate: new Date(endDate),
+      });
     if (pitakId) summaryQB.andWhere("pitak.id = :pitakId", { pitakId });
 
     const summary = await summaryQB.getRawOne();

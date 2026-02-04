@@ -46,7 +46,7 @@ class PaymentHandler {
     this.assignPaymentToWorker = this.importHandler("./assign_to_worker.ipc");
     this.assignPaymentToPitak = this.importHandler("./assign_to_pitak.ipc");
     this.linkDebtPayment = this.importHandler("./link_debt_payment.ipc");
-    this.getPaymentHistory = this.importHandler("./get_history.ipc");
+    this.getPaymentHistory = this.importHandler("./get/get_history.ipc");
 
     // 📊 REPORTING HANDLERS
     this.generatePaymentReport = this.importHandler("./generate_report.ipc");

@@ -7,6 +7,7 @@ const Payment = require("../../../entities/Payment");
 const PaymentHistory = require("../../../entities/PaymentHistory");
 const { validatePitak } = require("./utils/assignmentUtils");
 const { farmRatePerLuwang, farmSessionDefaultSessionId } = require("../../../utils/system");
+const { generateReferenceNumber } = require("../debt/utils/reference");
 
 /**
  * Update assignment status
@@ -102,6 +103,7 @@ module.exports = async (params, queryRunner) => {
       // compute payment
       const ratePerLuwang = await farmRatePerLuwang();
       const sessionId = await farmSessionDefaultSessionId();
+      const referenceNumber = generateReferenceNumber("PAY");
 
       // coerce luwangCount safely
       const luwangCount = Number(assignment.luwangCount || 0);
@@ -158,6 +160,7 @@ module.exports = async (params, queryRunner) => {
           deductionBreakdown: null,
           status: "pending",
           paymentMethod: 'cash',
+          referenceNumber: referenceNumber,
           // @ts-ignore
           periodStart: assignment.pitak?.startDate || null,
           // @ts-ignore

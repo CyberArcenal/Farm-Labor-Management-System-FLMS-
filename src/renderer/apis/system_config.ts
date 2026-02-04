@@ -48,34 +48,20 @@ export interface FarmSessionSettings {
   status?: "active" | "closed" | "archived";
   notes?: string;
   require_default_session?: boolean;
-  auto_close_previous?: boolean;
-  allow_multiple_active_sessions?: boolean;
 }
 
 // 2. FARM BUKID SETTINGS
 export interface FarmBukidSettings {
   name_format?: string;
   enable_location_descriptor?: boolean;
-  auto_duplicate_per_session?: boolean;
   default_status?: "active" | "inactive";
   location_required?: boolean;
-  area_unit?: string; // hectares, acres, etc.
   max_bukid_per_session?: number;
-  auto_generate_code?: boolean;
-  code_prefix?: string;
 }
 
 // 3. FARM PITAK SETTINGS
 export interface FarmPitakSettings {
-  default_total_luwang_capacity?: number;
-  location_format?: string;
-  status_options?: string[]; // ['active', 'inactive', 'completed']
-  auto_generate_pitak_ids?: boolean;
-  id_prefix?: string;
-  min_capacity?: number;
-  max_capacity?: number;
   require_location?: boolean;
-  pitak_number_format?: string;
 }
 
 // 4. FARM ASSIGNMENT SETTINGS

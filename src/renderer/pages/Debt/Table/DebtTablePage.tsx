@@ -19,6 +19,7 @@ import DebtTableView from "./components/DebtTableView";
 import DebtGridView from "./components/DebtGridView";
 import DebtPagination from "./components/DebtPagination";
 import DebtViewDialog from "./Dialogs/DebtViewDialog";
+import DebtPaymentDialog from "../../Payment/Table/Dialogs/Form/DebtPayment";
 
 const DebtTablePage: React.FC = () => {
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
@@ -26,7 +27,8 @@ const DebtTablePage: React.FC = () => {
   const [selectedDebtId, setSelectedDebtId] = useState<number | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [showStats, setShowStats] = useState(false); // Add show/hide stats state
-
+  const [showDebtPaymentDialog, setShowDebtPaymentDialog] = useState(false);
+  const [selectedWorkerId, setSelectedWorkerId] = useState<number | null>(null);
   const {
     debts,
     stats,
@@ -64,7 +66,7 @@ const DebtTablePage: React.FC = () => {
     handleDeleteDebt,
     handleBulkDelete,
     handleExportCSV,
-    handleMakePayment,
+    
     handleUpdateStatus,
     handleViewHistory,
   } = useDebtActions(debts, fetchDebts, selectedDebts);
@@ -131,6 +133,17 @@ const DebtTablePage: React.FC = () => {
     setStatusFilter(status);
     setCurrentPage(1);
   };
+
+  const onDebtDialogSuccess = () => {
+    setShowDebtPaymentDialog(false);
+    setSelectedWorkerId(null);
+    handleRefresh();
+  };
+
+  const handleMakePayment = (id:number) => {
+    setSelectedWorkerId(id);
+    setShowDebtPaymentDialog(true);
+  }
 
   // Loading skeleton
   const renderLoadingSkeleton = () => {
@@ -496,6 +509,14 @@ const DebtTablePage: React.FC = () => {
           onEdit={openEditDialog}
           onMakePayment={handleMakePayment}
           onViewHistory={handleViewHistory}
+        />
+      )}
+
+      {showDebtPaymentDialog && selectedWorkerId && (
+        <DebtPaymentDialog
+          workerId={selectedWorkerId}
+          onClose={() => setShowDebtPaymentDialog(false)}
+          onSuccess={() => onDebtDialogSuccess()}
         />
       )}
     </>

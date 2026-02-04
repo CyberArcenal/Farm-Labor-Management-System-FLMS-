@@ -28,8 +28,8 @@ import ViewSingleAssignmentDialog from "../../Assignment/View/Dialogs/ViewSingle
 // import PitakFormDialog from "../Dialogs/Form/Form";
 import PitakViewDialog from "../Dialogs/View";
 import ViewAssignedWorkersDialog from "../../Assignment/View/Dialogs/ViewAssignedWorkersDialog";
-import PaymentViewDialog from "../../Payment/Table/Dialogs/PaymentViewDialog";
 import PitakFormDialog from "../Dialogs/Form";
+import PaymentViewDialog from "../../Payment/Table/Dialogs/View/PaymentViewDialog";
 
 const PitakTablePage: React.FC = () => {
   const {

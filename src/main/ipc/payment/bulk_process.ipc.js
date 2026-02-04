@@ -9,7 +9,10 @@ const PaymentHistory = require("../../../entities/PaymentHistory");
 const UserActivity = require("../../../entities/UserActivity");
 const { AppDataSource } = require("../../db/dataSource");
 
-module.exports = async function bulkProcessPayments(params = {}, queryRunner = null) {
+module.exports = async function bulkProcessPayments(
+  params = {},
+  queryRunner = null,
+) {
   let shouldRelease = false;
 
   if (!queryRunner) {
@@ -24,18 +27,31 @@ module.exports = async function bulkProcessPayments(params = {}, queryRunner = n
 
   try {
     // @ts-ignore
-    const { paymentIds, paymentDate, paymentMethod, _userId } = params;
+    const { paymentIds, paymentDate, paymentMethod, referenceNumber, _userId } =
+      params;
 
     if (!paymentIds || !Array.isArray(paymentIds) || paymentIds.length === 0) {
-      return { status: false, message: "Payment IDs array is required and cannot be empty", data: null };
+      return {
+        status: false,
+        message: "Payment IDs array is required and cannot be empty",
+        data: null,
+      };
     }
     if (!_userId) {
-      return { status: false, message: "User ID is required for audit trail", data: null };
+      return {
+        status: false,
+        message: "User ID is required for audit trail",
+        data: null,
+      };
     }
 
     const MAX_BATCH_SIZE = 50;
     if (paymentIds.length > MAX_BATCH_SIZE) {
-      return { status: false, message: `Cannot process more than ${MAX_BATCH_SIZE} payments at once`, data: null };
+      return {
+        status: false,
+        message: `Cannot process more than ${MAX_BATCH_SIZE} payments at once`,
+        data: null,
+      };
     }
 
     // @ts-ignore
@@ -45,9 +61,13 @@ module.exports = async function bulkProcessPayments(params = {}, queryRunner = n
     // @ts-ignore
     const activityRepo = queryRunner.manager.getRepository(UserActivity);
     // @ts-ignore
-    const paymentHistoryRepo = queryRunner.manager.getRepository(PaymentHistory);
+    const paymentHistoryRepo =
+      // @ts-ignore
+      queryRunner.manager.getRepository(PaymentHistory);
+    // @ts-ignore
     // @ts-ignore
     const debtRepository = queryRunner.manager.getRepository(Debt);
+    // @ts-ignore
     // @ts-ignore
     const debtHistoryRepo = queryRunner.manager.getRepository(DebtHistory);
 
@@ -72,19 +92,31 @@ module.exports = async function bulkProcessPayments(params = {}, queryRunner = n
 
         if (!payment) {
           // @ts-ignore
-          results.failed.push({ index: i, paymentId, error: "Payment not found" });
+          results.failed.push({
+            index: i,
+            paymentId,
+            error: "Payment not found",
+          });
           continue;
         }
 
         // Prevent processing non-pending or cancelled payments
         if (payment.status !== "pending") {
           // @ts-ignore
-          results.failed.push({ index: i, paymentId, error: `Payment cannot be processed. Current status: ${payment.status}` });
+          results.failed.push({
+            index: i,
+            paymentId,
+            error: `Payment cannot be processed. Current status: ${payment.status}`,
+          });
           continue;
         }
         if (payment.status === "cancelled") {
           // @ts-ignore
-          results.failed.push({ index: i, paymentId, error: "Cannot process cancelled payment" });
+          results.failed.push({
+            index: i,
+            paymentId,
+            error: "Cannot process cancelled payment",
+          });
           continue;
         }
 
@@ -98,6 +130,11 @@ module.exports = async function bulkProcessPayments(params = {}, queryRunner = n
         payment.status = "completed";
         payment.updatedAt = new Date();
 
+        // Update reference number if provided
+        if (referenceNumber) {
+          payment.referenceNumber = referenceNumber;
+        }
+
         // Apply debt deductions first (this will update debts and worker totals)
         if (totalDebtDeduction > 0) {
           await applyDebtDeductions(payment, queryRunner, _userId);
@@ -108,31 +145,48 @@ module.exports = async function bulkProcessPayments(params = {}, queryRunner = n
 
         // Update worker aggregates: add netPay to totalPaid and reduce currentBalance by netPay
         if (payment.worker && payment.worker.id) {
-          const worker = await workerRepository.findOne({ where: { id: payment.worker.id } });
+          const worker = await workerRepository.findOne({
+            where: { id: payment.worker.id },
+          });
           if (worker) {
-            worker.totalPaid = parseFloat((parseFloat(worker.totalPaid || 0) + netPay).toFixed(2));
-            worker.currentBalance = parseFloat(Math.max(0, parseFloat(worker.currentBalance || 0) - netPay).toFixed(2));
+            worker.totalPaid = parseFloat(
+              (parseFloat(worker.totalPaid || 0) + netPay).toFixed(2),
+            );
+            worker.currentBalance = parseFloat(
+              Math.max(
+                0,
+                parseFloat(worker.currentBalance || 0) - netPay,
+              ).toFixed(2),
+            );
             worker.updatedAt = new Date();
             await workerRepository.save(worker);
           }
         }
 
-        // Create payment history entry for status change
+        // Create payment history entry for status change - FIXED: Added oldAmount and newAmount
         const paymentHistory = paymentHistoryRepo.create({
           payment: updatedPayment,
           actionType: "status_change",
           changedField: "status",
           oldValue: "pending",
           newValue: "completed",
+          // FIX: Added amount fields for proper auditing
+          oldAmount: 0.0,
+          newAmount: netPay,
           notes: `Payment processed via bulk operation (${payment.paymentMethod || paymentMethod || "unknown method"})`,
           performedBy: String(_userId),
           changeDate: new Date(),
-          changeReason: "bulk_process",
+          referenceNumber: payment.referenceNumber,
         });
         await paymentHistoryRepo.save(paymentHistory);
 
         // @ts-ignore
-        results.success.push({ index: i, paymentId, workerName: payment.worker ? payment.worker.name : null, amount: netPay });
+        results.success.push({
+          index: i,
+          paymentId,
+          workerName: payment.worker ? payment.worker.name : null,
+          amount: netPay,
+        });
         results.successCount++;
         results.totalAmount += netPay;
       } catch (error) {
@@ -171,10 +225,22 @@ module.exports = async function bulkProcessPayments(params = {}, queryRunner = n
         success: results.successCount,
         failed: results.failedCount,
         totalAmount: results.totalAmount,
-        averageAmount: results.successCount > 0 ? results.totalAmount / results.successCount : 0,
+        averageAmount:
+          results.successCount > 0
+            ? results.totalAmount / results.successCount
+            : 0,
         errors: results.failed,
         // @ts-ignore
-        processedPayments: results.success.map((s) => ({ index: s.index, paymentId: s.paymentId, workerName: s.workerName, amount: s.amount })),
+        processedPayments: results.success.map((s) => ({
+          // @ts-ignore
+          index: s.index,
+          // @ts-ignore
+          paymentId: s.paymentId,
+          // @ts-ignore
+          workerName: s.workerName,
+          // @ts-ignore
+          amount: s.amount,
+        })),
       },
     };
   } catch (error) {
@@ -184,7 +250,12 @@ module.exports = async function bulkProcessPayments(params = {}, queryRunner = n
     }
     console.error("Error in bulkProcessPayments:", error);
     // @ts-ignore
-    return { status: false, message: `Failed to bulk process payments: ${error.message}`, data: null };
+    return {
+      status: false,
+      // @ts-ignore
+      message: `Failed to bulk process payments: ${error.message}`,
+      data: null,
+    };
   } finally {
     if (shouldRelease) {
       // @ts-ignore
@@ -198,6 +269,7 @@ async function applyDebtDeductions(payment, queryRunner, performedBy) {
   const debtRepository = queryRunner.manager.getRepository(Debt);
   const debtHistoryRepo = queryRunner.manager.getRepository(DebtHistory);
   const workerRepository = queryRunner.manager.getRepository(Worker);
+  const paymentHistoryRepo = queryRunner.manager.getRepository(PaymentHistory);
 
   // Find outstanding debts for the worker ordered by dueDate
   const debts = await debtRepository.find({
@@ -212,7 +284,9 @@ async function applyDebtDeductions(payment, queryRunner, performedBy) {
   if (remainingDeduction <= 0) return;
 
   // Load worker once
-  const worker = await workerRepository.findOne({ where: { id: payment.worker.id } });
+  const worker = await workerRepository.findOne({
+    where: { id: payment.worker.id },
+  });
 
   for (const debt of debts) {
     if (remainingDeduction <= 0) break;
@@ -226,8 +300,12 @@ async function applyDebtDeductions(payment, queryRunner, performedBy) {
     const oldDebtTotalPaid = parseFloat(debt.totalPaid || 0);
 
     // Update debt safely
-    const newDebtBalance = parseFloat((debtBalance - deductionAmount).toFixed(2));
-    const newDebtTotalPaid = parseFloat((oldDebtTotalPaid + deductionAmount).toFixed(2));
+    const newDebtBalance = parseFloat(
+      (debtBalance - deductionAmount).toFixed(2),
+    );
+    const newDebtTotalPaid = parseFloat(
+      (oldDebtTotalPaid + deductionAmount).toFixed(2),
+    );
 
     debt.balance = newDebtBalance;
     debt.totalPaid = newDebtTotalPaid;
@@ -260,19 +338,27 @@ async function applyDebtDeductions(payment, queryRunner, performedBy) {
 
     // Update worker aggregates to reflect debt payment
     if (worker) {
-      worker.totalPaid = parseFloat((parseFloat(worker.totalPaid || 0) + deductionAmount).toFixed(2));
-      worker.currentBalance = parseFloat(Math.max(0, parseFloat(worker.currentBalance || 0) - deductionAmount).toFixed(2));
+      worker.totalPaid = parseFloat(
+        (parseFloat(worker.totalPaid || 0) + deductionAmount).toFixed(2),
+      );
+      worker.currentBalance = parseFloat(
+        Math.max(
+          0,
+          parseFloat(worker.currentBalance || 0) - deductionAmount,
+        ).toFixed(2),
+      );
       worker.updatedAt = new Date();
       await workerRepository.save(worker);
     }
 
     // Decrease remaining deduction
-    remainingDeduction = parseFloat((remainingDeduction - deductionAmount).toFixed(2));
+    remainingDeduction = parseFloat(
+      (remainingDeduction - deductionAmount).toFixed(2),
+    );
   }
 
   // If any deduction was applied, create a PaymentHistory entry for the deduction
   if (parseFloat(payment.totalDebtDeduction || 0) > 0) {
-    const paymentHistoryRepo = queryRunner.manager.getRepository(PaymentHistory);
     const paymentHistory = paymentHistoryRepo.create({
       payment: { id: payment.id },
       actionType: "deduction",
@@ -282,7 +368,6 @@ async function applyDebtDeductions(payment, queryRunner, performedBy) {
       notes: `Applied debt deductions totaling ${parseFloat(payment.totalDebtDeduction || 0).toFixed(2)}`,
       performedBy: performedBy ? String(performedBy) : null,
       changeDate: new Date(),
-      changeReason: "apply_debt_deductions_bulk",
     });
     await paymentHistoryRepo.save(paymentHistory);
   }

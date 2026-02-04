@@ -10,6 +10,7 @@ import type {
   WorkerPaymentSummaryData,
 } from "../../../../apis/payment";
 import { showError } from "../../../../utils/notification";
+import debtAPI from "../../../../apis/debt";
 
 export interface WorkerPaymentSummary {
   worker: any;
@@ -18,6 +19,7 @@ export interface WorkerPaymentSummary {
   totalNetPay: number;
   totalDeductions: number;
   pendingPayments: number;
+    totalPendingAmount: number;
   processingPayments: number;
   completedPayments: number;
   cancelledPayments: number;
@@ -31,7 +33,9 @@ export interface WorkerPaymentSummary {
 
 export const useWorkerPaymentData = () => {
   const [workers, setWorkers] = useState<any[]>([]);
-  const [workerSummaries, setWorkerSummaries] = useState<WorkerPaymentSummary[]>([]);
+  const [workerSummaries, setWorkerSummaries] = useState<
+    WorkerPaymentSummary[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,149 +57,223 @@ export const useWorkerPaymentData = () => {
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Pagkalkula ng worker summaries mula sa mga workers
-  const calculateWorkerSummaries = useCallback(async (workerList: any[]) => {
-    try {
-      const summaries: WorkerPaymentSummary[] = [];
+  const calculateWorkerSummaries = useCallback(
+    async (workerList: any[]) => {
+      try {
+        const summaries: WorkerPaymentSummary[] = [];
 
-      for (const worker of workerList) {
-        try {
-          // Kumuha ng payment summary para sa bawat worker
-          const paymentResponse = await paymentAPI.getWorkerPaymentSummary(worker.id, {
-            startDate: dateFrom || undefined,
-            endDate: dateTo || undefined,
-          });
+        for (const worker of workerList) {
+          try {
+            // Kumuha ng payment summary para sa bawat worker
+            const paymentResponse = await paymentAPI.getWorkerPaymentSummary(
+              worker.id,
+              {
+                startDate: dateFrom || undefined,
+                endDate: dateTo || undefined,
+              },
+            );
 
-          if (paymentResponse.status) {
-            const summaryData = paymentResponse.data;
-            
-            // Kumuha ng recent payments para sa worker
-            const recentPaymentsRes = await paymentAPI.getPaymentsByWorker(worker.id, {
-              limit: 5,
-              page: 1,
-              status: statusFilter !== "all" ? statusFilter : undefined,
-            });
+            const debtResponse = await debtAPI.getByWorker(worker.id);
 
-            const workerSummary: WorkerPaymentSummary = {
+            if (paymentResponse.status) {
+              const summaryData = paymentResponse.data;
+
+            // Kunin ang LAHAT ng pending payments para makuha ang total pending amount
+            const pendingPaymentsRes = await paymentAPI.getPaymentsByWorker(
+              worker.id,
+              {
+                statuses: ["pending", "partially_paid"],
+                limit: 100, // Kunin lahat ng pending
+                page: 1,
+              },
+            );
+
+            // Kalkulahin ang total pending amount
+            const totalPendingAmount = pendingPaymentsRes.data?.payments?.reduce(
+              (sum: number, payment: PaymentData) => sum + (payment.netPay || 0),
+              0
+            ) || 0;
+
+            // Kumuha ng recent payments para sa worker (mixed status)
+            const recentPaymentsRes = await paymentAPI.getPaymentsByWorker(
+              worker.id,
+              {
+                limit: 5,
+                page: 1,
+                status: statusFilter !== "all" ? statusFilter : undefined,
+              },
+            );
+
+
+             const workerSummary: WorkerPaymentSummary = {
               worker,
               totalPayments: summaryData.summary?.totalPayments || 0,
-              totalGrossPay: parseFloat(summaryData.summary?.totalGross?.toString() || "0"),
-              totalNetPay: parseFloat(summaryData.summary?.totalNet?.toString() || "0"),
+              totalGrossPay: parseFloat(
+                summaryData.summary?.totalGross?.toString() || "0",
+              ),
+              totalNetPay: parseFloat(
+                summaryData.summary?.totalNet?.toString() || "0",
+              ),
               totalDeductions: summaryData.summary?.totalDeductions || 0,
-              pendingPayments: Object.entries(summaryData.summary?.statusDistribution || {}).find(([key]) => 
-                key.includes('pending'))?.[1] || 0,
-              processingPayments: Object.entries(summaryData.summary?.statusDistribution || {}).find(([key]) => 
-                key.includes('processing'))?.[1] || 0,
-              completedPayments: Object.entries(summaryData.summary?.statusDistribution || {}).find(([key]) => 
-                key.includes('completed'))?.[1] || 0,
-              cancelledPayments: Object.entries(summaryData.summary?.statusDistribution || {}).find(([key]) => 
-                key.includes('cancelled'))?.[1] || 0,
-              partiallyPaidPayments: Object.entries(summaryData.summary?.statusDistribution || {}).find(([key]) => 
-                key.includes('partially'))?.[1] || 0,
-              totalDebt: worker.totalDebt || 0,
-              lastPaymentDate: summaryData.recentPayments?.[0]?.paymentDate || null,
+              
+              // ADD THIS: Total pending amount
+              totalPendingAmount: totalPendingAmount,
+              
+              pendingPayments:
+                Object.entries(
+                  summaryData.summary?.statusDistribution || {},
+                ).find(([key]) => key.includes("pending"))?.[1] || 0,
+              processingPayments:
+                Object.entries(
+                  summaryData.summary?.statusDistribution || {},
+                ).find(([key]) => key.includes("processing"))?.[1] || 0,
+              completedPayments:
+                Object.entries(
+                  summaryData.summary?.statusDistribution || {},
+                ).find(([key]) => key.includes("completed"))?.[1] || 0,
+              cancelledPayments:
+                Object.entries(
+                  summaryData.summary?.statusDistribution || {},
+                ).find(([key]) => key.includes("cancelled"))?.[1] || 0,
+              partiallyPaidPayments:
+                Object.entries(
+                  summaryData.summary?.statusDistribution || {},
+                ).find(([key]) => key.includes("partially_paid"))?.[1] || 0,
+              totalDebt: debtResponse.data.debts.reduce(
+                (sum, p) => sum + p.balance || 0,
+                0,
+              ),
+              lastPaymentDate:
+                summaryData.recentPayments?.[0]?.paymentDate || null,
               paymentMethods: new Set(),
               payments: recentPaymentsRes.data?.payments || [],
-              recentPayments: recentPaymentsRes.data?.payments?.slice(0, 3) || [],
+              recentPayments:
+                recentPaymentsRes.data?.payments?.slice(0, 3) || [],
             };
 
-            // Kolektahin ang mga payment methods
-            if (recentPaymentsRes.data?.payments) {
-              recentPaymentsRes.data.payments.forEach((payment: PaymentData) => {
-                if (payment.paymentMethod) {
-                  workerSummary.paymentMethods.add(payment.paymentMethod);
-                }
-              });
+              // Kolektahin ang mga payment methods
+              if (recentPaymentsRes.data?.payments) {
+                recentPaymentsRes.data.payments.forEach(
+                  (payment: PaymentData) => {
+                    if (payment.paymentMethod) {
+                      workerSummary.paymentMethods.add(payment.paymentMethod);
+                    }
+                  },
+                );
+              }
+
+              summaries.push(workerSummary);
             }
-
-            summaries.push(workerSummary);
+          } catch (err) {
+            console.error(
+              `Error fetching summary for worker ${worker.id}:`,
+              err,
+            );
+            // Magpatuloy sa susunod na worker
+            continue;
           }
-        } catch (err) {
-          console.error(`Error fetching summary for worker ${worker.id}:`, err);
-          // Magpatuloy sa susunod na worker
-          continue;
         }
-      }
 
-      // Pag-filter base sa search query
-      let filteredSummaries = summaries;
-      if (searchQuery.trim()) {
-        filteredSummaries = summaries.filter(summary => 
-          summary.worker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          summary.worker.contact?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          summary.worker.email?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
+        // Pag-filter base sa search query
+        let filteredSummaries = summaries;
+        if (searchQuery.trim()) {
+          filteredSummaries = summaries.filter(
+            (summary) =>
+              summary.worker.name
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              summary.worker.contact
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
+              summary.worker.email
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()),
+          );
+        }
 
-      // Pag-filter base sa status
-      if (statusFilter !== "all") {
-        filteredSummaries = filteredSummaries.filter(summary => {
-          switch (statusFilter) {
-            case "has_pending":
-              return summary.pendingPayments > 0;
-            case "has_debt":
-              return summary.totalDebt > 0;
-            case "has_completed":
-              return summary.completedPayments > 0;
+        // Pag-filter base sa status
+        if (statusFilter !== "all") {
+          filteredSummaries = filteredSummaries.filter((summary) => {
+            switch (statusFilter) {
+              case "has_pending":
+                return summary.pendingPayments > 0;
+              case "has_debt":
+                return summary.totalDebt > 0;
+              case "has_completed":
+                return summary.completedPayments > 0;
+              default:
+                return true;
+            }
+          });
+        }
+
+        // Pag-sort
+        filteredSummaries.sort((a, b) => {
+          let aValue: any, bValue: any;
+
+          switch (sortBy) {
+            case "workerName":
+              aValue = a.worker.name.toLowerCase();
+              bValue = b.worker.name.toLowerCase();
+              break;
+            case "totalPayments":
+              aValue = a.totalPayments;
+              bValue = b.totalPayments;
+              break;
+            case "totalGrossPay":
+              aValue = a.totalGrossPay;
+              bValue = b.totalGrossPay;
+              break;
+            case "totalNetPay":
+              aValue = a.totalNetPay;
+              bValue = b.totalNetPay;
+              break;
+            case "totalDeductions":
+              aValue = a.totalDeductions;
+              bValue = b.totalDeductions;
+              break;
+            case "totalDebt":
+              aValue = a.totalDebt;
+              bValue = b.totalDebt;
+              break;
             default:
-              return true;
+              aValue = a.totalNetPay;
+              bValue = b.totalNetPay;
+          }
+
+          if (sortOrder === "asc") {
+            return aValue > bValue ? 1 : -1;
+          } else {
+            return aValue < bValue ? 1 : -1;
           }
         });
+
+        // Pagkalkula ng pagination
+        const startIndex = (currentPage - 1) * limit;
+        const paginatedSummaries = filteredSummaries.slice(
+          startIndex,
+          startIndex + limit,
+        );
+
+        setWorkerSummaries(paginatedSummaries);
+        setTotalItems(filteredSummaries.length);
+        setTotalPages(Math.ceil(filteredSummaries.length / limit));
+      } catch (err: any) {
+        console.error("Error calculating worker summaries:", err);
+        setError(err.message || "Failed to calculate worker summaries");
       }
-
-      // Pag-sort
-      filteredSummaries.sort((a, b) => {
-        let aValue: any, bValue: any;
-        
-        switch (sortBy) {
-          case "workerName":
-            aValue = a.worker.name.toLowerCase();
-            bValue = b.worker.name.toLowerCase();
-            break;
-          case "totalPayments":
-            aValue = a.totalPayments;
-            bValue = b.totalPayments;
-            break;
-          case "totalGrossPay":
-            aValue = a.totalGrossPay;
-            bValue = b.totalGrossPay;
-            break;
-          case "totalNetPay":
-            aValue = a.totalNetPay;
-            bValue = b.totalNetPay;
-            break;
-          case "totalDeductions":
-            aValue = a.totalDeductions;
-            bValue = b.totalDeductions;
-            break;
-          case "totalDebt":
-            aValue = a.totalDebt;
-            bValue = b.totalDebt;
-            break;
-          default:
-            aValue = a.totalNetPay;
-            bValue = b.totalNetPay;
-        }
-
-        if (sortOrder === "asc") {
-          return aValue > bValue ? 1 : -1;
-        } else {
-          return aValue < bValue ? 1 : -1;
-        }
-      });
-
-      // Pagkalkula ng pagination
-      const startIndex = (currentPage - 1) * limit;
-      const paginatedSummaries = filteredSummaries.slice(startIndex, startIndex + limit);
-
-      setWorkerSummaries(paginatedSummaries);
-      setTotalItems(filteredSummaries.length);
-      setTotalPages(Math.ceil(filteredSummaries.length / limit));
-      
-    } catch (err: any) {
-      console.error("Error calculating worker summaries:", err);
-      setError(err.message || "Failed to calculate worker summaries");
-    }
-  }, [searchQuery, statusFilter, dateFrom, dateTo, sortBy, sortOrder, currentPage, limit]);
+    },
+    [
+      searchQuery,
+      statusFilter,
+      dateFrom,
+      dateTo,
+      sortBy,
+      sortOrder,
+      currentPage,
+      limit,
+    ],
+  );
 
   // Kunin ang mga workers
   const fetchWorkers = useCallback(async () => {
@@ -207,7 +285,7 @@ export const useWorkerPaymentData = () => {
         page: currentPage,
         limit: 100, // Kunin ang lahat para ma-calculate ang summaries
         sortBy: "name",
-        sortOrder: "ASC"
+        sortOrder: "ASC",
       });
 
       if (response.status) {
@@ -264,19 +342,19 @@ export const useWorkerPaymentData = () => {
     // Data
     workers,
     workerSummaries,
-    
+
     // Loading states
     loading,
     refreshing,
     error,
-    
+
     // Pagination
     currentPage,
     totalPages,
     totalItems,
     limit,
     setCurrentPage,
-    
+
     // Filters
     searchQuery,
     setSearchQuery,
@@ -286,13 +364,13 @@ export const useWorkerPaymentData = () => {
     setDateFrom,
     dateTo,
     setDateTo,
-    
+
     // Sorting
     sortBy,
     setSortBy,
     sortOrder,
     setSortOrder,
-    
+
     // Actions
     handleRefresh,
     fetchWorkers,

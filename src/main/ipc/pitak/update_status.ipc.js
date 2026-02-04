@@ -10,6 +10,7 @@ const {
   farmSessionDefaultSessionId,
   farmRatePerLuwang,
 } = require("../../../utils/system");
+const { generateReferenceNumber } = require("../debt/utils/reference");
 
 // @ts-ignore
 module.exports = async (params, queryRunner) => {
@@ -69,6 +70,7 @@ module.exports = async (params, queryRunner) => {
       const ratePerLuwang = await farmRatePerLuwang();
 
       for (const assignment of activeAssignments) {
+        const referenceNumber = generateReferenceNumber("PAY");
         // coerce luwangCount safely (could be decimal string)
         const luwangCount = Number(assignment.luwangCount || 0);
         const grossPay = parseFloat((luwangCount * ratePerLuwang).toFixed(2));
@@ -101,6 +103,7 @@ module.exports = async (params, queryRunner) => {
           deductionBreakdown: null,
           status: "pending",
           paymentMethod: 'cash',
+          referenceNumber: referenceNumber,
           // @ts-ignore
           periodStart: pitak.startDate || null,
           // @ts-ignore

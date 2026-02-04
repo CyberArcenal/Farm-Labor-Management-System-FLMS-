@@ -4,11 +4,11 @@ import {
     X, Save, DollarSign, Calculator, AlertCircle,
     Loader, Calendar, FileText, User, MapPin
 } from 'lucide-react';
-import paymentAPI from '../../../../apis/payment';
-import { showError, showSuccess } from '../../../../utils/notification';
-import { dialogs } from '../../../../utils/dialogs';
-import WorkerSelect from '../../../../components/Selects/Worker';
-import PitakSelect from '../../../../components/Selects/Pitak';
+import paymentAPI from '../../../../../apis/payment';
+import { showError, showSuccess } from '../../../../../utils/notification';
+import { dialogs } from '../../../../../utils/dialogs';
+import WorkerSelect from '../../../../../components/Selects/Worker';
+import PitakSelect from '../../../../../components/Selects/Pitak';
 
 interface PaymentFormDialogProps {
     id?: number;

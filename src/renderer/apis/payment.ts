@@ -291,6 +291,61 @@ export interface PaymentPayload {
   method: string;
   params?: Record<string, any>;
 }
+// types/payment.types.ts
+export interface PaymentHistoryItem {
+  id: number;
+  timestamp: string | null;
+  action: string;
+  field: string;
+  changes: {
+    oldValue: string | null;
+    newValue: string | null;
+    oldAmount: number | null;
+    newAmount: number | null;
+  };
+  performedBy: string | null;
+  notes: string | null;
+  worker: {
+    id: number;
+    name: string;
+    contact: string;
+  } | null;
+  paymentInfo: {
+    id: number;
+    referenceNumber: string | null;
+    status: string;
+    netPay: number;
+  } | null;
+}
+
+export interface PaymentHistorySummary {
+  totalRecords: number;
+  activitySummary: Array<{
+    actionType: string;
+    count: number;
+  }>;
+  firstChange: string | null;
+  lastChange: string | null;
+}
+
+export interface PaymentHistoryPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface PaymentHistoryResponseData {
+  history: PaymentHistoryItem[];
+  summary: PaymentHistorySummary;
+  pagination: PaymentHistoryPagination;
+}
+
+export interface PaymentResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
+}
 
 class PaymentAPI {
   // Helper method to get current user ID
@@ -370,6 +425,7 @@ class PaymentAPI {
     workerId: number,
     params?: {
       status?: string;
+      statuses?: string[];
       startDate?: string;
       endDate?: string;
       page?: number;
@@ -645,36 +701,7 @@ class PaymentAPI {
       page?: number;
       limit?: number;
     },
-  ): Promise<
-    PaymentResponse<{
-      history: Array<{
-        id: number;
-        timestamp: string;
-        action: string;
-        field: string;
-        changes: {
-          oldValue: string | null;
-          newValue: string | null;
-          oldAmount: number | null;
-          newAmount: number | null;
-        };
-        performedBy: string | null;
-        notes: string | null;
-      }>;
-      summary: {
-        totalRecords: number;
-        activitySummary: Array<{ actionType: string; count: number }>;
-        firstChange: string | null;
-        lastChange: string | null;
-      };
-      pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-      };
-    }>
-  > {
+  ): Promise<PaymentResponse<PaymentHistoryResponseData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.payment) {
         throw new Error("Electron API not available");
@@ -686,7 +713,27 @@ class PaymentAPI {
       });
 
       if (response.status) {
-        return response;
+        // Response now includes worker data in history items
+        console.log("Payment history with worker data:", response.data);
+        return {
+          status: response.status,
+          message: response.message,
+          data: {
+            history: response.data.history || [],
+            summary: response.data.summary || {
+              totalRecords: 0,
+              activitySummary: [],
+              firstChange: null,
+              lastChange: null,
+            },
+            pagination: response.data.pagination || {
+              page: 1,
+              limit: 100,
+              total: 0,
+              totalPages: 0,
+            },
+          },
+        };
       }
       throw new Error(response.message || "Failed to get payment history");
     } catch (error: any) {
@@ -1286,6 +1333,7 @@ class PaymentAPI {
   async bulkProcessPayments(
     paymentIds: number[],
     params?: {
+      referenceNumber?: string;
       paymentDate?: string;
       paymentMethod?: string;
     },

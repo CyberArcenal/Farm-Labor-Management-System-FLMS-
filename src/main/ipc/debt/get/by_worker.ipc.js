@@ -1,5 +1,5 @@
 // src/ipc/debt/get/by_worker.ipc
-//@ts-check
+// @ts-check
 const Debt = require("../../../../entities/Debt");
 const { AppDataSource } = require("../../../db/dataSource");
 
@@ -18,8 +18,9 @@ module.exports = async (workerId, filters = {}, userId) => {
       .createQueryBuilder("debt")
       .leftJoinAndSelect("debt.worker", "worker")
       .leftJoinAndSelect("debt.history", "history")
-      .where("debt.worker = :workerId", { workerId })
+      .where("worker.id = :workerId", { workerId })
       .orderBy("debt.dateIncurred", "DESC");
+
 
     // Apply filters
     if (filters.status) {
@@ -40,15 +41,13 @@ module.exports = async (workerId, filters = {}, userId) => {
     }
 
     const debts = await qb.getMany();
+    console.log(debts)
 
     // Totals
     const totals = {
-      // @ts-ignore
-      totalDebt: debts.reduce((sum, d) => sum + parseFloat(d.amount || 0), 0),
-      // @ts-ignore
-      totalBalance: debts.reduce((sum, d) => sum + parseFloat(d.balance || 0), 0),
-      // @ts-ignore
-      totalPaid: debts.reduce((sum, d) => sum + parseFloat(d.totalPaid || 0), 0),
+      totalDebt: debts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0),
+      totalBalance: debts.reduce((sum, d) => sum + (Number(d.balance) || 0), 0),
+      totalPaid: debts.reduce((sum, d) => sum + (Number(d.totalPaid) || 0), 0),
       count: debts.length,
     };
 

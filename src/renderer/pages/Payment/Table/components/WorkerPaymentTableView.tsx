@@ -45,6 +45,7 @@ const WorkerPaymentTableView: React.FC<WorkerPaymentTableViewProps> = ({
   sortOrder,
   onSort,
 }) => {
+  console.log(workerSummaries);
   const [expandedWorker, setExpandedWorker] = useState<number | null>(null);
 
   const toggleExpandWorker = (workerId: number) => {
@@ -234,6 +235,34 @@ const WorkerPaymentTableView: React.FC<WorkerPaymentTableViewProps> = ({
                   </div>
                 </div>
 
+                {/* Pending Amount - ADD THIS */}
+                <div className="text-right">
+                  <div className="flex items-center gap-2 justify-end">
+                    <Clock
+                      className="w-4 h-4"
+                      style={{ color: "var(--accent-rust)" }}
+                    />
+                    <span
+                      className="font-medium"
+                      style={{
+                        color:
+                          summary.totalPendingAmount > 0
+                            ? "var(--accent-rust)"
+                            : "var(--text-primary)",
+                      }}
+                    >
+                      {formatCurrency(summary.totalPendingAmount)}
+                    </span>
+                  </div>
+                  <div
+                    className="text-xs mt-1"
+                    style={{ color: "var(--text-tertiary)" }}
+                  >
+                    Pending ({summary.pendingPayments})
+                    Partially Paid ({summary.partiallyPaidPayments})
+                  </div>
+                </div>
+
                 {/* Actions */}
                 <div
                   className="flex items-center gap-2"
@@ -397,6 +426,20 @@ const WorkerPaymentTableView: React.FC<WorkerPaymentTableViewProps> = ({
                         {formatCurrency(summary.totalDeductions)}
                       </span>
                     </div>
+                    <div className="flex justify-between items-center">
+                      <span
+                        className="text-sm"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        Pending Amount:
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 text-yellow-600" />
+                        <span className="text-sm font-medium text-yellow-700">
+                          {formatCurrency(summary.totalPendingAmount)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -450,7 +493,9 @@ const WorkerPaymentTableView: React.FC<WorkerPaymentTableViewProps> = ({
                                       ? "var(--status-growing-bg)"
                                       : payment.status === "processing"
                                         ? "var(--status-irrigation-bg)"
-                                        : "var(--accent-rust-light)",
+                                        : payment.status === "partially_paid"
+                                          ? "rgba(168, 85, 247, 0.1)" // violet background
+                                          : "var(--accent-rust-light)",
                                 color:
                                   payment.status === "completed"
                                     ? "var(--status-planted)"
@@ -458,7 +503,9 @@ const WorkerPaymentTableView: React.FC<WorkerPaymentTableViewProps> = ({
                                       ? "var(--status-growing)"
                                       : payment.status === "processing"
                                         ? "var(--status-irrigation)"
-                                        : "var(--accent-rust)",
+                                        : payment.status === "partially_paid"
+                                          ? "rgb(126, 34, 206)" // violet text
+                                          : "var(--accent-rust)",
                               }}
                             >
                               {payment.status}
@@ -537,7 +584,7 @@ const WorkerPaymentTableView: React.FC<WorkerPaymentTableViewProps> = ({
                     </button>
                   )}
 
-                  <button
+                  {/* <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onViewWorkerDetails(summary.worker.id);
@@ -550,7 +597,7 @@ const WorkerPaymentTableView: React.FC<WorkerPaymentTableViewProps> = ({
                   >
                     <Eye className="w-4 h-4" />
                     View Full Profile
-                  </button>
+                  </button> */}
 
                   <button
                     onClick={(e) => {

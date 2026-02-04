@@ -39,7 +39,7 @@ module.exports = async function updateDebtStatus(params = {}, queryRunner = null
       return { status: false, message: "Debt not found", data: null };
     }
 
-    const validStatuses = ["active", "settled", "cancelled", "partially_paid"];
+    const validStatuses = ["active", "cancelled", "partially_paid", "paid"];
     if (!validStatuses.includes(status)) {
       return { status: false, message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`, data: null };
     }
@@ -56,10 +56,10 @@ module.exports = async function updateDebtStatus(params = {}, queryRunner = null
     const oldStatus = debt.status;
     const oldBalance = parseFloat(debt.balance || 0.0);
 
-    if (status === "settled") {
+    if (status === "settled" || status === "paid") {
       // Auto-settle: set balance to zero
       debt.balance = 0.0;
-      debt.status = "settled";
+      debt.status = "paid";
       debt.updatedAt = new Date();
 
       // Log DebtHistory entry

@@ -23,7 +23,8 @@ import {
   Package,
   TrendingUp,
   MapPin,
-  Activity
+  Activity,
+  HistoryIcon
 } from "lucide-react";
 import dashboardAPI from "../../apis/dashboard";
 
@@ -88,6 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       children: [
         { path: "/finance/payments", name: "Payments", icon: DollarSign },
         { path: "/finance/debts", name: "Debt Management", icon: Receipt },
+        {path: "/finance/history", name: "History", icon: HistoryIcon},
       ],
     },
     {

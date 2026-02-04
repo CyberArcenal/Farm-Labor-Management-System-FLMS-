@@ -3,7 +3,11 @@
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
+// @ts-ignore
+// @ts-ignore
 const path = require("path");
+// @ts-ignore
+// @ts-ignore
 // @ts-ignore
 // @ts-ignore
 // @ts-ignore
@@ -35,7 +39,7 @@ async function getValue(key, settingType, defaultValue = null) {
     const repository = AppDataSource.getRepository(SystemSetting);
     if (!repository) {
       logger.debug(
-        `[DB] Repository not available for key: ${key}, using default: ${defaultValue}`
+        `[DB] Repository not available for key: ${key}, using default: ${defaultValue}`,
       );
       return defaultValue;
     }
@@ -59,7 +63,7 @@ async function getValue(key, settingType, defaultValue = null) {
 
     if (!setting || setting.value === null || setting.value === undefined) {
       logger.debug(
-        `[DB] Setting ${key} not found, using default: ${defaultValue}`
+        `[DB] Setting ${key} not found, using default: ${defaultValue}`,
       );
       return defaultValue;
     }
@@ -68,7 +72,7 @@ async function getValue(key, settingType, defaultValue = null) {
   } catch (error) {
     logger.warn(
       // @ts-ignore
-      `[DB] Error fetching setting ${key}: ${error.message}, using default: ${defaultValue}`
+      `[DB] Error fetching setting ${key}: ${error.message}, using default: ${defaultValue}`,
     );
     return defaultValue;
   }
@@ -85,7 +89,7 @@ async function getBool(key, settingType, defaultValue = false) {
       key,
       settingType,
       // @ts-ignore
-      defaultValue ? "true" : "false"
+      defaultValue ? "true" : "false",
     );
     if (raw === null) {
       return defaultValue;
@@ -99,7 +103,7 @@ async function getBool(key, settingType, defaultValue = false) {
     }
     if (
       ["false", "0", "no", "n", "off", "disabled", "inactive"].includes(
-        normalized
+        normalized,
       )
     ) {
       return false;
@@ -111,13 +115,13 @@ async function getBool(key, settingType, defaultValue = false) {
     }
 
     logger.warn(
-      `Unrecognized boolean for key='${key}': '${raw}' → using default=${defaultValue}`
+      `Unrecognized boolean for key='${key}': '${raw}' → using default=${defaultValue}`,
     );
     return defaultValue;
   } catch (error) {
     logger.error(
       // @ts-ignore
-      `Error in getBool for ${key}: ${error.message}, using default: ${defaultValue}`
+      `Error in getBool for ${key}: ${error.message}, using default: ${defaultValue}`,
     );
     return defaultValue;
   }
@@ -141,7 +145,7 @@ async function getInt(key, settingType, defaultValue = 0) {
   } catch (error) {
     logger.warn(
       // @ts-ignore
-      `Invalid int for key='${key}': '${error.message}' – using default=${defaultValue}`
+      `Invalid int for key='${key}': '${error.message}' – using default=${defaultValue}`,
     );
     return defaultValue;
   }
@@ -174,7 +178,7 @@ async function getArray(key, settingType, defaultValue = []) {
   } catch (error) {
     logger.warn(
       // @ts-ignore
-      `Error getting array setting ${key}: ${error.message}, using default`
+      `Error getting array setting ${key}: ${error.message}, using default`,
     );
     return defaultValue;
   }
@@ -208,7 +212,6 @@ async function language() {
   // @ts-ignore
   return getValue("language", SettingType.GENERAL, "en");
 }
-
 
 // ============================================================
 // 🏞️ FARM SESSION SETTINGS
@@ -256,7 +259,11 @@ async function farmSessionAutoClosePrevious() {
 }
 
 async function farmSessionAllowMultipleActiveSessions() {
-  return getBool("allow_multiple_active_sessions", SettingType.FARM_SESSION, false);
+  return getBool(
+    "allow_multiple_active_sessions",
+    SettingType.FARM_SESSION,
+    false,
+  );
 }
 
 // ============================================================
@@ -317,7 +324,11 @@ async function farmPitakLocationFormat() {
 }
 
 async function farmPitakStatusOptions() {
-  return getArray("status_options", SettingType.FARM_PITAK, ['active', 'inactive', 'completed']);
+  return getArray("status_options", SettingType.FARM_PITAK, [
+    "active",
+    "inactive",
+    "completed",
+  ]);
 }
 
 async function farmPitakAutoGeneratePitakIds() {
@@ -343,7 +354,12 @@ async function farmPitakRequireLocation() {
 
 async function farmPitakPitakNumberFormat() {
   // @ts-ignore
-  return getValue("pitak_number_format", SettingType.FARM_PITAK, "{bukid_code}-{sequence}");
+  return getValue(
+    "pitak_number_format",
+    SettingType.FARM_PITAK,
+    // @ts-ignore
+    "{bukid_code}-{sequence}",
+  );
 }
 
 // ============================================================
@@ -360,7 +376,11 @@ async function farmAssignmentDateBehavior() {
 }
 
 async function farmAssignmentStatusOptions() {
-  return getArray("status_options", SettingType.FARM_ASSIGNMENT, ['active', 'completed', 'cancelled']);
+  return getArray("status_options", SettingType.FARM_ASSIGNMENT, [
+    "active",
+    "completed",
+    "cancelled",
+  ]);
 }
 
 async function farmAssignmentEnableNotesRemarks() {
@@ -407,7 +427,10 @@ async function farmPaymentOtherDeductionsConfig() {
 }
 
 async function farmPaymentPaymentMethods() {
-  return getArray("payment_methods", SettingType.FARM_PAYMENT, ['cash', 'gcash']);
+  return getArray("payment_methods", SettingType.FARM_PAYMENT, [
+    "cash",
+    "gcash",
+  ]);
 }
 
 async function farmPaymentRequireReferenceNumber() {
@@ -415,7 +438,13 @@ async function farmPaymentRequireReferenceNumber() {
 }
 
 async function farmPaymentStatusOptions() {
-  return getArray("status_options", SettingType.FARM_PAYMENT, ['pending', 'processing', 'completed', 'cancelled', 'partially_paid']);
+  return getArray("status_options", SettingType.FARM_PAYMENT, [
+    "pending",
+    "processing",
+    "completed",
+    "cancelled",
+    "partially_paid",
+  ]);
 }
 
 async function farmPaymentPaymentTermsDays() {
@@ -457,12 +486,23 @@ async function farmDebtCarryOverToNextSession() {
 }
 
 async function farmDebtStatusOptions() {
-  return getArray("status_options", SettingType.FARM_DEBT, ['pending', 'partially_paid', 'paid', 'cancelled', 'overdue']);
+  return getArray("status_options", SettingType.FARM_DEBT, [
+    "pending",
+    "partially_paid",
+    "paid",
+    "cancelled",
+    "overdue",
+  ]);
 }
 
 async function farmDebtInterestCalculationMethod() {
   // @ts-ignore
-  return getValue("interest_calculation_method", SettingType.FARM_DEBT, "simple");
+  return getValue(
+    "interest_calculation_method",
+    SettingType.FARM_DEBT,
+    // @ts-ignore
+    "simple",
+  );
 }
 
 async function farmDebtCompoundFrequency() {
@@ -512,7 +552,11 @@ async function farmAuditAuditRetentionDays() {
 }
 
 async function farmAuditLogEvents() {
-  return getArray("log_events", SettingType.FARM_AUDIT, ['create', 'update', 'delete']);
+  return getArray("log_events", SettingType.FARM_AUDIT, [
+    "create",
+    "update",
+    "delete",
+  ]);
 }
 
 async function farmAuditEnableRealTimeLogging() {
@@ -524,9 +568,11 @@ async function farmAuditNotifyOnCriticalEvents() {
 }
 
 async function farmAuditCriticalEvents() {
-  return getArray("critical_events", SettingType.FARM_AUDIT, ['data_deletion', 'system_failure']);
+  return getArray("critical_events", SettingType.FARM_AUDIT, [
+    "data_deletion",
+    "system_failure",
+  ]);
 }
-
 
 /**
  * Kunin ang rate per luwang mula sa settings
@@ -534,12 +580,19 @@ async function farmAuditCriticalEvents() {
  */
 async function farmRatePerLuwang() {
   // @ts-ignore
-  const value = await getValue("rate_per_luwang", SettingType.FARM_PAYMENT, "230.00");
+  const value = await getValue(
+    "rate_per_luwang",
+    SettingType.FARM_PAYMENT,
+    // @ts-ignore
+    "230.00",
+  );
   // @ts-ignore
   const rate = parseFloat(value);
 
   if (isNaN(rate)) {
-    throw new Error("Invalid rate_per_luwang setting. Please check system settings.");
+    throw new Error(
+      "Invalid rate_per_luwang setting. Please check system settings.",
+    );
   }
 
   return rate;
@@ -547,7 +600,12 @@ async function farmRatePerLuwang() {
 
 async function getDebtLimit() {
   // @ts-ignore
-  const value = await getValue("debt_limit", SettingType.FARM_PAYMENT, "10000.00");
+  const value = await getValue(
+    "debt_limit",
+    SettingType.FARM_PAYMENT,
+    // @ts-ignore
+    "10000.00",
+  );
   // @ts-ignore
   const limit = parseFloat(value);
 
@@ -558,8 +616,30 @@ async function getDebtLimit() {
   return limit;
 }
 
+/**
+ * Debt allocation strategy setting
+ * @returns {Promise<"equal"|"proportional"|"auto">}
+ */
+async function farmDebtAllocationStrategy() {
+  // @ts-ignore
+  const value = await getValue(
+    "debt_allocation_strategy",
+    SettingType.FARM_PAYMENT,
+    // @ts-ignore
+    "auto",
+  );
 
+  const allowed = ["equal", "proportional", "auto"];
+  // @ts-ignore
+  if (!allowed.includes(value)) {
+    throw new Error(
+      `Invalid debt_allocation_strategy setting "${value}". Allowed values: ${allowed.join(", ")}`,
+    );
+  }
 
+  // @ts-ignore
+  return value;
+}
 
 // ============================================================
 // 🎯 HELPER FUNCTIONS
@@ -571,25 +651,27 @@ async function getDebtLimit() {
 async function getFarmSettingsGrouped() {
   try {
     const settings = {};
-    
+
     // Collect all settings by category
-    for (const category of Object.values(SettingType).filter(t => t.startsWith('farm_'))) {
+    for (const category of Object.values(SettingType).filter((t) =>
+      t.startsWith("farm_"),
+    )) {
       // @ts-ignore
       settings[category] = {};
       const repository = AppDataSource.getRepository(SystemSetting);
       const categorySettings = await repository.find({
         where: {
           setting_type: category,
-          is_deleted: false
-        }
+          is_deleted: false,
+        },
       });
-      
+
       for (const setting of categorySettings) {
         // @ts-ignore
         settings[category][setting.key] = setting.value;
       }
     }
-    
+
     return settings;
   } catch (error) {
     // @ts-ignore
@@ -607,7 +689,7 @@ async function getFarmSetting(category, key, defaultValue = null) {
   try {
     // First try to get it from the specific category
     const value = await getValue(key, category, defaultValue);
-    
+
     // If not found, try to find it in any farm category
     if (value === defaultValue) {
       const repository = AppDataSource.getRepository(SystemSetting);
@@ -615,63 +697,70 @@ async function getFarmSetting(category, key, defaultValue = null) {
         where: {
           key: key.toLowerCase(),
           setting_type: SettingType.FARM_SESSION, // Default to farm_session if not specified
-          is_deleted: false
-        }
+          is_deleted: false,
+        },
       });
-      
+
       if (setting) {
         return String(setting.value).trim();
       }
     }
-    
+
     return value;
   } catch (error) {
     // @ts-ignore
-    logger.error(`Error getting farm setting ${category}.${key}: ${error.message}`);
+    logger.error(
+      // @ts-ignore
+      `Error getting farm setting ${category}.${key}: ${error.message}`,
+    );
     return defaultValue;
   }
 }
 
-
-
 async function getDefaultInterestRate() {
   // fallback = "0" para walang interest kapag walang setting
   // @ts-ignore
-  const value = await getValue("default_interest_rate", SettingType.FARM_PAYMENT, "0");
+  const value = await getValue(
+    "default_interest_rate",
+    SettingType.FARM_PAYMENT,
+    // @ts-ignore
+    "0",
+  );
   // @ts-ignore
   const intRate = parseInt(value, 10);
 
   if (isNaN(intRate)) {
-    throw new Error("Invalid default interest rate. Please check system settings.");
+    throw new Error(
+      "Invalid default interest rate. Please check system settings.",
+    );
   }
 
   // convert to decimal for computation
   return intRate / 100;
 }
 
-
-
 // ============================================================
 // 📤 EXPORT ALL FUNCTIONS
 // ============================================================
 
 module.exports = {
+  farmDebtAllocationStrategy,
   getDefaultInterestRate,
-   farmRatePerLuwang,
-   getDebtLimit,
+  farmRatePerLuwang,
+  getDebtLimit,
   // Core getters
   getValue,
   getBool,
   getInt,
   getArray,
-  
+
   // General settings
   companyName,
   timezone,
   workStart,
   workEnd,
   language,
-  
+
   // Farm Session Settings
   farmSessionDefaultSessionId,
   farmSessionSeasonType,
@@ -683,7 +772,7 @@ module.exports = {
   farmSessionRequireDefaultSession,
   farmSessionAutoClosePrevious,
   farmSessionAllowMultipleActiveSessions,
-  
+
   // Farm Bukid Settings
   farmBukidNameFormat,
   farmBukidEnableLocationDescriptor,
@@ -694,7 +783,7 @@ module.exports = {
   farmBukidMaxBukidPerSession,
   farmBukidAutoGenerateCode,
   farmBukidCodePrefix,
-  
+
   // Farm Pitak Settings
   farmPitakDefaultTotalLuwangCapacity,
   farmPitakLocationFormat,
@@ -705,7 +794,7 @@ module.exports = {
   farmPitakMaxCapacity,
   farmPitakRequireLocation,
   farmPitakPitakNumberFormat,
-  
+
   // Farm Assignment Settings
   farmAssignmentDefaultLuwangPerWorker,
   farmAssignmentDateBehavior,
@@ -716,7 +805,7 @@ module.exports = {
   farmAssignmentAllowReassignment,
   farmAssignmentMaxWorkersPerPitak,
   farmAssignmentRequireAssignmentDate,
-  
+
   // Farm Payment Settings
   farmPaymentDefaultWageMultiplier,
   farmPaymentDeductionRules,
@@ -728,7 +817,7 @@ module.exports = {
   farmPaymentAutoCalculateTotal,
   farmPaymentTaxPercentage,
   farmPaymentRequirePaymentDate,
-  
+
   // Farm Debt Settings
   farmDebtDefaultInterestRate,
   farmDebtPaymentTermDays,
@@ -740,7 +829,7 @@ module.exports = {
   farmDebtMaxDebtAmount,
   farmDebtRequireDebtReason,
   farmDebtAutoApplyInterest,
-  
+
   // Farm Audit Settings
   farmAuditLogActionsEnabled,
   farmAuditTrackEntityId,
@@ -752,8 +841,8 @@ module.exports = {
   farmAuditEnableRealTimeLogging,
   farmAuditNotifyOnCriticalEvents,
   farmAuditCriticalEvents,
-  
+
   // Helper functions
   getFarmSettingsGrouped,
-  getFarmSetting
+  getFarmSetting,
 };

@@ -9,7 +9,7 @@ const Payment = new EntitySchema({
     grossPay: { type: "decimal", precision: 10, scale: 2, default: 0.0 },
     manualDeduction: { type: "decimal", precision: 10, scale: 2, nullable: true, default: 0.0 },
     netPay: { type: "decimal", precision: 10, scale: 2, default: 0.0 },
-    status: { type: String, default: "pending" },
+    status: { type: String, default: "pending" }, //pending, partially_paid, complete, cancel
     paymentDate: { type: Date, nullable: true },
     paymentMethod: { type: String, nullable: true },
     referenceNumber: { type: String, nullable: true }, // remove global unique here

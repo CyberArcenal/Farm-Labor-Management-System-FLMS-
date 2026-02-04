@@ -59,7 +59,8 @@ module.exports = async (/** @type {any} */ pitakId, dateRange = {}, /** @type {a
         'AVG(payment.grossPay) as averageGrossPay',
         'AVG(payment.netPay) as averageNetPay',
         'SUM(CASE WHEN payment.status = "completed" THEN 1 ELSE 0 END) as completedPayments',
-        'SUM(CASE WHEN payment.status = "pending" THEN 1 ELSE 0 END) as pendingPayments'
+        'SUM(CASE WHEN payment.status = "pending" OR payment.status = "partially_paid" THEN 1 ELSE 0 END) as pendingPayments'
+
       ])
       .where('payment.pitakId = :pitakId', { pitakId })
       .getRawOne();

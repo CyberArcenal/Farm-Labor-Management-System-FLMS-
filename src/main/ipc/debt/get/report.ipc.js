@@ -1,30 +1,32 @@
 // src/ipc/debt/get/report.ipc
-//@ts-check
+// @ts-check
+const Debt = require("../../../../entities/Debt");
 const { AppDataSource } = require("../../../db/dataSource");
 
 // @ts-ignore
+// @ts-ignore
 module.exports = async (dateRange = {}, filters = {}, /** @type {any} */ userId) => {
   try {
-    const debtRepository = AppDataSource.getRepository("Debt");
-    
+    const debtRepository = AppDataSource.getRepository(Debt);
+
     // @ts-ignore
     const { startDate, endDate } = dateRange;
     const defaultStartDate = new Date();
     defaultStartDate.setMonth(defaultStartDate.getMonth() - 1); // Last month
-    
+
     const queryStartDate = startDate || defaultStartDate;
     const queryEndDate = endDate || new Date();
 
     // Base query
     const query = debtRepository.createQueryBuilder("debt")
       .leftJoinAndSelect("debt.worker", "worker")
-      .leftJoinAndSelect("debt.history", "history")
+      .leftJoinAndSelect("debt.histories", "history")
       .where("debt.dateIncurred BETWEEN :startDate AND :endDate", {
         startDate: queryStartDate,
         endDate: queryEndDate
       });
 
-    // Apply additional filters
+    // Apply filters
     // @ts-ignore
     if (filters.status) {
       // @ts-ignore
@@ -34,7 +36,7 @@ module.exports = async (dateRange = {}, filters = {}, /** @type {any} */ userId)
     // @ts-ignore
     if (filters.worker_id) {
       // @ts-ignore
-      query.andWhere("debt.worker_id = :worker_id", { worker_id: filters.worker_id });
+      query.andWhere("worker.id = :worker_id", { worker_id: filters.worker_id });
     }
 
     query.orderBy("debt.dateIncurred", "DESC");
@@ -44,21 +46,25 @@ module.exports = async (dateRange = {}, filters = {}, /** @type {any} */ userId)
     // Generate report summary
     const summary = {
       totalDebts: debts.length,
-      totalAmount: debts.reduce((/** @type {number} */ sum, /** @type {{ amount: string; }} */ debt) => sum + parseFloat(debt.amount), 0),
-      totalBalance: debts.reduce((/** @type {number} */ sum, /** @type {{ balance: string; }} */ debt) => sum + parseFloat(debt.balance), 0),
-      totalPaid: debts.reduce((/** @type {number} */ sum, /** @type {{ totalPaid: string; }} */ debt) => sum + parseFloat(debt.totalPaid), 0),
-      totalInterest: debts.reduce((/** @type {number} */ sum, /** @type {{ totalInterest: string; }} */ debt) => sum + parseFloat(debt.totalInterest), 0),
-      
+      totalAmount: debts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0),
+      totalBalance: debts.reduce((sum, d) => sum + (Number(d.balance) || 0), 0),
+      totalPaid: debts.reduce((sum, d) => sum + (Number(d.totalPaid) || 0), 0),
+      totalInterest: debts.reduce((sum, d) => sum + (Number(d.totalInterest) || 0), 0),
+
       // Group by status
-      byStatus: debts.reduce((/** @type {{ [x: string]: number; }} */ acc, /** @type {{ status: string | number; balance: string; }} */ debt) => {
+      byStatus: debts.reduce((acc, debt) => {
+        // @ts-ignore
         if (!acc[debt.status]) acc[debt.status] = 0;
-        acc[debt.status] += parseFloat(debt.balance);
+        // @ts-ignore
+        acc[debt.status] += (Number(debt.balance) || 0);
         return acc;
       }, {}),
-      
+
       // Group by worker
-      byWorker: debts.reduce((/** @type {{ [x: string]: { count: number; }; }} */ acc, /** @type {{ worker: { id: string | number; name: any; }; amount: string; balance: string; }} */ debt) => {
+      byWorker: debts.reduce((acc, debt) => {
+        // @ts-ignore
         if (!acc[debt.worker.id]) {
+          // @ts-ignore
           acc[debt.worker.id] = {
             // @ts-ignore
             workerName: debt.worker.name,
@@ -68,9 +74,10 @@ module.exports = async (dateRange = {}, filters = {}, /** @type {any} */ userId)
           };
         }
         // @ts-ignore
-        acc[debt.worker.id].totalDebt += parseFloat(debt.amount);
+        acc[debt.worker.id].totalDebt += (Number(debt.amount) || 0);
         // @ts-ignore
-        acc[debt.worker.id].totalBalance += parseFloat(debt.balance);
+        acc[debt.worker.id].totalBalance += (Number(debt.balance) || 0);
+        // @ts-ignore
         acc[debt.worker.id].count++;
         return acc;
       }, {})

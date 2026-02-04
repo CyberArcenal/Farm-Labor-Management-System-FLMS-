@@ -32,7 +32,8 @@ const PaymentHistory = new EntitySchema({
     },
     notes: { type: String, nullable: true },
     performedBy: { type: String, nullable: true }, // Who made the change
-    changeDate: { type: Date, createDate: true }
+    changeDate: { type: Date, createDate: true },
+    referenceNumber: {type: String, nullable: true},
   },
   relations: {
     payment: { 

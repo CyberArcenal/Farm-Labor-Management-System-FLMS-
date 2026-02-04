@@ -48,6 +48,9 @@ class DebtHandler {
     this.exportDebtsToCSV = this.importHandler("./export_csv.ipc.js");
     this.bulkUpdateStatus = this.importHandler("./bulk_update_status.ipc.js");
     this.processPayment = this.importHandler("./process_payment.ipc.js"); // NEW
+    this.processDebtPayment = this.importHandler(
+      "./process_debt_payment.ipc.js",
+    );
 
     // 💰 PAYMENT OPERATIONS
     this.reversePayment = this.importHandler("./reverse_payment.ipc.js");
@@ -56,6 +59,7 @@ class DebtHandler {
     this.validateDebtData = this.importHandler("./validate_data.ipc.js");
     this.checkDebtLimit = this.importHandler("./check_debt_limit.ipc.js");
     this.calculateInterest = this.importHandler("./calculate_interest.ipc.js");
+    this.validateDebtPayment = this.importHandler("./validate_debt_payment.ipc.js");
   }
 
   /**
@@ -108,7 +112,7 @@ class DebtHandler {
         case "getDebtsByWorker":
           return await this.getDebtsByWorker(
             // @ts-ignore
-            enrichedParams.worker_id,
+            enrichedParams.workerId,
             // @ts-ignore
             enrichedParams.filters,
             userId,
@@ -155,7 +159,7 @@ class DebtHandler {
         case "getWorkerDebtSummary":
           return await this.getWorkerDebtSummary(
             // @ts-ignore
-            enrichedParams.worker_id,
+            enrichedParams.workerId,
             userId,
           );
 
@@ -243,12 +247,22 @@ class DebtHandler {
             this.processPayment,
             enrichedParams,
           );
+        case "processDebtPayment":
+          return await this.handleWithTransaction(
+            this.processDebtPayment,
+            enrichedParams,
+          );
 
         // 💰 PAYMENT OPERATIONS
         case "reversePayment":
           return await this.handleWithTransaction(
             this.reversePayment,
             enrichedParams,
+          );
+        case "validateDebtPayment":
+          return await this.validateDebtPayment(
+            enrichedParams,
+            userId,
           );
 
         // ⚙️ VALIDATION OPERATIONS
@@ -334,16 +348,18 @@ class DebtHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-    // ✅ Always require default session
-    const sessionId = await farmSessionDefaultSessionId();
-    if (!sessionId || sessionId === 0) {
-      throw new Error("No default session configured. Please set one in Settings.");
-    }
+      // ✅ Always require default session
+      const sessionId = await farmSessionDefaultSessionId();
+      if (!sessionId || sessionId === 0) {
+        throw new Error(
+          "No default session configured. Please set one in Settings.",
+        );
+      }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
-        session: {id:sessionId},
+        session: { id: sessionId },
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
       });

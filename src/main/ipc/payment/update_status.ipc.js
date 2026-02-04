@@ -116,6 +116,7 @@ module.exports = async function updatePaymentStatus(params = {}, queryRunner = n
         : `Status changed from ${oldStatus} to ${status}`,
       performedBy: String(_userId),
       changeDate: new Date(),
+      referenceNumber: referenceNumber,
     });
 
     await paymentHistoryRepository.save(paymentHistory);

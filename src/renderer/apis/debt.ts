@@ -9,7 +9,7 @@ export interface DebtData {
   amount: number;
   balance: number;
   reason: string | null;
-  status: 'pending' | 'partially_paid' | 'paid' | 'cancelled' | 'overdue';
+  status: "pending" | "partially_paid" | "paid" | "cancelled" | "overdue";
   dateIncurred: string;
   dueDate: string | null;
   paymentTerm: string | null;
@@ -21,6 +21,12 @@ export interface DebtData {
   updatedAt: string;
   worker: WorkerData;
   history?: DebtHistoryData[];
+  totals?: {
+    totalDebt: number;
+    totalBalance: number;
+    totalPaid: number;
+    count: number;
+  };
 }
 
 export interface DebtHistoryData {
@@ -28,7 +34,7 @@ export interface DebtHistoryData {
   amountPaid: number;
   previousBalance: number;
   newBalance: number;
-  transactionType: 'payment' | 'adjustment' | 'interest' | 'refund';
+  transactionType: "payment" | "adjustment" | "interest" | "refund";
   paymentMethod: string | null;
   referenceNumber: string | null;
   notes: string | null;
@@ -38,7 +44,7 @@ export interface DebtHistoryData {
 
 export interface DebtFilters {
   status?: string;
-  worker_id?: number;
+  workerId?: number;
   date_from?: string;
   date_to?: string;
   only_active?: boolean;
@@ -65,7 +71,7 @@ export interface InterestRequest {
 }
 
 export interface DebtCreationRequest {
-  worker_id: number;
+  workerId: number;
   amount: number;
   reason?: string;
   dueDate?: string;
@@ -92,12 +98,15 @@ export interface DebtReportData {
     totalPaid: number;
     totalInterest: number;
     byStatus: Record<string, number>;
-    byWorker: Record<number, {
-      workerName: string;
-      totalDebt: number;
-      totalBalance: number;
-      count: number;
-    }>;
+    byWorker: Record<
+      number,
+      {
+        workerName: string;
+        totalDebt: number;
+        totalBalance: number;
+        count: number;
+      }
+    >;
   };
   dateRange: {
     startDate: string;
@@ -156,6 +165,104 @@ export interface DebtPayload {
   params?: Record<string, any>;
 }
 
+export interface DebtPaymentRequest {
+  workerId: number;
+  paymentAmount: number;
+  paymentMethod: string;
+  notes?: string; // optional notes
+}
+
+export interface DebtAllocationRecord {
+  debtId: number;
+  allocatedAmount: number;
+  previousBalance: number;
+  newBalance: number;
+}
+
+export interface DebtPaymentResponse {
+  status: boolean;
+  message: string;
+  data: {
+    workerId: number;
+    paymentId: number;
+    paymentAmount: number;
+    paymentMethod: string;
+    allocationStrategy: string;
+    totalAllocated: number;
+    referenceNumber: string;
+    allocations: DebtAllocationRecord[];
+    remainingBalance: number;
+  };
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  maxPaymentAllowed: number;
+  availablePaymentsTotal: number;
+  totalDebt: number;
+  errors: string[];
+  warnings: string[];
+}
+
+// types/debt.types.ts
+export interface DebtHistoryWorker {
+  id: number;
+  name: string;
+  contact: string;
+}
+
+export interface DebtHistoryDebt {
+  id: number;
+  originalAmount: number;
+  amount: number;
+  reason: string | null;
+  status: string;
+}
+
+export interface DebtHistoryPayment {
+  id: number;
+  referenceNumber: string | null;
+  status: string;
+  netPay: number;
+  paymentWorker: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+
+export interface DebtHistoryItem {
+  id: number;
+  amountPaid: number;
+  previousBalance: number;
+  newBalance: number;
+  transactionType: string;
+  paymentMethod: string | null;
+  referenceNumber: string | null;
+  notes: string | null;
+  transactionDate: string | Date;
+  createdAt: string | Date;
+  worker: DebtHistoryWorker | null;
+  debt: DebtHistoryDebt | null;
+  payment: DebtHistoryPayment | null;
+}
+
+export interface DebtHistorySummary {
+  totalRecords: number;
+  totalPaid: number;
+  transactionTypes: string[];
+}
+
+export interface DebtHistoryResponseData {
+  history: DebtHistoryItem[];
+  summary: DebtHistorySummary;
+}
+
+export interface DebtResponse<T> {
+  status: boolean;
+  message: string;
+  data: T;
+}
 
 class DebtAPI {
   // Helper method to get current user ID
@@ -164,7 +271,8 @@ class DebtAPI {
       const user = kabAuthStore.getUser();
       if (user && user.id) {
         // Ensure we return a number
-        const userId = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
+        const userId =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
         return isNaN(userId) ? null : userId;
       }
       return null;
@@ -221,7 +329,10 @@ class DebtAPI {
     }
   }
 
-  async getByWorker(workerId: number, filters: DebtFilters = {}): Promise<DebtResponse<{ debts: DebtData[], totals: any }>> {
+  async getByWorker(
+    workerId: number,
+    filters: DebtFilters = {},
+  ): Promise<DebtResponse<{ debts: DebtData[]; totals: any }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -229,7 +340,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getDebtsByWorker",
-        params: this.enrichParams({ worker_id: workerId, filters }),
+        params: this.enrichParams({ workerId: workerId, filters }),
       });
 
       if (response.status) {
@@ -241,7 +352,10 @@ class DebtAPI {
     }
   }
 
-  async getByStatus(status: string, filters: DebtFilters = {}): Promise<DebtResponse<DebtData[]>> {
+  async getByStatus(
+    status: string,
+    filters: DebtFilters = {},
+  ): Promise<DebtResponse<DebtData[]>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -261,7 +375,9 @@ class DebtAPI {
     }
   }
 
-  async getActive(filters: DebtFilters = {}): Promise<DebtResponse<DebtData[]>> {
+  async getActive(
+    filters: DebtFilters = {},
+  ): Promise<DebtResponse<DebtData[]>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -281,7 +397,9 @@ class DebtAPI {
     }
   }
 
-  async getOverdue(filters: DebtFilters = {}): Promise<DebtResponse<DebtData[]>> {
+  async getOverdue(
+    filters: DebtFilters = {},
+  ): Promise<DebtResponse<DebtData[]>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -301,7 +419,9 @@ class DebtAPI {
     }
   }
 
-  async getHistory(debtId: number): Promise<DebtResponse<DebtHistoryData[]>> {
+  async getHistory(
+    debtId: number,
+  ): Promise<DebtResponse<DebtHistoryResponseData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -313,7 +433,20 @@ class DebtAPI {
       });
 
       if (response.status) {
-        return response;
+        // Response now includes worker data in history items
+        console.log("Debt history with worker data:", response.data);
+        return {
+          status: response.status,
+          message: response.message,
+          data: {
+            history: response.data?.history || [],
+            summary: response.data?.summary || {
+              totalRecords: 0,
+              totalPaid: 0,
+              transactionTypes: [],
+            },
+          },
+        };
       }
       throw new Error(response.message || "Failed to get debt history");
     } catch (error: any) {
@@ -342,7 +475,10 @@ class DebtAPI {
   }
 
   // 📊 Report methods
-  async getReport(dateRange: DateRange = {}, filters: DebtFilters = {}): Promise<DebtResponse<DebtReportData>> {
+  async getReport(
+    dateRange: DateRange = {},
+    filters: DebtFilters = {},
+  ): Promise<DebtResponse<DebtReportData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -362,7 +498,9 @@ class DebtAPI {
     }
   }
 
-  async getWorkerSummary(workerId: number): Promise<DebtResponse<WorkerDebtSummary>> {
+  async getWorkerSummary(
+    workerId: number,
+  ): Promise<DebtResponse<WorkerDebtSummary>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -370,7 +508,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "getWorkerDebtSummary",
-        params: this.enrichParams({ worker_id: workerId }),
+        params: this.enrichParams({ workerId: workerId }),
       });
 
       if (response.status) {
@@ -382,7 +520,9 @@ class DebtAPI {
     }
   }
 
-  async getCollectionReport(dateRange: DateRange = {}): Promise<DebtResponse<any>> {
+  async getCollectionReport(
+    dateRange: DateRange = {},
+  ): Promise<DebtResponse<any>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -463,7 +603,10 @@ class DebtAPI {
     }
   }
 
-  async updateStatus(id: number, status: string): Promise<DebtResponse<DebtData>> {
+  async updateStatus(
+    id: number,
+    status: string,
+  ): Promise<DebtResponse<DebtData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -523,7 +666,10 @@ class DebtAPI {
     }
   }
 
-  async adjustDebt(id: number, adjustmentData: any): Promise<DebtResponse<DebtData>> {
+  async adjustDebt(
+    id: number,
+    adjustmentData: any,
+  ): Promise<DebtResponse<DebtData>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -584,7 +730,9 @@ class DebtAPI {
     }
   }
 
-  async exportToCSV(filters: DebtFilters = {}): Promise<DebtResponse<{ filePath: string }>> {
+  async exportToCSV(
+    filters: DebtFilters = {},
+  ): Promise<DebtResponse<{ filePath: string }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -604,7 +752,10 @@ class DebtAPI {
     }
   }
 
-  async bulkUpdateStatus(debtIds: number[], status: string): Promise<DebtResponse<any>> {
+  async bulkUpdateStatus(
+    debtIds: number[],
+    status: string,
+  ): Promise<DebtResponse<any>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -645,7 +796,10 @@ class DebtAPI {
     }
   }
 
-  async reversePayment(debtHistoryId: number, reason: string): Promise<DebtResponse<any>> {
+  async reversePayment(
+    debtHistoryId: number,
+    reason: string,
+  ): Promise<DebtResponse<any>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -665,7 +819,9 @@ class DebtAPI {
     }
   }
 
-  async getPaymentHistory(debtId: number): Promise<DebtResponse<DebtHistoryData[]>> {
+  async getPaymentHistory(
+    debtId: number,
+  ): Promise<DebtResponse<DebtHistoryData[]>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -677,6 +833,7 @@ class DebtAPI {
       });
 
       if (response.status) {
+        console.log(response);
         return response;
       }
       throw new Error(response.message || "Failed to get payment history");
@@ -686,7 +843,9 @@ class DebtAPI {
   }
 
   // ⚙️ Validation methods
-  async validateData(data: DebtCreationRequest): Promise<DebtResponse<{ errors: string[] }>> {
+  async validateData(
+    data: DebtCreationRequest,
+  ): Promise<DebtResponse<{ errors: string[] }>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -706,7 +865,10 @@ class DebtAPI {
     }
   }
 
-  async checkLimit(workerId: number, newDebtAmount: number): Promise<DebtResponse<DebtLimitCheck>> {
+  async checkLimit(
+    workerId: number,
+    newDebtAmount: number,
+  ): Promise<DebtResponse<DebtLimitCheck>> {
     try {
       if (!window.backendAPI || !window.backendAPI.debt) {
         throw new Error("Electron API not available");
@@ -714,7 +876,7 @@ class DebtAPI {
 
       const response = await window.backendAPI.debt({
         method: "checkDebtLimit",
-        params: this.enrichParams({ worker_id: workerId, newDebtAmount }),
+        params: this.enrichParams({ workerId: workerId, newDebtAmount }),
       });
 
       if (response.status) {
@@ -757,10 +919,10 @@ class DebtAPI {
       const allDebts = await this.getAll();
       const activeDebts = await this.getActive();
       const overdueDebts = await this.getOverdue();
-      const pendingDebts = await this.getByStatus('pending');
-      const partiallyPaidDebts = await this.getByStatus('partially_paid');
-      const paidDebts = await this.getByStatus('paid');
-      const cancelledDebts = await this.getByStatus('cancelled');
+      const pendingDebts = await this.getByStatus("pending");
+      const partiallyPaidDebts = await this.getByStatus("partially_paid");
+      const paidDebts = await this.getByStatus("paid");
+      const cancelledDebts = await this.getByStatus("cancelled");
 
       const stats: DebtStats = {
         totalDebts: allDebts.data.length,
@@ -771,14 +933,17 @@ class DebtAPI {
         paidCount: paidDebts.data.length,
         cancelledCount: cancelledDebts.data.length,
         totalAmount: allDebts.data.reduce((sum, debt) => sum + debt.amount, 0),
-        totalBalance: allDebts.data.reduce((sum, debt) => sum + debt.balance, 0),
+        totalBalance: allDebts.data.reduce(
+          (sum, debt) => sum + debt.balance,
+          0,
+        ),
         totalPaid: allDebts.data.reduce((sum, debt) => sum + debt.totalPaid, 0),
       };
 
       return {
         status: true,
         message: "Debt stats calculated",
-        data: stats
+        data: stats,
       };
     } catch (error: any) {
       throw new Error(error.message || "Failed to calculate debt stats");
@@ -799,7 +964,7 @@ class DebtAPI {
     try {
       const debt = await this.getById(debtId);
       if (!debt.data.dueDate) return false;
-      
+
       const dueDate = new Date(debt.data.dueDate);
       const today = new Date();
       return debt.data.balance > 0 && dueDate < today;
@@ -819,25 +984,27 @@ class DebtAPI {
     }
   }
 
-  async validateAndCreateDebt(data: DebtCreationRequest): Promise<DebtResponse<DebtData>> {
+  async validateAndCreateDebt(
+    data: DebtCreationRequest,
+  ): Promise<DebtResponse<DebtData>> {
     try {
       // Validate data first
       const validation = await this.validateData(data);
       if (!validation.data.errors || validation.data.errors.length > 0) {
         return {
           status: false,
-          message: validation.data.errors?.join(', ') || "Validation failed",
-          data: null as any
+          message: validation.data.errors?.join(", ") || "Validation failed",
+          data: null as any,
         };
       }
 
       // Check debt limit
-      const limitCheck = await this.checkLimit(data.worker_id, data.amount);
+      const limitCheck = await this.checkLimit(data.workerId, data.amount);
       if (!limitCheck.data.canProceed) {
         return {
           status: false,
           message: `Debt limit exceeded. Current: ${limitCheck.data.currentDebt}, Proposed: ${limitCheck.data.proposedDebt}, Limit: ${limitCheck.data.debtLimit}`,
-          data: null as any
+          data: null as any,
         };
       }
 
@@ -847,7 +1014,7 @@ class DebtAPI {
       return {
         status: false,
         message: error.message || "Failed to validate and create debt",
-        data: null as any
+        data: null as any,
       };
     }
   }
@@ -869,6 +1036,57 @@ class DebtAPI {
     } catch (error) {
       console.error("Error getting total overdue amount:", error);
       return 0;
+    }
+  }
+
+  /**
+   * Validate a debt payment before processing
+   */
+  async validateDebtPayment(
+    workerId: number,
+    paymentAmount: number,
+  ): Promise<DebtResponse<ValidationResult>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.debt) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.debt({
+        method: "validateDebtPayment",
+        params: this.enrichParams({ workerId: workerId, paymentAmount }),
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to validate debt payment");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to validate debt payment");
+    }
+  }
+
+  /**
+   * Process a debt payment with allocations
+   */
+  async processDebtPayment(
+    data: DebtPaymentRequest,
+  ): Promise<DebtResponse<DebtPaymentResponse>> {
+    try {
+      if (!window.backendAPI || !window.backendAPI.debt) {
+        throw new Error("Electron API not available");
+      }
+
+      const response = await window.backendAPI.debt({
+        method: "processDebtPayment",
+        params: this.enrichParams(data),
+      });
+
+      if (response.status) {
+        return response;
+      }
+      throw new Error(response.message || "Failed to process debt payment");
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to process debt payment");
     }
   }
 }

@@ -8,6 +8,7 @@ const Assignment = require("../../../entities/Assignment");
 const Payment = require("../../../entities/Payment");
 const PaymentHistory = require("../../../entities/PaymentHistory");
 const { farmRatePerLuwang, farmSessionDefaultSessionId } = require("../../../utils/system");
+const { generateReferenceNumber } = require("../debt/utils/reference");
 
 /**
  * Update bukid status. If marking as "completed", cascade:
@@ -101,6 +102,7 @@ module.exports = async function updateBukidStatus(params = {}, queryRunner = nul
 
         if (assignments && assignments.length > 0) {
           for (const assignment of assignments) {
+            const referenceNumber = generateReferenceNumber("PAY");
             // mark assignment completed
             assignment.status = "completed";
             assignment.updatedAt = new Date();
@@ -144,6 +146,8 @@ module.exports = async function updateBukidStatus(params = {}, queryRunner = nul
               deductionBreakdown: null,
               status: "pending",
               paymentMethod: 'cash',
+              // @ts-ignore
+              referenceNumber: referenceNumber,
               // @ts-ignore
               periodStart: pitak.startDate || null,
               // @ts-ignore

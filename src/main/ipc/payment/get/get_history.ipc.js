@@ -9,35 +9,25 @@ module.exports = async function getPaymentHistory(params = {}) {
     // @ts-ignore
     let { paymentId, actionType, startDate, endDate, limit = 100, page = 1 } = params;
 
-    if (!paymentId) {
-      return {
-        status: false,
-        message: "Payment ID is required",
-        data: null,
-      };
-    }
-
-    // normalize inputs
-    paymentId = parseInt(paymentId, 10);
-    if (Number.isNaN(paymentId) || paymentId <= 0) {
-      return {
-        status: false,
-        message: "Payment ID must be a valid positive integer",
-        data: null,
-      };
-    }
-
     const parsedLimit = Math.max(1, parseInt(limit, 10) || 100);
     const parsedPage = Math.max(1, parseInt(page, 10) || 1);
     const skip = (parsedPage - 1) * parsedLimit;
 
     const historyRepository = AppDataSource.getRepository(PaymentHistory);
 
-    // Base query: join payment relation and apply filters consistently
+    // Base query with worker relation
     const queryBuilder = historyRepository
       .createQueryBuilder("history")
       .leftJoinAndSelect("history.payment", "payment")
-      .where("payment.id = :paymentId", { paymentId });
+      .leftJoinAndSelect("payment.worker", "worker"); // Added worker join
+
+    // Apply filters
+    if (paymentId) {
+      paymentId = parseInt(paymentId, 10);
+      if (!Number.isNaN(paymentId) && paymentId > 0) {
+        queryBuilder.where("payment.id = :paymentId", { paymentId });
+      }
+    }
 
     if (actionType) {
       queryBuilder.andWhere("history.actionType = :actionType", { actionType });
@@ -59,7 +49,7 @@ module.exports = async function getPaymentHistory(params = {}) {
     // Get paginated results
     const history = await queryBuilder.skip(skip).take(parsedLimit).getMany();
 
-    // Format history for display and normalize numeric fields
+    // Format history for display
     const formattedHistory = history.map((record) => ({
       id: record.id,
       // @ts-ignore
@@ -76,15 +66,38 @@ module.exports = async function getPaymentHistory(params = {}) {
       },
       performedBy: record.performedBy ?? null,
       notes: record.notes ?? null,
+      // Include worker data
+      // @ts-ignore
+      worker: record.payment?.worker ? {
+        // @ts-ignore
+        id: record.payment.worker.id,
+        // @ts-ignore
+        name: record.payment.worker.name,
+        // @ts-ignore
+        contact: record.payment.worker.contact,
+      } : null,
+      // @ts-ignore
+      paymentInfo: record.payment ? {
+        // @ts-ignore
+        id: record.payment.id,
+        // @ts-ignore
+        referenceNumber: record.payment.referenceNumber,
+        // @ts-ignore
+        status: record.payment.status,
+        // @ts-ignore
+        netPay: parseFloat(record.payment.netPay || 0),
+      } : null,
     }));
 
-    // Activity summary using same filters
+    // Activity summary
     const activitySummaryQB = historyRepository
       .createQueryBuilder("history")
       .select(["history.actionType as action_type", "COUNT(history.id) as count"])
-      .leftJoin("history.payment", "payment")
-      .where("payment.id = :paymentId", { paymentId });
+      .leftJoin("history.payment", "payment");
 
+    if (paymentId) {
+      activitySummaryQB.where("payment.id = :paymentId", { paymentId });
+    }
     if (actionType) activitySummaryQB.andWhere("history.actionType = :actionType", { actionType });
     if (startDate) activitySummaryQB.andWhere("history.changeDate >= :startDate", { startDate: new Date(startDate) });
     if (endDate) activitySummaryQB.andWhere("history.changeDate <= :endDate", { endDate: new Date(endDate) });
@@ -105,10 +118,20 @@ module.exports = async function getPaymentHistory(params = {}) {
         summary: {
           totalRecords: total,
           activitySummary,
-          // @ts-ignore
-          firstChange: history.length > 0 ? (history[history.length - 1].changeDate ? new Date(history[history.length - 1].changeDate).toISOString() : null) : null,
-          // @ts-ignore
-          lastChange: history.length > 0 ? (history[0].changeDate ? new Date(history[0].changeDate).toISOString() : null) : null,
+          firstChange:
+            history.length > 0
+              ? history[history.length - 1].changeDate
+                // @ts-ignore
+                ? new Date(history[history.length - 1].changeDate).toISOString()
+                : null
+              : null,
+          lastChange:
+            history.length > 0
+              ? history[0].changeDate
+                // @ts-ignore
+                ? new Date(history[0].changeDate).toISOString()
+                : null
+              : null,
         },
         pagination: {
           page: parsedPage,

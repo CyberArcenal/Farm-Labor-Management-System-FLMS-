@@ -38,34 +38,46 @@ const DebtTableRow: React.FC<DebtTableRowProps> = ({
   onUpdateStatus,
   onViewHistory,
 }) => {
-  const getStatusBadge = (status: string = "pending") => {
+  const getStatusBadge = (status: string = "pending", compact = false) => {
     const statusConfig: Record<string, any> = {
       pending: {
         text: "Pending",
+        icon: "⏳",
         bg: "var(--status-growing-bg)",
         color: "var(--status-growing)",
         border: "rgba(214, 158, 46, 0.3)",
       },
       partially_paid: {
         text: "Partially Paid",
+        icon: "💸",
         bg: "rgba(168, 85, 247, 0.1)",
         color: "rgb(126, 34, 206)",
         border: "rgba(168, 85, 247, 0.2)",
       },
       paid: {
         text: "Paid",
+        icon: "✔️",
+        bg: "var(--status-planted-bg)",
+        color: "var(--status-planted)",
+        border: "rgba(56, 161, 105, 0.3)",
+      },
+      settled: {
+        text: "Paid",
+        icon: "✔️",
         bg: "var(--status-planted-bg)",
         color: "var(--status-planted)",
         border: "rgba(56, 161, 105, 0.3)",
       },
       cancelled: {
         text: "Cancelled",
+        icon: "✖️",
         bg: "var(--accent-rust-light)",
         color: "var(--accent-rust)",
         border: "rgba(197, 48, 48, 0.3)",
       },
       overdue: {
         text: "Overdue",
+        icon: "⚠️",
         bg: "rgba(239, 68, 68, 0.1)",
         color: "rgb(220, 38, 38)",
         border: "rgba(239, 68, 68, 0.2)",
@@ -77,14 +89,14 @@ const DebtTableRow: React.FC<DebtTableRowProps> = ({
 
     return (
       <span
-        className="px-3 py-1 rounded-full text-xs font-medium"
+        className="px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1"
         style={{
           background: config.bg,
           color: config.color,
           border: `1px solid ${config.border}`,
         }}
       >
-        {config.text}
+        {compact ? config.icon : config.text}
       </span>
     );
   };
@@ -472,7 +484,7 @@ const DebtTableRow: React.FC<DebtTableRowProps> = ({
               onView={() => onView(debt.id)}
               onEdit={() => onEdit(debt.id)}
               onDelete={() => onDelete(debt.id)}
-              onMakePayment={() => onMakePayment(debt.id)}
+              onMakePayment={() => onMakePayment(debt.worker.id)}
               onUpdateStatus={(status) => onUpdateStatus(debt.id, status)}
               onViewHistory={() => onViewHistory(debt.id)}
             />

@@ -33,7 +33,7 @@ const DebtHistory = new EntitySchema({
       default: "payment" 
     },
     paymentMethod: { type: String, nullable: true },
-    referenceNumber: { type: String, nullable: true, unique: true },
+    referenceNumber: { type: String, nullable: true},
     notes: { type: String, nullable: true },
     transactionDate: { type: Date, createDate: true },
     createdAt: { type: Date, createDate: true }

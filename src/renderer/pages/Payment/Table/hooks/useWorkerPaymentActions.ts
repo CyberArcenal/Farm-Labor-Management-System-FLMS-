@@ -1,6 +1,6 @@
 // components/Payment/hooks/useWorkerPaymentActions.ts
 import { useState } from "react";
-import { showSuccess, showError} from "../../../../utils/notification";
+import { showSuccess, showError } from "../../../../utils/notification";
 import type { WorkerPaymentSummary } from "./useWorkerPaymentData";
 import workerAPI from "../../../../apis/worker";
 import paymentAPI from "../../../../apis/payment";
@@ -8,61 +8,64 @@ import { showConfirm } from "../../../../utils/dialogs";
 
 export const useWorkerPaymentActions = (
   workerSummaries: WorkerPaymentSummary[],
-  refreshData: () => Promise<void>
+  refreshData: () => Promise<void>,
 ) => {
   const [processing, setProcessing] = useState<number | null>(null);
+  // const handleProcessAllPayments = async (workerId: number) => {
+  //   try {
+  //     const confirm = await showConfirm({
+  //       title: "Process All Pending Payments",
+  //       message:
+  //         "Are you sure you want to process all pending payments for this worker?",
+  //       confirmText: "Process All",
+  //       cancelText: "Cancel",
+  //     });
 
-  const handleProcessAllPayments = async (workerId: number) => {
-    try {
-      const confirm = await showConfirm({
-        title: "Process All Pending Payments",
-        message: "Are you sure you want to process all pending payments for this worker?",
-        confirmText: "Process All",
-        cancelText: "Cancel"}
-      );
-      
-      if (!confirm) return;
+  //     if (!confirm) return;
 
-      setProcessing(workerId);
-      
-      // Kunin ang mga pending payments para sa worker na ito
-      const response = await paymentAPI.getPaymentsByWorker(workerId, {
-        status: "pending",
-        limit: 100,
-        page: 1,
-      });
+  //     setProcessing(workerId);
 
-      if (response.status && response.data.payments.length > 0) {
-        const paymentIds = response.data.payments.map((p: any) => p.id);
-        
-        // I-process ang lahat ng payments
-        const processResponse = await paymentAPI.bulkProcessPayments(paymentIds, {
-          paymentDate: new Date().toISOString().split('T')[0],
-          paymentMethod: "cash",
-        });
+  //     // Kunin ang mga pending payments para sa worker na ito
+  //     const response = await paymentAPI.getPaymentsByWorker(workerId, {
+  //       status: "pending",
+  //       limit: 100,
+  //       page: 1,
+  //     });
 
-        if (processResponse.status) {
-          showSuccess(
-            `Successfully processed ${processResponse.data.success} payments`
-          );
-          await refreshData();
-        } else {
-          throw new Error(processResponse.message);
-        }
-      } else {
-        showSuccess("This worker has no pending payments to process");
-      }
-    } catch (error: any) {
-      showError("Processing Failed", error.message);
-    } finally {
-      setProcessing(null);
-    }
-  };
+  //     if (response.status && response.data.payments.length > 0) {
+  //       const paymentIds = response.data.payments.map((p: any) => p.id);
+
+  //       // I-process ang lahat ng payments
+  //       const processResponse = await paymentAPI.bulkProcessPayments(
+  //         paymentIds,
+  //         {
+  //           paymentDate: new Date().toISOString().split("T")[0],
+  //           paymentMethod: "cash",
+  //         },
+  //       );
+
+  //       if (processResponse.status) {
+  //         showSuccess(
+  //           `Successfully processed ${processResponse.data.success} payments`,
+  //         );
+  //         await refreshData();
+  //       } else {
+  //         throw new Error(processResponse.message);
+  //       }
+  //     } else {
+  //       showSuccess("This worker has no pending payments to process");
+  //     }
+  //   } catch (error: any) {
+  //     showError("Processing Failed", error.message);
+  //   } finally {
+  //     setProcessing(null);
+  //   }
+  // };
 
   const handlePayWorkerDebt = async (workerId: number) => {
     try {
       // Makakuha ng worker summary para makuha ang total debt
-      const worker = workerSummaries.find(w => w.worker.id === workerId);
+      const worker = workerSummaries.find((w) => w.worker.id === workerId);
       if (!worker || worker.totalDebt <= 0) {
         showError("This worker has no outstanding debt");
         return;
@@ -72,15 +75,15 @@ export const useWorkerPaymentActions = (
         title: "Pay Worker Debt",
         message: `Pay ${worker.totalDebt.toLocaleString()} debt for ${worker.worker.name}?`,
         confirmText: "Pay Debt",
-        cancelText: "Cancel"}
-      );
-      
+        cancelText: "Cancel",
+      });
+
       if (!confirm) return;
 
       // Dito maaaring magdagdag ng logic para magbayad ng debt
       // Halimbawa, gumawa ng bagong payment na may debt deduction
       console.log(`Paying debt for worker ${workerId}: ${worker.totalDebt}`);
-      
+
       showSuccess("Worker debt payment initiated successfully");
       await refreshData();
     } catch (error: any) {
@@ -105,7 +108,7 @@ export const useWorkerPaymentActions = (
 
       if (response.status) {
         showSuccess("Worker report has been generated successfully");
-        
+
         // I-download ang report
         // if (response.data.format === "pdf") {
         //   const blob = new Blob([response.data.content], { type: response.data.contentType });
@@ -136,15 +139,15 @@ export const useWorkerPaymentActions = (
       if (response.status && response.data.payments.length > 0) {
         // I-generate ang slips para sa bawat payment
         const slipPromises = response.data.payments.map((payment: any) =>
-          paymentAPI.exportPaymentSlip(payment.id)
+          paymentAPI.exportPaymentSlip(payment.id),
         );
 
         const results = await Promise.allSettled(slipPromises);
-        const successful = results.filter(r => r.status === 'fulfilled').length;
-        
-        showSuccess(
-          `Successfully generated ${successful} payment slips`
-        );
+        const successful = results.filter(
+          (r) => r.status === "fulfilled",
+        ).length;
+
+        showSuccess(`Successfully generated ${successful} payment slips`);
       } else {
         showError("No completed payments found for this worker");
       }
@@ -155,7 +158,6 @@ export const useWorkerPaymentActions = (
 
   return {
     processing,
-    handleProcessAllPayments,
     handlePayWorkerDebt,
     handleViewWorkerDetails,
     handleExportWorkerReport,

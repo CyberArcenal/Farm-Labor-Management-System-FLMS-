@@ -108,7 +108,7 @@ const WorkerPaymentActionsDropdown: React.FC<WorkerPaymentActionsDropdownProps> 
               Worker Actions
             </div>
 
-            <button
+            {/* <button
               onClick={(e) =>
                 handleAction(e, () => onViewWorkerDetails(summary.worker.id))
               }
@@ -116,7 +116,7 @@ const WorkerPaymentActionsDropdown: React.FC<WorkerPaymentActionsDropdownProps> 
             >
               <Eye className="w-4 h-4 text-blue-500" />
               <span>View Worker Details</span>
-            </button>
+            </button> */}
 
             {summary.pendingPayments > 0 && (
               <button
@@ -147,7 +147,7 @@ const WorkerPaymentActionsDropdown: React.FC<WorkerPaymentActionsDropdownProps> 
               Reports & Export
             </div>
 
-            <button
+            {/* <button
               onClick={(e) =>
                 handleAction(e, () => onExportWorkerReport(summary.worker.id))
               }
@@ -165,14 +165,14 @@ const WorkerPaymentActionsDropdown: React.FC<WorkerPaymentActionsDropdownProps> 
             >
               <FileText className="w-4 h-4 text-cyan-600" />
               <span>Generate Payment Slips</span>
-            </button>
+            </button> */}
 
             <div className="border-t border-gray-100 my-1"></div>
             <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               Financial Management
             </div>
 
-            <button
+            {/* <button
               onClick={(e) => {
                 e.stopPropagation();
                 console.log(`Adjust deductions for worker ${summary.worker.id}`);
@@ -194,7 +194,7 @@ const WorkerPaymentActionsDropdown: React.FC<WorkerPaymentActionsDropdownProps> 
             >
               <BarChart3 className="w-4 h-4 text-amber-600" />
               <span>View Debt History</span>
-            </button>
+            </button> */}
           </div>
         </div>
       )}

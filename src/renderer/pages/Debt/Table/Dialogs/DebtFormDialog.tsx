@@ -455,7 +455,7 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+             onClick={async() => {if(!await dialogs.confirm({title: "Exit", message: "Are you sure do you want to exit?"}))return; onClose()}}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors windows-button-secondary"
             title="Close"
           >
@@ -886,7 +886,7 @@ const DebtFormDialog: React.FC<DebtFormDialogProps> = ({
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={onClose}
+                 onClick={async() => {if(!await dialogs.confirm({title: "Exit", message: "Are you sure do you want to exit?"}))return; onClose()}}
                 className="windows-button windows-button-secondary"
                 disabled={submitting}
               >

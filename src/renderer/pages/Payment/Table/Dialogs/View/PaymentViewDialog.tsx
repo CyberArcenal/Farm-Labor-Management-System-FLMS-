@@ -5,8 +5,8 @@ import {
     AlertCircle, Clock, TrendingUp, CreditCard, Download,
     Banknote, Percent, Calculator, Receipt, User, MapPin
 } from 'lucide-react';
-import paymentAPI from '../../../../apis/payment';
-import type { PaymentData, WorkerData, PitakData } from '../../../../apis/payment';
+import paymentAPI from '../../../../../apis/payment';
+import type { PaymentData, WorkerData, PitakData } from '../../../../../apis/payment';
 
 interface PaymentViewDialogProps {
     paymentId: number;

@@ -4,18 +4,15 @@ import {
   DollarSign,
   Plus,
   Download,
-  AlertCircle,
   BarChart2,
   ChevronUp,
   ChevronDown,
   Users,
   List,
-  Grid,
 } from "lucide-react";
 import { usePaymentData } from "./hooks/usePaymentData";
 import { useWorkerPaymentData } from "./hooks/useWorkerPaymentData";
 import { useWorkerPaymentActions } from "./hooks/useWorkerPaymentActions";
-import PaymentFormDialog from "./Dialogs/PaymentFormDialog";
 import { usePaymentActions } from "./hooks/usePaymentActions";
 import PaymentStats from "./components/PaymentStats";
 import PaymentFilters from "./components/PaymentFilters";
@@ -23,13 +20,16 @@ import PaymentBulkActions from "./components/PaymentBulkActions";
 import PaymentTableView from "./components/PaymentTableView";
 import WorkerPaymentTable from "./components/WorkerPaymentTableView";
 import PaymentPagination from "./components/PaymentPagination";
-import PaymentViewDialog from "./Dialogs/PaymentViewDialog";
-import { useDebtPaymentDialog } from "./Dialogs/hooks/useDebtPaymentDialog";
-import DebtPaymentDialog from "./Dialogs/DebtPaymentDialog";
+import PaymentViewDialog from "./Dialogs/View/PaymentViewDialog";
+import PaymentFormDialog from "./Dialogs/Form/PaymentFormDialog";
+import DebtPaymentDialog from "./Dialogs/Form/DebtPayment";
+import ProcessAllPaymentsDialog from "./Dialogs/Form/ProcessAllPayments";
 
 const PaymentTablePage: React.FC = () => {
   const [viewType, setViewType] = useState<"payments" | "workers">("payments");
-
+  const [showProcessAllDialog, setShowProcessAllDialog] = useState(false);
+  const [selectedWorkerForProcessing, setSelectedWorkerForProcessing] =
+    useState<{ id: number; name: string } | null>(null);
   // Payment data hook
   const {
     payments,
@@ -92,7 +92,6 @@ const PaymentTablePage: React.FC = () => {
   } = useWorkerPaymentData();
 
   const {
-    handleProcessAllPayments,
     handlePayWorkerDebt,
     handleViewWorkerDetails,
     handleExportWorkerReport,
@@ -148,9 +147,21 @@ const PaymentTablePage: React.FC = () => {
     setShowDebtPaymentDialog(true);
     setSelectedWorkerId(workerId);
   };
+  const handleProcessAllPayments = async (workerId: number) => {
+    // Hanapin ang worker name
+    const worker = workerSummaries.find((w) => w.worker.id === workerId);
+    if (worker) {
+      setSelectedWorkerForProcessing({
+        id: workerId,
+        name: worker.worker.name,
+      });
+      setShowProcessAllDialog(true);
+    }
+  };
   const onDebtDialogSuccess = () => {
     setShowDebtPaymentDialog(false);
     setSelectedWorkerId(null);
+    handleRefresh();
   };
   const setSearchQueryWrapper = (value: string) => {
     if (viewType === "payments") setPaymentSearchQuery(value);
@@ -648,7 +659,24 @@ const PaymentTablePage: React.FC = () => {
         <DebtPaymentDialog
           workerId={selectedWorkerId}
           onClose={() => setShowDebtPaymentDialog(false)}
-          onSuccess={() => onDebtDialogSuccess}
+          onSuccess={() => onDebtDialogSuccess()}
+        />
+      )}
+
+      {showProcessAllDialog && selectedWorkerForProcessing && (
+        <ProcessAllPaymentsDialog
+          workerId={selectedWorkerForProcessing.id}
+          workerName={selectedWorkerForProcessing.name}
+          onClose={() => {
+            setShowProcessAllDialog(false);
+            setSelectedWorkerForProcessing(null);
+            handleWorkerRefresh(); // Refresh data after processing
+          }}
+          onSuccess={() => {
+            setShowProcessAllDialog(false);
+            setSelectedWorkerForProcessing(null);
+            handleWorkerRefresh(); // Refresh data
+          }}
         />
       )}
     </>

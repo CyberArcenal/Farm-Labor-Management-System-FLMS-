@@ -36,6 +36,8 @@ import UserTablePage from '../pages/User/Table/UserTablePage';
 import AuditTrailTablePage from '../pages/Audit/AuditTrailTablePage';
 import SessionTablePage from '../pages/Session/SessionTablePage';
 import FarmManagementSettingsPage from '../pages/Settings';
+import HistoryPage from '../pages/History';
+
 // import FarmManagementSettingsPage from '../pages/Settings/FarmManagementSettingsPage';
 
 // 🔹 Placeholder components para hindi mag red mark
@@ -140,6 +142,7 @@ function App() {
             <Route path="/finance/debts" element={<DebtTablePage />} />
             <Route path="/finance/debts/form" element={<DebtFormPage />} />
             <Route path="/finance/debts/form/:id" element={<DebtFormPage />} />
+            <Route path='/finance/history' element={<HistoryPage/>}/>
 
             {/* Reports & Analytics */}
             <Route path="/analytics/bukid" element={<BukidReportsPage />} />
