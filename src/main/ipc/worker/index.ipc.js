@@ -76,20 +76,24 @@ class WorkerHandler {
     }
   }
 
-  /** @param {Electron.IpcMainInvokeEvent} event @param {{ method: any; params: {}; }} payload */
+
+  /**
+   * @param {any} event
+   * @param {{ method: any; params: {}; }} payload
+   */
+  // @ts-ignore
   async handleRequest(event, payload) {
     try {
       const method = payload.method;
       const params = payload.params || {};
 
       // @ts-ignore
-      const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params};
 
       // Log the request
       if (logger) {
         // @ts-ignore
-        logger.info(`WorkerHandler: ${method}`, { params, userId });
+        logger.info(`WorkerHandler: ${method}`, { params});
       }
 
       // ROUTE REQUESTS
@@ -130,21 +134,27 @@ class WorkerHandler {
 
         // ✏️ WRITE OPERATIONS
         case "createWorker":
+          // @ts-ignore
           return await this.handleWithTransaction(this.createWorker, enrichedParams);
         
         case "updateWorker":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateWorker, enrichedParams);
         
         case "deleteWorker":
+          // @ts-ignore
           return await this.handleWithTransaction(this.deleteWorker, enrichedParams);
         
         case "updateWorkerStatus":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateWorkerStatus, enrichedParams);
         
         case "updateWorkerContact":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateWorkerContact, enrichedParams);
         
         case "updateWorkerFinancials":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateWorkerFinancials, enrichedParams);
 
         // 💰 FINANCIAL OPERATIONS
@@ -162,12 +172,15 @@ class WorkerHandler {
 
         // 🔄 BATCH OPERATIONS
         case "bulkCreateWorkers":
+          // @ts-ignore
           return await this.handleWithTransaction(this.bulkCreateWorkers, enrichedParams);
         
         case "bulkUpdateWorkers":
+          // @ts-ignore
           return await this.handleWithTransaction(this.bulkUpdateWorkers, enrichedParams);
         
         case "importWorkersFromCSV":
+          // @ts-ignore
           return await this.handleWithTransaction(this.importWorkersFromCSV, enrichedParams);
         
         case "exportWorkersToCSV":

@@ -321,30 +321,7 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{
-                background: "var(--accent-green)",
-                color: "white",
-              }}
-            >
-              <Thermometer className="w-6 h-6" />
-            </div>
-            <div>
-              <h1
-                className="text-lg font-bold windows-title"
-                style={{ color: "white" }}
-              >
-                Kabisilya
-              </h1>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.8)" }}>
-                Farm Management
-              </p>
-            </div>
-          </div>
-
+      
           {/* Default Session Display */}
           <div
             className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg"

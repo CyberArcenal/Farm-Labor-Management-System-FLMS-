@@ -82,8 +82,8 @@ class AssignmentHandler {
       const params = payload.params || {};
 
       // @ts-ignore
-      const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+        const userId = params.userId || event.sender.id || 0;
+      const enrichedParams = { ...params};
 
       // Log the request
       if (logger) {
@@ -197,48 +197,56 @@ class AssignmentHandler {
         case "createAssignment":
           return await this.handleWithTransaction(
             this.createAssignment,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "updateAssignment":
           return await this.handleWithTransaction(
             this.updateAssignment,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "deleteAssignment":
           return await this.handleWithTransaction(
             this.deleteAssignment,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "updateAssignmentStatus":
           return await this.handleWithTransaction(
             this.updateAssignmentStatus,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "bulkUpdateAssignments":
           return await this.handleWithTransaction(
             this.bulkUpdateAssignments,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "reassignWorker":
           return await this.handleWithTransaction(
             this.reassignWorker,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "updateLuWangCount":
           return await this.handleWithTransaction(
             this.updateLuWangCount,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "addAssignmentNote":
           return await this.handleWithTransaction(
             this.addAssignmentNote,
+            // @ts-ignore
             enrichedParams,
           );
 
@@ -246,12 +254,14 @@ class AssignmentHandler {
         case "bulkCreateAssignments":
           return await this.handleWithTransaction(
             this.bulkCreateAssignments,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "importAssignmentsFromCSV":
           return await this.handleWithTransaction(
             this.importAssignmentsFromCSV,
+            // @ts-ignore
             enrichedParams,
           );
 
@@ -261,6 +271,7 @@ class AssignmentHandler {
         case "syncAssignmentsFromExternal":
           return await this.handleWithTransaction(
             this.syncAssignmentsFromExternal,
+            // @ts-ignore
             enrichedParams,
           );
 

@@ -78,19 +78,19 @@ class UserHandler {
   }
 
   /** @param {Electron.IpcMainInvokeEvent} event @param {{ method: any; params: {}; }} payload */
+  // @ts-ignore
   async handleRequest(event, payload) {
     try {
       const method = payload.method;
       const params = payload.params || {};
 
       // @ts-ignore
-      const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params };
 
       // Log the request
       if (logger) {
         // @ts-ignore
-        logger.info(`UserHandler: ${method}`, { params, userId });
+        logger.info(`UserHandler: ${method}`, { params });
       }
 
       // ROUTE REQUESTS
@@ -122,21 +122,27 @@ class UserHandler {
 
         // ✏️ WRITE OPERATIONS
         case "createUser":
+          // @ts-ignore
           return await this.handleWithTransaction(this.createUser, enrichedParams);
         
         case "updateUser":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateUser, enrichedParams);
         
         case "deleteUser":
+          // @ts-ignore
           return await this.handleWithTransaction(this.deleteUser, enrichedParams);
         
         case "updateUserStatus":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateUserStatus, enrichedParams);
         
         case "changePassword":
+          // @ts-ignore
           return await this.handleWithTransaction(this.changePassword, enrichedParams);
         
         case "updateUserRole":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateUserRole, enrichedParams);
 
         // 🔐 AUTHENTICATION OPERATIONS
@@ -160,16 +166,20 @@ class UserHandler {
           return await this.getUserActivity(enrichedParams);
         
         case "clearUserActivity":
+          // @ts-ignore
           return await this.handleWithTransaction(this.clearUserActivity, enrichedParams);
 
         // 🔄 BATCH OPERATIONS
         case "bulkCreateUsers":
+          // @ts-ignore
           return await this.handleWithTransaction(this.bulkCreateUsers, enrichedParams);
         
         case "bulkUpdateUsers":
+          // @ts-ignore
           return await this.handleWithTransaction(this.bulkUpdateUsers, enrichedParams);
         
         case "importUsersFromCSV":
+          // @ts-ignore
           return await this.handleWithTransaction(this.importUsersFromCSV, enrichedParams);
         
         case "exportUsersToCSV":
@@ -177,9 +187,11 @@ class UserHandler {
 
         // 👥 PROFILE OPERATIONS
         case "updateProfile":
+          // @ts-ignore
           return await this.handleWithTransaction(this.updateProfile, enrichedParams);
         
         case "uploadProfilePicture":
+          // @ts-ignore
           return await this.handleWithTransaction(this.uploadProfilePicture, enrichedParams);
 
         default:

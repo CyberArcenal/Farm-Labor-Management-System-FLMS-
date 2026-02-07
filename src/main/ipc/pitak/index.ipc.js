@@ -105,7 +105,7 @@ class PitakHandler {
 
       // @ts-ignore
       const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params };
 
       // Log the request
       if (logger) {
@@ -221,48 +221,56 @@ class PitakHandler {
         case "createPitak":
           return await this.handleWithTransaction(
             this.createPitak,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "updatePitak":
           return await this.handleWithTransaction(
             this.updatePitak,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "deletePitak":
           return await this.handleWithTransaction(
             this.deletePitak,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "updatePitakStatus":
           return await this.handleWithTransaction(
             this.updatePitakStatus,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "updatePitakLuWang":
           return await this.handleWithTransaction(
             this.updatePitakLuWang,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "updatePitakLocation":
           return await this.handleWithTransaction(
             this.updatePitakLocation,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "transferPitakBukid":
           return await this.handleWithTransaction(
             this.transferPitakBukid,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "bulkUpdatePitaks":
           return await this.handleWithTransaction(
             this.bulkUpdatePitaks,
+            // @ts-ignore
             enrichedParams,
           );
 
@@ -270,12 +278,14 @@ class PitakHandler {
         case "bulkCreatePitaks":
           return await this.handleWithTransaction(
             this.bulkCreatePitaks,
+            // @ts-ignore
             enrichedParams,
           );
 
         case "importPitaksFromCSV":
           return await this.handleWithTransaction(
             this.importPitaksFromCSV,
+            // @ts-ignore
             enrichedParams,
           );
 
@@ -403,16 +413,18 @@ class PitakHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-    // ✅ Always require default session
-    const sessionId = await farmSessionDefaultSessionId();
-    if (!sessionId || sessionId === 0) {
-      throw new Error("No default session configured. Please set one in Settings.");
-    }
+      // ✅ Always require default session
+      const sessionId = await farmSessionDefaultSessionId();
+      if (!sessionId || sessionId === 0) {
+        throw new Error(
+          "No default session configured. Please set one in Settings.",
+        );
+      }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
-        session: {id:sessionId},
+        session: { id: sessionId },
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
       });

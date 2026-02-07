@@ -40,7 +40,9 @@ class PaymentHandler {
     this.calculateNetPay = this.importHandler("./calculate_net_pay.ipc");
     this.applyDebtDeduction = this.importHandler("./apply_debt_deduction.ipc");
     this.updateDeductions = this.importHandler("./update_deductions.ipc");
-    this.generatePaymentBreakdown = this.importHandler("./generate_breakdown.ipc");
+    this.generatePaymentBreakdown = this.importHandler(
+      "./generate_breakdown.ipc",
+    );
 
     // 🔗 RELATIONSHIP HANDLERS
     this.assignPaymentToWorker = this.importHandler("./assign_to_worker.ipc");
@@ -51,7 +53,9 @@ class PaymentHandler {
     // 📊 REPORTING HANDLERS
     this.generatePaymentReport = this.importHandler("./generate_report.ipc");
     this.getPaymentPeriods = this.importHandler("./get_periods.ipc");
-    this.getWorkerPaymentSummary = this.importHandler("./get_worker_summary.ipc");
+    this.getWorkerPaymentSummary = this.importHandler(
+      "./get_worker_summary.ipc",
+    );
 
     // 🔄 BATCH OPERATIONS
     this.bulkCreatePayments = this.importHandler("./bulk_create.ipc");
@@ -93,7 +97,7 @@ class PaymentHandler {
 
       // @ts-ignore
       const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params };
 
       // Log the request
       if (logger) {
@@ -106,111 +110,159 @@ class PaymentHandler {
         // 📋 READ-ONLY OPERATIONS
         case "getAllPayments":
           return await this.getAllPayments(enrichedParams);
-        
+
         case "getPaymentById":
           return await this.getPaymentById(enrichedParams);
-        
+
         case "getPaymentsByWorker":
           return await this.getPaymentsByWorker(enrichedParams);
-        
+
         case "getPaymentsByPitak":
           return await this.getPaymentsByPitak(enrichedParams);
-        
+
         case "getPaymentsByStatus":
           return await this.getPaymentsByStatus(enrichedParams);
-        
+
         case "getPaymentsByDateRange":
           return await this.getPaymentsByDateRange(enrichedParams);
-        
+
         case "getPaymentWithDetails":
           return await this.getPaymentWithDetails(enrichedParams);
-        
+
         case "getPaymentSummary":
           return await this.getPaymentSummary(enrichedParams);
-        
+
         case "getPendingPayments":
           return await this.getPendingPayments(enrichedParams);
-        
+
         case "getPaymentStats":
           return await this.getPaymentStats(enrichedParams);
-        
+
         case "searchPayments":
           return await this.searchPayments(enrichedParams);
 
         // ✏️ WRITE OPERATIONS
         case "createPayment":
-          return await this.handleWithTransaction(this.createPayment, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.createPayment,
+            enrichedParams,
+          );
+
         case "updatePayment":
-          return await this.handleWithTransaction(this.updatePayment, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.updatePayment,
+            enrichedParams,
+          );
+
         case "deletePayment":
-          return await this.handleWithTransaction(this.deletePayment, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.deletePayment,
+            enrichedParams,
+          );
+
         case "updatePaymentStatus":
-          return await this.handleWithTransaction(this.updatePaymentStatus, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.updatePaymentStatus,
+            enrichedParams,
+          );
+
         case "addPaymentNote":
-          return await this.handleWithTransaction(this.addPaymentNote, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.addPaymentNote,
+            enrichedParams,
+          );
+
         case "processPayment":
-          return await this.handleWithTransaction(this.processPayment, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.processPayment,
+            enrichedParams,
+          );
+
         case "cancelPayment":
-          return await this.handleWithTransaction(this.cancelPayment, enrichedParams);
+          return await this.handleWithTransaction(
+            this.cancelPayment,
+            enrichedParams,
+          );
 
         // 💰 PAYMENT CALCULATION OPERATIONS
         case "calculateNetPay":
           return await this.calculateNetPay(enrichedParams);
-        
+
         case "applyDebtDeduction":
-          return await this.handleWithTransaction(this.applyDebtDeduction, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.applyDebtDeduction,
+            enrichedParams,
+          );
+
         case "updateDeductions":
-          return await this.handleWithTransaction(this.updateDeductions, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.updateDeductions,
+            enrichedParams,
+          );
+
         case "generatePaymentBreakdown":
           return await this.generatePaymentBreakdown(enrichedParams);
 
         // 🔗 RELATIONSHIP OPERATIONS
         case "assignPaymentToWorker":
-          return await this.handleWithTransaction(this.assignPaymentToWorker, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.assignPaymentToWorker,
+            enrichedParams,
+          );
+
         case "assignPaymentToPitak":
-          return await this.handleWithTransaction(this.assignPaymentToPitak, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.assignPaymentToPitak,
+            enrichedParams,
+          );
+
         case "linkDebtPayment":
-          return await this.handleWithTransaction(this.linkDebtPayment, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.linkDebtPayment,
+            enrichedParams,
+          );
+
         case "getPaymentHistory":
           return await this.getPaymentHistory(enrichedParams);
 
         // 📊 REPORTING OPERATIONS
         case "generatePaymentReport":
           return await this.generatePaymentReport(enrichedParams);
-        
+
         case "getPaymentPeriods":
           return await this.getPaymentPeriods(enrichedParams);
-        
+
         case "getWorkerPaymentSummary":
           return await this.getWorkerPaymentSummary(enrichedParams);
 
         // 🔄 BATCH OPERATIONS
         case "bulkCreatePayments":
-          return await this.handleWithTransaction(this.bulkCreatePayments, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.bulkCreatePayments,
+            enrichedParams,
+          );
+
         case "bulkUpdatePayments":
-          return await this.handleWithTransaction(this.bulkUpdatePayments, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.bulkUpdatePayments,
+            enrichedParams,
+          );
+
         case "bulkProcessPayments":
-          return await this.handleWithTransaction(this.bulkProcessPayments, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.bulkProcessPayments,
+            enrichedParams,
+          );
+
         case "importPaymentsFromCSV":
-          return await this.handleWithTransaction(this.importPaymentsFromCSV, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.importPaymentsFromCSV,
+            enrichedParams,
+          );
+
         case "exportPaymentsToCSV":
           return await this.exportPaymentsToCSV(enrichedParams);
-        
+
         case "exportPaymentSlip":
           return await this.exportPaymentSlip(enrichedParams);
 
@@ -279,19 +331,21 @@ class PaymentHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-    // ✅ Always require default session
-    const sessionId = await farmSessionDefaultSessionId();
-    if (!sessionId || sessionId === 0) {
-      throw new Error("No default session configured. Please set one in Settings.");
-    }
+      // ✅ Always require default session
+      const sessionId = await farmSessionDefaultSessionId();
+      if (!sessionId || sessionId === 0) {
+        throw new Error(
+          "No default session configured. Please set one in Settings.",
+        );
+      }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
-        session: {id: sessionId},
+        session: { id: sessionId },
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
-        created_at: new Date()
+        created_at: new Date(),
       });
 
       await activityRepo.save(activity);

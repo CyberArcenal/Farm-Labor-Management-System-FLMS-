@@ -6,28 +6,18 @@ import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
 import KabisilyaFirstRunSetup from '../pages/Setup';
 import Login from '../pages/Auth/Login';
-// import BukidTablePage from '../pages/Bukid/Table';
-// import AssignmentTablePage from '../pages/Assignment/Table';
-// import KabisilyaTablePage from '../pages/Kabisilya/Table';
-// import WorkerTablePage from '../pages/Worker/Table/WorkerTable';
 import WorkerAttendancePage from '../pages/WorkerAttendance';
-// import PaymentTablePage from '../pages/Payment/Table/PaymentTable';
-// import DebtTablePage from '../pages/Debt/Table/DebtTable';
-// import UserTablePage from '../pages/User/Table';
-// import AuditTrailTablePage from '../pages/Audit/AuditTrail';
 import BukidReportsPage from '../pages/Analytics/Bukid';
 import PitakProductivityPage from '../pages/Analytics/PitakProductivity';
 import FinancialReportsPage from '../pages/Analytics/FinancialReports';
 import WorkerPerformancePage from '../pages/Analytics/WorkerPerformance';
 import BukidFormPage from '../pages/Bukid/Form';
-// import KabisilyaFormPage from '../pages/Kabisilya/Form';
 import PitakFormPage from '../pages/Pitak/Form';
 import WorkerFormPage from '../pages/Worker/Form/WorkerForm';
 import DebtFormPage from '../pages/Debt/Form/DebtForm';
 import PitakTablePage from '../pages/Pitak/Table';
 import BukidTablePage from '../pages/Bukid/Table/BukidTablePage';
 import AssignmentTablePage from '../pages/Assignment/Table/AssignmentTablePage';
-// import KabisilyaTablePage from '../pages/Kabisilya/Table/KabisilyaTablePage';
 import WorkerTablePage from '../pages/Worker/Table/WorkerTablePage';
 import PaymentTablePage from '../pages/Payment/Table/PaymentTablePage';
 import DebtTablePage from '../pages/Debt/Table/DebtTablePage';
@@ -39,7 +29,6 @@ import HistoryPage from '../pages/History';
 import MyProfileView from '../pages/User/Table/Dialogs/MyProfile/View';
 import DashboardPage from '../pages/dashboard/DashboardPage';
 
-// import FarmManagementSettingsPage from '../pages/Settings/FarmManagementSettingsPage';
 
 // 🔹 Placeholder components para hindi mag red mark
 const Placeholder = ({ title }: { title: string }) => (
@@ -128,9 +117,6 @@ function App() {
             <Route path="/farms/assignments/form" element={<Placeholder title="Assignment Form" />} />
             <Route path="/farms/assignments/form/:id" element={<Placeholder title="Assignment Form" />} />
             {/* Kabisilya & Workers */}
-            {/* <Route path="/workers/kabisilya" element={<KabisilyaTablePage />} />
-            <Route path="/workers/kabisilya/form" element={<KabisilyaFormPage />} />
-            <Route path="/workers/kabisilya/form/:id" element={<KabisilyaFormPage />} /> */}
 
             <Route path="/workers/list" element={<WorkerTablePage />} />
             <Route path="/workers" element={<WorkerTablePage />} />

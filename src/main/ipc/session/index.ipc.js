@@ -37,7 +37,7 @@ class SessionHandler {
 
       // @ts-ignore
       const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params};
 
       // Log the request
       if (logger) {

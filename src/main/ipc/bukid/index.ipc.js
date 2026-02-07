@@ -74,7 +74,7 @@ class BukidHandler {
 
       // @ts-ignore
       const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params };
 
       // Log the request
       if (logger) {
@@ -87,65 +87,96 @@ class BukidHandler {
         // 📋 READ-ONLY OPERATIONS
         case "getAllBukid":
           return await this.getAllBukid(enrichedParams);
-        
+
         case "getBukidById":
           return await this.getBukidById(enrichedParams);
-      
-        
+
         case "getBukidByName":
           return await this.getBukidByName(enrichedParams);
-        
+
         case "getBukidByLocation":
           return await this.getBukidByLocation(enrichedParams);
-        
+
         case "getBukidWithPitaks":
           return await this.getBukidWithPitaks(enrichedParams);
-        
+
         case "getBukidSummary":
           return await this.getBukidSummary(enrichedParams);
-        
+
         case "getActiveBukid":
           return await this.getActiveBukid(enrichedParams);
-        
+
         case "getBukidStats":
           return await this.getBukidStats(enrichedParams);
-        
+
         case "searchBukid":
           return await this.searchBukid(enrichedParams);
 
         // ✏️ WRITE OPERATIONS
         case "createBukid":
-          return await this.handleWithTransaction(this.createBukid, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.createBukid,
+            // @ts-ignore
+            enrichedParams,
+          );
+
         case "updateBukid":
-          return await this.handleWithTransaction(this.updateBukid, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.updateBukid,
+            // @ts-ignore
+            enrichedParams,
+          );
+
         case "deleteBukid":
-          return await this.handleWithTransaction(this.deleteBukid, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.deleteBukid,
+            // @ts-ignore
+            enrichedParams,
+          );
+
         case "updateBukidStatus":
-          return await this.handleWithTransaction(this.updateBukidStatus, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.updateBukidStatus,
+            // @ts-ignore
+            enrichedParams,
+          );
+
         case "addBukidNote":
-          return await this.handleWithTransaction(this.addBukidNote, enrichedParams);
+          return await this.handleWithTransaction(
+            this.addBukidNote,
+            // @ts-ignore
+            enrichedParams,
+          );
 
         // 📊 STATISTICS OPERATIONS
         case "getPitakCounts":
           return await this.getPitakCounts(enrichedParams);
-        
+
         case "getWorkerCounts":
           return await this.getWorkerCounts(enrichedParams);
 
         // 🔄 BATCH OPERATIONS
         case "bulkCreateBukid":
-          return await this.handleWithTransaction(this.bulkCreateBukid, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.bulkCreateBukid,
+            // @ts-ignore
+            enrichedParams,
+          );
+
         case "bulkUpdateBukid":
-          return await this.handleWithTransaction(this.bulkUpdateBukid, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.bulkUpdateBukid,
+            // @ts-ignore
+            enrichedParams,
+          );
+
         case "importBukidFromCSV":
-          return await this.handleWithTransaction(this.importBukidFromCSV, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.importBukidFromCSV,
+            // @ts-ignore
+            enrichedParams,
+          );
+
         case "exportBukidToCSV":
           return await this.exportBukidToCSV(enrichedParams);
 
@@ -214,19 +245,21 @@ class BukidHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-    // ✅ Always require default session
-    const sessionId = await farmSessionDefaultSessionId();
-    if (!sessionId || sessionId === 0) {
-      throw new Error("No default session configured. Please set one in Settings.");
-    }
+      // ✅ Always require default session
+      const sessionId = await farmSessionDefaultSessionId();
+      if (!sessionId || sessionId === 0) {
+        throw new Error(
+          "No default session configured. Please set one in Settings.",
+        );
+      }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
-        session: {id:sessionId},
+        session: { id: sessionId },
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
-        created_at: new Date()
+        created_at: new Date(),
       });
 
       await activityRepo.save(activity);

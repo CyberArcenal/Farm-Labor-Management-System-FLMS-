@@ -14,14 +14,24 @@ class AttendanceHandler {
   initializeHandlers() {
     // 📋 ATTENDANCE HANDLERS
     this.getAttendanceByDate = this.importHandler("./get/by_date.ipc");
-    this.getAttendanceByDateRange = this.importHandler("./get/by_date_range.ipc");
+    this.getAttendanceByDateRange = this.importHandler(
+      "./get/by_date_range.ipc",
+    );
     this.getAttendanceByWorker = this.importHandler("./get/by_worker.ipc");
     this.getAttendanceByPitak = this.importHandler("./get/by_pitak.ipc");
     this.getAttendanceByBukid = this.importHandler("./get/by_bukid.ipc");
-    this.getAttendanceByKabisilya = this.importHandler("./get/by_kabisilya.ipc");
-    this.getWorkerAttendanceSummary = this.importHandler("./get/worker_summary.ipc");
-    this.getDailyAttendanceReport = this.importHandler("./get/daily_report.ipc");
-    this.getMonthlyAttendanceSummary = this.importHandler("./get/monthly_summary.ipc");
+    this.getAttendanceByKabisilya = this.importHandler(
+      "./get/by_kabisilya.ipc",
+    );
+    this.getWorkerAttendanceSummary = this.importHandler(
+      "./get/worker_summary.ipc",
+    );
+    this.getDailyAttendanceReport = this.importHandler(
+      "./get/daily_report.ipc",
+    );
+    this.getMonthlyAttendanceSummary = this.importHandler(
+      "./get/monthly_summary.ipc",
+    );
     this.getAttendanceStatistics = this.importHandler("./get/statistics.ipc");
     this.searchAttendanceRecords = this.importHandler("./search/search.ipc");
   }
@@ -54,7 +64,7 @@ class AttendanceHandler {
 
       // @ts-ignore
       const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params };
 
       // Log the request
       if (logger) {
@@ -159,7 +169,11 @@ class AttendanceHandler {
 
         case "searchAttendanceRecords":
           // @ts-ignore
-          return await this.searchAttendanceRecords(enrichedParams.query, userId);
+          return await this.searchAttendanceRecords(
+            // @ts-ignore
+            enrichedParams.query,
+            userId,
+          );
 
         default:
           return {

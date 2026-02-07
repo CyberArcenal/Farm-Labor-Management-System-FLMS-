@@ -59,7 +59,9 @@ class DebtHandler {
     this.validateDebtData = this.importHandler("./validate_data.ipc.js");
     this.checkDebtLimit = this.importHandler("./check_debt_limit.ipc.js");
     this.calculateInterest = this.importHandler("./calculate_interest.ipc.js");
-    this.validateDebtPayment = this.importHandler("./validate_debt_payment.ipc.js");
+    this.validateDebtPayment = this.importHandler(
+      "./validate_debt_payment.ipc.js",
+    );
   }
 
   /**
@@ -90,7 +92,7 @@ class DebtHandler {
 
       // @ts-ignore
       const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params };
 
       // Log the request
       if (logger) {
@@ -260,10 +262,7 @@ class DebtHandler {
             enrichedParams,
           );
         case "validateDebtPayment":
-          return await this.validateDebtPayment(
-            enrichedParams,
-            userId,
-          );
+          return await this.validateDebtPayment(enrichedParams, userId);
 
         // ⚙️ VALIDATION OPERATIONS
         case "validateDebtData":

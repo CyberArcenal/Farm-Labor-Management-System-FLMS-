@@ -217,6 +217,34 @@ const LoginPage: React.FC = () => {
 
     const currentSeason = getCurrentSeason();
 
+    const handleRememberMeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        handleChange(e);
+        if (e.target.checked) {
+            localStorage.setItem('rememberMe', JSON.stringify(formData));
+        } else {
+            localStorage.removeItem('rememberMe');
+        }
+    };
+
+    useEffect(() => {
+        const cachedData = localStorage.getItem('rememberMe');
+        if (cachedData) {
+            setFormData(JSON.parse(cachedData));
+        }
+    }, []);
+
+    // Remember Me Checkbox
+    <div className="flex items-center mb-4">
+        <input
+            type="checkbox"
+            name="rememberMe"
+            checked={formData.rememberMe}
+            onChange={handleRememberMeChange}
+            className="mr-2"
+        />
+        <label className="text-sm">Remember Me</label>
+    </div>
+
     return (
         <div className="min-h-screen flex bg-gradient-to-br from-green-50 to-amber-50">
             {/* Left Panel - Brand & Stats */}
@@ -488,7 +516,7 @@ const LoginPage: React.FC = () => {
                                             id="rememberMe"
                                             name="rememberMe"
                                             checked={formData.rememberMe}
-                                            onChange={handleChange}
+                                            onChange={handleRememberMeChange}
                                             className="w-4 h-4 rounded transition-colors"
                                             style={{
                                                 borderColor: 'var(--input-border)',

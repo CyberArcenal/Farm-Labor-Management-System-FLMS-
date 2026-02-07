@@ -20,7 +20,9 @@ class NotificationHandler {
     this.getNotificationsByType = this.importHandler("./get/by_type.ipc");
     this.getRecentNotifications = this.importHandler("./get/recent.ipc");
     this.getUnreadNotifications = this.importHandler("./get/unread.ipc");
-    this.getNotificationsByDateRange = this.importHandler("./get/by_date_range.ipc");
+    this.getNotificationsByDateRange = this.importHandler(
+      "./get/by_date_range.ipc",
+    );
     this.getNotificationStats = this.importHandler("./get/stats.ipc");
     this.searchNotifications = this.importHandler("./search.ipc");
 
@@ -79,7 +81,7 @@ class NotificationHandler {
 
       // @ts-ignore
       const userId = params.userId || event.sender.id || 0;
-      const enrichedParams = { ...params, _userId: userId };
+      const enrichedParams = { ...params };
 
       // Log the request
       if (logger) {
@@ -92,74 +94,107 @@ class NotificationHandler {
         // 📋 READ-ONLY OPERATIONS
         case "getAllNotifications":
           return await this.getAllNotifications(enrichedParams);
-        
+
         case "getNotificationById":
           return await this.getNotificationById(enrichedParams);
-        
+
         case "getNotificationsByType":
           return await this.getNotificationsByType(enrichedParams);
-        
+
         case "getRecentNotifications":
           return await this.getRecentNotifications(enrichedParams);
-        
+
         case "getUnreadNotifications":
           return await this.getUnreadNotifications(enrichedParams);
-        
+
         case "getNotificationsByDateRange":
           return await this.getNotificationsByDateRange(enrichedParams);
-        
+
         case "getNotificationStats":
           return await this.getNotificationStats(enrichedParams);
-        
+
         case "searchNotifications":
           return await this.searchNotifications(enrichedParams);
 
         // ✏️ WRITE OPERATIONS
         case "createNotification":
-          return await this.handleWithTransaction(this.createNotification, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.createNotification,
+            enrichedParams,
+          );
+
         case "updateNotification":
-          return await this.handleWithTransaction(this.updateNotification, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.updateNotification,
+            enrichedParams,
+          );
+
         case "deleteNotification":
-          return await this.handleWithTransaction(this.deleteNotification, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.deleteNotification,
+            enrichedParams,
+          );
+
         case "markAsRead":
-          return await this.handleWithTransaction(this.markAsRead, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.markAsRead,
+            enrichedParams,
+          );
+
         case "markAllAsRead":
-          return await this.handleWithTransaction(this.markAllAsRead, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.markAllAsRead,
+            enrichedParams,
+          );
+
         case "bulkDeleteNotifications":
-          return await this.handleWithTransaction(this.bulkDeleteNotifications, enrichedParams);
+          return await this.handleWithTransaction(
+            this.bulkDeleteNotifications,
+            enrichedParams,
+          );
 
         // 📊 SYSTEM NOTIFICATION OPERATIONS
         case "createSystemNotification":
-          return await this.handleWithTransaction(this.createSystemNotification, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.createSystemNotification,
+            enrichedParams,
+          );
+
         case "createWorkerNotification":
-          return await this.handleWithTransaction(this.createWorkerNotification, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.createWorkerNotification,
+            enrichedParams,
+          );
+
         case "createDebtNotification":
-          return await this.handleWithTransaction(this.createDebtNotification, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.createDebtNotification,
+            enrichedParams,
+          );
+
         case "createPaymentNotification":
-          return await this.handleWithTransaction(this.createPaymentNotification, enrichedParams);
+          return await this.handleWithTransaction(
+            this.createPaymentNotification,
+            enrichedParams,
+          );
 
         // 🔔 NOTIFICATION PREFERENCES
         case "getUserPreferences":
           return await this.getUserPreferences(enrichedParams);
-        
+
         case "updateUserPreferences":
-          return await this.handleWithTransaction(this.updateUserPreferences, enrichedParams);
-        
+          return await this.handleWithTransaction(
+            this.updateUserPreferences,
+            enrichedParams,
+          );
+
         case "getNotificationTypes":
           return await this.getNotificationTypes(enrichedParams);
 
         // 📤 EXPORT OPERATIONS
         case "exportNotificationsToCSV":
           return await this.exportNotificationsToCSV(enrichedParams);
-        
+
         case "exportNotificationReport":
           return await this.exportNotificationReport(enrichedParams);
 
@@ -228,19 +263,21 @@ class NotificationHandler {
       } else {
         activityRepo = AppDataSource.getRepository(UserActivity);
       }
-    // ✅ Always require default session
-    const sessionId = await farmSessionDefaultSessionId();
-    if (!sessionId || sessionId === 0) {
-      throw new Error("No default session configured. Please set one in Settings.");
-    }
+      // ✅ Always require default session
+      const sessionId = await farmSessionDefaultSessionId();
+      if (!sessionId || sessionId === 0) {
+        throw new Error(
+          "No default session configured. Please set one in Settings.",
+        );
+      }
       const activity = activityRepo.create({
         user_id: user_id,
         action,
         description,
-        session: {id: sessionId},
+        session: { id: sessionId },
         ip_address: "127.0.0.1",
         user_agent: "Kabisilya-Management-System",
-        created_at: new Date()
+        created_at: new Date(),
       });
 
       await activityRepo.save(activity);
