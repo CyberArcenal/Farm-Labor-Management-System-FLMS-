@@ -21,14 +21,14 @@ import {
   Sprout,
   Wheat,
   Package,
-  TrendingUp,
-  MapPin,
-  Activity,
+  TrendingUp, Activity,
   HistoryIcon
 } from "lucide-react";
 import dashboardAPI from "../../apis/dashboard";
 import { kabAuthStore } from "../../lib/kabAuthStore";
 import { dialogs } from "../../utils/dialogs";
+import { version } from "../../../../package.json";
+
 
 interface SidebarProps {
   isOpen: boolean;
@@ -451,7 +451,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           </button>
         </div>
         <p className="text-xs text-center" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          © {new Date().getFullYear()} Kabisilya Management
+          v{version} {new Date().getFullYear()} Kabisilya Management
         </p>
       </div>
     </div>

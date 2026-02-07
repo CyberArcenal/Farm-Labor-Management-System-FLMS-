@@ -401,7 +401,7 @@ export class WorkerAPI {
 
   private enrichParams(params: any = {}): any {
     const userId = this.getCurrentUserId();
-    return { ...params, _userId: userId !== null ? userId : 0 };
+    return { ...params, userId: userId !== null ? userId : 0 };
   }
 
   // ============================================================================
