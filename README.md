@@ -118,6 +118,21 @@ Here are sample displays of the system
 
 ---
 
+## 💖 Support This Project
+
+If you find this project helpful, consider supporting its development:
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue)](https://github.com/sponsors/CyberArcenal)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.me/Lugawan677)
+[![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-red)](https://ko-fi.com/cyberarcenal60019)
+
+## 📱 Donate via GCash
+Scan the QR code below to send your support:
+
+![GCash QR](screenshots/gcash-qr.JPG)
+
+---
+
 ## ⚖️ License
 ```
 
